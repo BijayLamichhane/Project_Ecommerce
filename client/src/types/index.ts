@@ -1,0 +1,237 @@
+export type UserRole = "customer" | "seller" | "admin";
+export type BookingStatus =
+  | "pending"
+  | "confirmed"
+  | "rejected"
+  | "cancelled"
+  | "active"
+  | "return_requested"
+  | "returned"
+  | "completed"
+  | "disputed";
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  status: string;
+  avatarUrl?: string;
+  phone?: string;
+  profile?: Profile;
+  sellerProfile?: SellerProfile;
+  createdAt: string;
+}
+
+export interface Profile {
+  id: string;
+  userId: string;
+  bio?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postalCode?: string;
+}
+
+export interface SellerProfile {
+  id: string;
+  userId: string;
+  businessName: string;
+  businessDescription?: string;
+  businessAddress?: string;
+  businessCity?: string;
+  isVerified: boolean;
+  averageRating: string;
+  totalRatings: number;
+  totalEarnings: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  iconName?: string;
+  imageUrl?: string;
+  sortOrder: number;
+}
+
+export interface ProductPricing {
+  hourlyRate?: string | null;
+  dailyRate?: string | null;
+  weeklyRate?: string | null;
+  monthlyRate?: string | null;
+  securityDeposit: string;
+  serviceFeePercent?: string;
+  deliveryFee?: string;
+  minimumRentalDays?: number;
+  maximumRentalDays?: number;
+}
+
+export interface ProductImage {
+  id: string;
+  productId: string;
+  url: string;
+  altText?: string;
+  isPrimary: boolean;
+  sortOrder: number;
+}
+
+export interface ProductRules {
+  id: string;
+  rules?: string[];
+  restrictions?: string[];
+  requirements?: string[];
+  cancellationPolicy?: string;
+  advanceBookingDays?: number;
+  instantBook?: boolean;
+}
+
+export interface Product {
+  id: string;
+  sellerId: string;
+  categoryId: string;
+  name: string;
+  slug: string;
+  description: string;
+  shortDescription?: string;
+  brand?: string;
+  model?: string;
+  condition: "new" | "like_new" | "good" | "fair" | "poor";
+  status: "active" | "inactive" | "suspended" | "draft";
+  city?: string;
+  state?: string;
+  totalQuantity: number;
+  totalRentals: number;
+  totalRatings: number;
+  averageRating: string;
+  isFeatured: boolean;
+  images: ProductImage[];
+  pricing?: ProductPricing;
+  rules?: ProductRules;
+  category?: Category;
+  seller?: {
+    id: string;
+    name: string;
+    avatarUrl?: string;
+  };
+}
+
+export interface BookingItem {
+  id: string;
+  bookingId: string;
+  productId: string;
+  quantity: number;
+  startDate: string;
+  endDate: string;
+  dailyRate?: string;
+  baseRentalPrice: string;
+  securityDeposit: string;
+  durationDays: number;
+  product?: Product;
+}
+
+export interface Booking {
+  id: string;
+  customerId: string;
+  sellerId: string;
+  status: BookingStatus;
+  totalRentalPrice: string;
+  totalDeposit: string;
+  serviceFee: string;
+  deliveryFee: string;
+  totalAmount: string;
+  specialRequests?: string;
+  confirmedAt?: string;
+  activatedAt?: string;
+  returnRequestedAt?: string;
+  returnedAt?: string;
+  completedAt?: string;
+  createdAt: string;
+  bookingItems: BookingItem[];
+  customer?: { id: string; name: string; email: string; avatarUrl?: string };
+  seller?: { id: string; name: string; email: string; avatarUrl?: string };
+}
+
+export interface Review {
+  id: string;
+  productId: string;
+  bookingId: string;
+  reviewerId: string;
+  rating: number;
+  title?: string;
+  comment: string;
+  sellerResponse?: string;
+  createdAt: string;
+  reviewer?: {
+    id: string;
+    name: string;
+    avatarUrl?: string;
+  };
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: string;
+  title: string;
+  message: string;
+  actionUrl?: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface Conversation {
+  id: string;
+  customerId: string;
+  sellerId: string;
+  productId?: string;
+  lastMessageAt?: string;
+  customer?: { id: string; name: string; avatarUrl?: string };
+  seller?: { id: string; name: string; avatarUrl?: string };
+  product?: { id: string; name: string; slug: string; images?: { url: string }[] };
+  messages?: Message[];
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  imageUrl?: string;
+  isRead: boolean;
+  createdAt: string;
+  sender?: { id: string; name: string; avatarUrl?: string };
+}
+
+export interface CartItem {
+  id: string;
+  productId: string;
+  quantity: number;
+  startDate: string;
+  endDate: string;
+  product: Product;
+  priceCalculation?: {
+    baseRentalPrice: number;
+    serviceFee: number;
+    deliveryFee: number;
+    totalRentalPrice: number;
+    securityDeposit: number;
+    grandTotal: number;
+  };
+}
+
+export interface RentalPriceCalculation {
+  startDate: string;
+  endDate: string;
+  durationUnit: string;
+  durationValue: number;
+  baseRentalPrice: number;
+  serviceFee: number;
+  deliveryFee: number;
+  totalRentalPrice: number;
+  securityDeposit: number;
+  grandTotal: number;
+  breakdown: { label: string; amount: number }[];
+}
