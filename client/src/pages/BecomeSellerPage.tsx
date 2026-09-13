@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { api } from "../lib/axios";
 import { useAuth } from "../hooks/useAuth";
 import {
@@ -13,8 +13,7 @@ import {
 
 export function BecomeSellerPage() {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
-  const queryClient = useQueryClient();
+  const { isAuthenticated, setUser } = useAuth();
 
   const [formData, setFormData] = useState({
     businessName: "",
@@ -35,9 +34,14 @@ export function BecomeSellerPage() {
       const { data } = await api.post("/users/become-seller", formData);
       return data.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user-me"] });
-      window.location.href = "/seller";
+    onSuccess: async () => {
+      // The client's cached user still has role: "customer" at this point —
+      // refetch it now that the server has upgraded the account, so
+      // ProtectedRoute's role check on /seller sees the update immediately
+      // instead of needing a full page reload to pick it up.
+      const { data: me } = await api.get("/users/me");
+      setUser(me.data);
+      navigate("/seller", { replace: true });
     },
     onError: (err: any) => {
       const details = err.response?.data?.error?.details;
@@ -55,7 +59,7 @@ export function BecomeSellerPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAuthenticated) {
-      navigate("/login");
+      navigate("/login?redirect=/become-seller");
       return;
     }
     registerMutation.mutate();

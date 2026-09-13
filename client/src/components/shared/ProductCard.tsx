@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Product } from "../../types";
 import { formatCurrency } from "../../lib/utils";
 import { Star, Heart, MapPin, ShieldCheck, Sparkles } from "lucide-react";
@@ -15,13 +15,10 @@ interface ProductCardProps {
 export function ProductCard({ product, isInWishlist = false }: ProductCardProps) {
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const toggleWishlistMutation = useMutation({
     mutationFn: async () => {
-      if (!isAuthenticated) {
-        window.location.href = "/login";
-        return;
-      }
       await api.post("/wishlist/toggle", { productId: product.id });
     },
     onSuccess: () => {
@@ -69,6 +66,10 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
         <button
           onClick={(e) => {
             e.preventDefault();
+            if (!isAuthenticated) {
+              navigate(`/login?redirect=${encodeURIComponent(`/products/${product.id}`)}`);
+              return;
+            }
             toggleWishlistMutation.mutate();
           }}
           className="absolute top-3 right-3 p-2 rounded-full bg-white/90 backdrop-blur-md shadow-sm hover:bg-white text-slate-600 hover:text-rose-500 transition"

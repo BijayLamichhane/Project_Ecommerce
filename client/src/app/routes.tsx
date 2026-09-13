@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Navbar } from "../components/layout/Navbar";
 import { Footer } from "../components/layout/Footer";
 import { HomePage } from "../pages/HomePage";
@@ -21,6 +21,7 @@ import { useAuth } from "../hooks/useAuth";
 
 function ProtectedRoute({ children, role }: { children: React.ReactNode; role?: "seller" | "admin" }) {
   const { user, isLoading } = useAuth();
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -31,7 +32,7 @@ function ProtectedRoute({ children, role }: { children: React.ReactNode; role?: 
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   if (role === "admin" && user.role !== "admin") {

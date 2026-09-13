@@ -78,13 +78,15 @@ export function ProductDetailPage() {
     enabled: !!startDate && !!endDate && !!id,
   });
 
+  // Redirects to login, remembering this listing so the user lands back
+  // here — rather than /cart or /dashboard — once they've signed in.
+  const redirectToLogin = () => {
+    navigate(`/login?redirect=${encodeURIComponent(`/products/${id}`)}`);
+  };
+
   // Add to Cart Mutation
   const addToCartMutation = useMutation({
     mutationFn: async () => {
-      if (!isAuthenticated) {
-        navigate("/login");
-        return;
-      }
       if (!startDate || !endDate) {
         setBookingError("Please select both pickup and return dates on the calendar");
         return;
@@ -108,10 +110,6 @@ export function ProductDetailPage() {
   // Direct Book / Instant Checkout Mutation
   const bookNowMutation = useMutation({
     mutationFn: async () => {
-      if (!isAuthenticated) {
-        navigate("/login");
-        return;
-      }
       if (!startDate || !endDate) {
         setBookingError("Please select both pickup and return dates");
         return;
@@ -322,7 +320,7 @@ export function ProductDetailPage() {
               <button
                 type="button"
                 disabled={!startDate || !endDate || bookNowMutation.isPending}
-                onClick={() => bookNowMutation.mutate()}
+                onClick={() => (isAuthenticated ? bookNowMutation.mutate() : redirectToLogin())}
                 className="w-full py-3.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm shadow-md shadow-indigo-200 transition flex items-center justify-center gap-2"
               >
                 <Zap className="w-4 h-4 fill-white" />
@@ -332,7 +330,7 @@ export function ProductDetailPage() {
               <button
                 type="button"
                 disabled={!startDate || !endDate || addToCartMutation.isPending}
-                onClick={() => addToCartMutation.mutate()}
+                onClick={() => (isAuthenticated ? addToCartMutation.mutate() : redirectToLogin())}
                 className="w-full py-3 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed text-slate-800 font-semibold text-xs transition flex items-center justify-center gap-2"
               >
                 <ShoppingCart className="w-4 h-4" />

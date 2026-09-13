@@ -87,8 +87,11 @@ export class BookingService {
         try {
           const res = await redis.set(lockKey, customerId, "EX", env.BOOKING_LOCK_TTL_SECONDS, "NX");
           if (!res) lockAcquired = false;
-        } catch {
-          // Redis optional
+        } catch (err) {
+          // Redis is optional — fall back to the database-level overlap
+          // check below — but log it so an unreachable Redis in production
+          // doesn't silently disable the distributed lock with no trace.
+          logger.warn({ err, lockKey }, "Booking lock unavailable (Redis unreachable); relying on database overlap check only");
         }
 
         if (!lockAcquired) {

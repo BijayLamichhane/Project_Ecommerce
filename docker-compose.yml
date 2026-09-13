@@ -1,4 +1,10 @@
 services:
+  # NOTE: nothing in server/src connects to Postgres — the app (see
+  # server/src/config/database.js) and Better Auth (see
+  # server/src/config/auth.js) both use MongoDB via MONGODB_URI. The `mongo`
+  # service below is what `npm run dev:server` actually needs. Postgres and
+  # Adminer are left running in case you have another use for them — remove
+  # them if not.
   postgres:
     image: postgres:16-alpine
     container_name: renthub_postgres
@@ -13,6 +19,22 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-renthub}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - renthub_network
+
+  mongo:
+    image: mongo:7
+    container_name: renthub_mongo
+    restart: unless-stopped
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -52,6 +74,8 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+  mongo_data:
     driver: local
   redis_data:
     driver: local

@@ -1,17 +1,28 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { api } from "../lib/axios";
 import { useAuth } from "../hooks/useAuth";
+import { getPostLoginRedirect } from "../lib/utils";
 import { Layers, Lock, Mail, User as UserIcon, AlertCircle } from "lucide-react";
 
 export function RegisterPage() {
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const { user, isLoading: isSessionLoading, setUser } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const redirectTo = getPostLoginRedirect(location.state, searchParams);
+
+  useEffect(() => {
+    if (!isSessionLoading && user) {
+      navigate(redirectTo, { replace: true });
+    }
+  }, [isSessionLoading, user, navigate, redirectTo]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,11 +38,11 @@ export function RegisterPage() {
 
       if (res.data?.user) {
         setUser(res.data.user);
-        navigate("/dashboard");
+        navigate(redirectTo, { replace: true });
       } else {
         const { data: me } = await api.get("/users/me");
         setUser(me.data);
-        navigate("/dashboard");
+        navigate(redirectTo, { replace: true });
       }
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || err.response?.data?.error?.message || "Registration failed");
@@ -39,6 +50,14 @@ export function RegisterPage() {
       setIsLoading(false);
     }
   };
+
+  if (isSessionLoading || user) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[80vh] flex flex-col justify-center py-12 sm:px-6 lg:px-8">

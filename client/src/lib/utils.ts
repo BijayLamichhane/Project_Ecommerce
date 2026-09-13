@@ -22,3 +22,31 @@ export function formatDate(dateString: string | Date | undefined, formatStr = "M
     return String(dateString);
   }
 }
+
+/**
+ * Figures out where to send the user after login/register, in priority order:
+ * 1. The page ProtectedRoute bounced them from (react-router location state)
+ * 2. A "?redirect=" query param (set when the axios 401 interceptor or a
+ *    "sign in to continue" action sends them here)
+ * 3. The given fallback (defaults to the dashboard)
+ *
+ * Both sources are restricted to same-site relative paths so a crafted
+ * "?redirect=https://evil.example" link can't be used as an open redirect.
+ */
+export function getPostLoginRedirect(
+  locationState: unknown,
+  searchParams: URLSearchParams,
+  fallback = "/dashboard"
+): string {
+  const isSafeRelativePath = (value: string | null | undefined): value is string =>
+    !!value && value.startsWith("/") && !value.startsWith("//");
+
+  const from = (locationState as { from?: { pathname?: string; search?: string } } | null)?.from;
+  const fromPath = from?.pathname ? `${from.pathname}${from.search || ""}` : null;
+  if (isSafeRelativePath(fromPath)) return fromPath;
+
+  const redirectParam = searchParams.get("redirect");
+  if (isSafeRelativePath(redirectParam)) return redirectParam;
+
+  return fallback;
+}

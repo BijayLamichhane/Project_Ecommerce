@@ -1,19 +1,25 @@
 import axios from "axios";
+import { useAuthStore } from "../stores/auth.store";
 
-const SERVER_ORIGIN = "http://localhost:5000";
+// Left empty in development so requests stay relative (e.g. "/api/v1/...")
+// and are forwarded by Vite's dev proxy (see vite.config.ts) to the API
+// server. Set VITE_API_URL for a production build, where there is no dev
+// proxy and the browser needs the real API origin.
+const API_ORIGIN = import.meta.env.VITE_API_URL || "";
 
 export const api = axios.create({
-  baseURL: `${SERVER_ORIGIN}/api/v1`,
+  baseURL: `${API_ORIGIN}/api/v1`,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Automatically route Better Auth endpoints to root server without /api/v1 duplication
+// Better Auth mounts its own routes at the server root ("/api/auth/*"),
+// not under the versioned "/api/v1" prefix, so route those requests there.
 api.interceptors.request.use((config) => {
   if (config.url?.startsWith("/api/auth")) {
-    config.baseURL = SERVER_ORIGIN;
+    config.baseURL = API_ORIGIN;
   }
   return config;
 });
@@ -22,12 +28,18 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Session expired or unauthorized
-      if (
-        !window.location.pathname.startsWith("/login") &&
-        !window.location.pathname.startsWith("/register")
-      ) {
-        // Optional redirect logic
+      const path = window.location.pathname;
+      const onAuthPage = path.startsWith("/login") || path.startsWith("/register");
+
+      // Only force a redirect when the store still thinks we're signed in —
+      // that means an active session just expired mid-use. A 401 from the
+      // silent "/users/me" check on first load is expected for anonymous
+      // visitors and must NOT bounce them off public pages.
+      const wasAuthenticated = !!useAuthStore.getState().user;
+
+      if (wasAuthenticated && !onAuthPage) {
+        useAuthStore.getState().logout();
+        window.location.href = `/login?redirect=${encodeURIComponent(path + window.location.search)}`;
       }
     }
     return Promise.reject(error);

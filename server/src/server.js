@@ -9,11 +9,7 @@ import { logger } from "./utils/logger.js";
 async function startServer() {
   try {
     await connectDatabase();
-    // try {
-    //   await connectRedis();
-    // } catch (err) {
-    //   logger.warn({ err }, "Redis connection failed. Running without Redis cache.");
-    // }
+    await connectRedis(); // non-blocking: logs a warning and continues if Redis is unreachable
     const app = createApp();
     const server = http.createServer(app);
     initSocketIO(server);

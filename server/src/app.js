@@ -30,9 +30,14 @@ export function createApp() {
     })
   );
 
+  const corsOrigins =
+    env.NODE_ENV === "production"
+      ? [env.CLIENT_URL]
+      : [env.CLIENT_URL, "http://localhost:3000", "http://localhost:5173"];
+
   app.use(
     cors({
-      origin: [env.CLIENT_URL, "http://localhost:3000", "http://localhost:5173"],
+      origin: corsOrigins,
       credentials: true,
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
