@@ -35,6 +35,8 @@ const envSchema = z.object({
   ESEWA_SECRET_KEY: z.string().optional().default("8gBm/:&EnhH.1/q"),
   ESEWA_CHECKOUT_URL: z.string().url().optional().default("https://rc-epay.esewa.com.np/api/epay/main/v2/form"),
   ESEWA_STATUS_URL: z.string().url().optional().default("https://rc.esewa.com.np/api/epay/transaction/status/"),
+  KHALTI_SECRET_KEY: z.string().optional().default(""),
+  KHALTI_BASE_URL: z.string().url().optional().default("https://dev.khalti.com/api/v2"),
   BOOKING_LOCK_TTL_SECONDS: z.coerce.number().int().positive().default(60),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900000),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100),
