@@ -26,6 +26,15 @@ export class PaymentController {
     }
   }
 
+  async khaltiSuccess(req, res) {
+    try {
+      const result = await paymentService.handleKhaltiSuccess(req.query);
+      res.redirect(`${env.CLIENT_URL}/bookings/${encodeURIComponent(result.bookingId)}?payment=success`);
+    } catch (error) {
+      res.redirect(`${env.CLIENT_URL}/bookings?payment=failed&reason=${encodeURIComponent(error.message || "Payment verification failed")}`);
+    }
+  }
+
   async releaseDeposit(req, res, next) {
     try {
       const result = await paymentService.releaseDeposit(req.user.id, req.params.bookingId, req.user.role);
