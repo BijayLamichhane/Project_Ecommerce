@@ -5,10 +5,11 @@ import { NotFoundError, ForbiddenError, ValidationError } from "../../middleware
 import { env } from "../../config/env.js";
 import { v4 as uuidv4 } from "uuid";
 
-function signEsewa(totalAmount, transactionUuid, productCode) {
-  const message = `total_amount=${totalAmount},transaction_uuid=${transactionUuid},product_code=${productCode}`;
+function signFields(fields, signedFieldNames) {
+  const message = signedFieldNames.split(",").map((name) => `${name}=${fields[name] ?? ""}`).join(",");
   return crypto.createHmac("sha256", env.ESEWA_SECRET_KEY).update(message).digest("base64");
 }
+
 function safeEqual(a, b) {
   const left = Buffer.from(String(a));
   const right = Buffer.from(String(b));
@@ -40,8 +41,7 @@ export class PaymentService {
     } else {
       await paymentRepository.updatePayment(existingPayment.id, { status: "pending", paymentMethod: "esewa", transactionId: transactionUuid, amount });
     }
-    const successUrl = `${env.BETTER_AUTH_URL}/api/v1/payments/esewa/success`;
-    const failureUrl = `${env.CLIENT_URL}/bookings/${bookingId}?payment=failed`;
+    const signedFieldNames = "total_amount,transaction_uuid,product_code";
     const fields = {
       amount,
       tax_amount: "0",
@@ -50,10 +50,10 @@ export class PaymentService {
       product_code: env.ESEWA_PRODUCT_CODE,
       product_service_charge: "0",
       product_delivery_charge: "0",
-      success_url: successUrl,
-      failure_url: failureUrl,
-      signed_field_names: "total_amount,transaction_uuid,product_code",
-      signature: signEsewa(amount, transactionUuid, env.ESEWA_PRODUCT_CODE),
+      success_url: `${env.BETTER_AUTH_URL}/api/v1/payments/esewa/success`,
+      failure_url: `${env.CLIENT_URL}/bookings/${bookingId}?payment=failed`,
+      signed_field_names: signedFieldNames,
+      signature: signFields({ total_amount: amount, transaction_uuid: transactionUuid, product_code: env.ESEWA_PRODUCT_CODE }, signedFieldNames),
     };
     return { paymentId, bookingId, paymentMethod: "esewa", action: env.ESEWA_CHECKOUT_URL, fields, amount, currency: "NPR" };
   }
@@ -62,16 +62,17 @@ export class PaymentService {
     if (!encodedData) throw new ValidationError("Missing eSewa payment response");
     let response;
     try { response = JSON.parse(Buffer.from(encodedData, "base64").toString("utf8")); } catch { throw new ValidationError("Invalid eSewa payment response"); }
-    const { transaction_uuid: transactionUuid, total_amount: totalAmount, status, signature } = response;
-    if (!transactionUuid || !totalAmount || !signature) throw new ValidationError("Incomplete eSewa payment response");
+    const { transaction_uuid: transactionUuid, total_amount: totalAmount, status, signature, signed_field_names: signedFieldNames } = response;
+    if (!transactionUuid || !totalAmount || !signature || !signedFieldNames) throw new ValidationError("Incomplete eSewa payment response");
     if (status !== "COMPLETE") throw new ValidationError(`eSewa payment status is ${status || "unknown"}`);
     const payment = await paymentRepository.findByTransactionId(transactionUuid);
     if (!payment) throw new NotFoundError("Payment");
     if (payment.status === "completed") return { payment, bookingId: payment.bookingId };
     const booking = await bookingRepository.findById(payment.bookingId);
     if (!booking) throw new NotFoundError("Booking");
-    const expectedSignature = signEsewa(totalAmount, transactionUuid, env.ESEWA_PRODUCT_CODE);
+    const expectedSignature = signFields(response, signedFieldNames);
     if (!safeEqual(signature, expectedSignature)) throw new ValidationError("eSewa signature verification failed");
+    if (response.product_code !== env.ESEWA_PRODUCT_CODE) throw new ValidationError("Invalid eSewa product code");
     if (Math.abs(Number(totalAmount) - Number(payment.amount)) > 0.01) throw new ValidationError("eSewa payment amount does not match the booking");
     const statusUrl = new URL(env.ESEWA_STATUS_URL);
     statusUrl.searchParams.set("product_code", env.ESEWA_PRODUCT_CODE);
