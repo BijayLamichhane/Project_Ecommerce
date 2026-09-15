@@ -30,20 +30,19 @@ export function RegisterPage() {
     setErrorMsg(null);
 
     try {
-      const res = await api.post("/api/auth/sign-up/email", {
-        name,
-        email,
+      await api.post("/api/auth/sign-up/email", {
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
         password,
       });
 
-      if (res.data?.user) {
-        setUser(res.data.user);
-        navigate(redirectTo, { replace: true });
-      } else {
-        const { data: me } = await api.get("/users/me");
-        setUser(me.data);
-        navigate(redirectTo, { replace: true });
+      const { data: me } = await api.get("/users/me");
+      if (!me.success || !me.data) {
+        throw new Error("Unable to load your account profile after registration");
       }
+
+      setUser(me.data);
+      navigate(redirectTo, { replace: true });
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || getErrorMessage(err, "Registration failed"));
     } finally {
@@ -92,14 +91,7 @@ export function RegisterPage() {
             <div className="space-y-1">
               <label className="text-xs font-bold text-slate-700">Full Name</label>
               <div className="relative">
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Your Name"
-                  className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500"
-                  required
-                />
+                <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your Name" className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500" required />
                 <UserIcon className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               </div>
             </div>
@@ -107,14 +99,7 @@ export function RegisterPage() {
             <div className="space-y-1">
               <label className="text-xs font-bold text-slate-700">Email Address</label>
               <div className="relative">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500"
-                  required
-                />
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500" required />
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               </div>
             </div>
@@ -122,24 +107,12 @@ export function RegisterPage() {
             <div className="space-y-1">
               <label className="text-xs font-bold text-slate-700">Password (min 8 chars)</label>
               <div className="relative">
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500"
-                  required
-                  minLength={8}
-                />
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500" required minLength={8} />
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-200 transition"
-            >
+            <button type="submit" disabled={isLoading} className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-200 transition">
               {isLoading ? "Creating account..." : "Sign Up"}
             </button>
           </form>
