@@ -13,7 +13,7 @@ const paymentSchema = new mongoose.Schema(
       enum: ["pending", "completed", "failed", "refunded"],
       default: "pending",
     },
-    paymentMethod: { type: String, default: "khalti" },
+    paymentMethod: { type: String, enum: ["esewa", "card"], default: "esewa" },
     transactionId: { type: String },
     paymentGatewayResponse: { type: mongoose.Schema.Types.Mixed },
   },
