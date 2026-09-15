@@ -34,7 +34,6 @@ export function SellerDashboardPage() {
     },
   });
   const sellerBookings = sellerBookingsData || [];
-  console.log(sellerBookings);
 
   const { data: myProductsData } = useQuery({
     queryKey: ["seller-products"],
@@ -268,11 +267,22 @@ export function SellerDashboardPage() {
                       {b.status === "return_requested" && (
                         <button
                           onClick={() =>
+                            updateStatusMutation.mutate({ bookingId: b._id, status: "returned" })
+                          }
+                          className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-bold text-[11px]"
+                        >
+                          Inspect & Mark Returned
+                        </button>
+                      )}
+
+                      {b.status === "returned" && (
+                        <button
+                          onClick={() =>
                             updateStatusMutation.mutate({ bookingId: b._id, status: "completed" })
                           }
                           className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-bold text-[11px]"
                         >
-                          Inspect & Complete Return
+                          Complete Booking
                         </button>
                       )}
 
