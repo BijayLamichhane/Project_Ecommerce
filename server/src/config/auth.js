@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth/minimal";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { MongoClient } from "mongodb";
+import bcrypt from "bcryptjs";
 import { env } from "./env.js";
 
 export const authClient = new MongoClient(env.MONGODB_URI);
@@ -14,6 +15,10 @@ export const auth = betterAuth({
     enabled: true,
     requireEmailVerification: false,
     minPasswordLength: 8,
+    password: {
+      hash: (password) => bcrypt.hash(password, 12),
+      verify: ({ password, hash }) => bcrypt.compare(password, hash),
+    },
   },
   session: {
     expiresIn: 60 * 60 * 24 * 30,
