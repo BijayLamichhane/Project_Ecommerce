@@ -7,31 +7,48 @@ export class MessagingService {
     return messagingRepository.findUserConversations(userId);
   }
 
-  async getConversationMessages(userId, conversationId) {
+  async assertConversationParticipant(userId, conversationId) {
     const conversation = await messagingRepository.findConversationById(conversationId);
     if (!conversation) throw new NotFoundError("Conversation");
-    if (conversation.customerId !== userId && conversation.sellerId !== userId) {
+    if (String(conversation.customerId) !== String(userId) && String(conversation.sellerId) !== String(userId)) {
       throw new ForbiddenError();
     }
+    return conversation;
+  }
+
+  async getConversationMessages(userId, conversationId) {
+    const conversation = await this.assertConversationParticipant(userId, conversationId);
 
     await messagingRepository.markAsRead(conversationId, userId);
     const messageList = await messagingRepository.findMessages(conversationId);
     return {
       conversation,
-      messages: messageList.reverse(), // Chronological order
+      messages: messageList.reverse(),
     };
   }
 
   async sendMessage(senderId, input) {
     let conversationId = input.conversationId;
-    if (!conversationId) {
+
+    if (conversationId) {
+      const conversation = await this.assertConversationParticipant(senderId, conversationId);
+      if (input.recipientId && String(input.recipientId) !== String(conversation.customerId) && String(input.recipientId) !== String(conversation.sellerId)) {
+        throw new ForbiddenError();
+      }
+    } else {
+      if (!input.recipientId || String(input.recipientId) === String(senderId)) {
+        throw new ForbiddenError();
+      }
+
       const existing = await messagingRepository.findBetweenUsers(
         senderId,
         input.recipientId,
         input.productId
       );
+
       if (existing) {
         conversationId = existing.id;
+        await this.assertConversationParticipant(senderId, conversationId);
       } else {
         const newConv = await messagingRepository.createConversation({
           _id: uuidv4(),
