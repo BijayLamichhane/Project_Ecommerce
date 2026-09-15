@@ -17,9 +17,6 @@ export function LoginPage() {
 
   const redirectTo = getPostLoginRedirect(location.state, searchParams);
 
-  // Already signed in (e.g. followed an old link, or a session cookie is
-  // still valid) — don't show the form, just continue on to where they
-  // were headed.
   useEffect(() => {
     if (!isSessionLoading && user) {
       navigate(redirectTo, { replace: true });
@@ -32,26 +29,23 @@ export function LoginPage() {
     setErrorMsg(null);
 
     try {
-      // Better Auth sign-in
-      const res = await api.post("/api/auth/sign-in/email", {
-        email,
+      await api.post("/api/auth/sign-in/email", {
+        email: email.trim().toLowerCase(),
         password,
       });
 
-      if (res.data?.user) {
-        setUser(res.data.user);
-        navigate(redirectTo, { replace: true });
-      } else {
-        // Fallback fetch profile
-        const { data: me } = await api.get("/users/me");
-        setUser(me.data);
-        navigate(redirectTo, { replace: true });
+      const { data: me } = await api.get("/users/me");
+      if (!me.success || !me.data) {
+        throw new Error("Unable to load your account profile after sign in");
       }
+
+      setUser(me.data);
+      navigate(redirectTo, { replace: true });
     } catch (err: any) {
-      // Better Auth's own errors land on response.data.message; fall back to
-      // our API's { error: { message, details } } shape for anything else
-      // (e.g. the /users/me fallback call below failing validation).
-      setErrorMsg(err.response?.data?.message || getErrorMessage(err, "Invalid email or password"));
+      setErrorMsg(
+        err.response?.data?.message ||
+          getErrorMessage(err, "Invalid email or password")
+      );
     } finally {
       setIsLoading(false);
     }
@@ -99,32 +93,19 @@ export function LoginPage() {
             </div>
           )}
 
-          {/* Quick Demo Credentials */}
           <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-100 text-xs space-y-2">
             <span className="font-bold text-indigo-900 flex items-center gap-1">
               <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
               Quick Demo Accounts
             </span>
             <div className="flex flex-wrap gap-1.5">
-              <button
-                type="button"
-                onClick={() => handleDemoFill("abc@example.com")}
-                className="px-2.5 py-1 rounded-lg bg-white text-indigo-700 font-semibold text-[11px] shadow-2xs hover:bg-indigo-50 border border-indigo-200"
-              >
+              <button type="button" onClick={() => handleDemoFill("prashant@example.com")} className="px-2.5 py-1 rounded-lg bg-white text-indigo-700 font-semibold text-[11px] shadow-2xs hover:bg-indigo-50 border border-indigo-200">
                 Customer
               </button>
-              <button
-                type="button"
-                onClick={() => handleDemoFill("apex.rentals@renthub.app")}
-                className="px-2.5 py-1 rounded-lg bg-white text-indigo-700 font-semibold text-[11px] shadow-2xs hover:bg-indigo-50 border border-indigo-200"
-              >
+              <button type="button" onClick={() => handleDemoFill("apex.rentals@renthub.app")} className="px-2.5 py-1 rounded-lg bg-white text-indigo-700 font-semibold text-[11px] shadow-2xs hover:bg-indigo-50 border border-indigo-200">
                 Seller (Apex Cine)
               </button>
-              <button
-                type="button"
-                onClick={() => handleDemoFill("admin@renthub.app")}
-                className="px-2.5 py-1 rounded-lg bg-white text-indigo-700 font-semibold text-[11px] shadow-2xs hover:bg-indigo-50 border border-indigo-200"
-              >
+              <button type="button" onClick={() => handleDemoFill("admin@renthub.app")} className="px-2.5 py-1 rounded-lg bg-white text-indigo-700 font-semibold text-[11px] shadow-2xs hover:bg-indigo-50 border border-indigo-200">
                 Admin
               </button>
             </div>
@@ -134,14 +115,7 @@ export function LoginPage() {
             <div className="space-y-1">
               <label className="text-xs font-bold text-slate-700">Email Address</label>
               <div className="relative">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500"
-                  required
-                />
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500" required />
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               </div>
             </div>
@@ -149,23 +123,12 @@ export function LoginPage() {
             <div className="space-y-1">
               <label className="text-xs font-bold text-slate-700">Password</label>
               <div className="relative">
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500"
-                  required
-                />
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500" required />
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-200 transition"
-            >
+            <button type="submit" disabled={isLoading} className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-200 transition">
               {isLoading ? "Signing in..." : "Sign In"}
             </button>
           </form>
