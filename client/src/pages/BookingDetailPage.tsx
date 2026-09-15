@@ -5,7 +5,7 @@ import { api } from "../lib/axios";
 import { Booking } from "../types";
 import { formatCurrency, formatDate, getErrorMessage } from "../lib/utils";
 import { useAuth } from "../hooks/useAuth";
-import { Calendar, Clock, ShieldCheck, CreditCard, WalletCards, RotateCcw, AlertTriangle, Star, MessageSquare, Send, X } from "lucide-react";
+import { Calendar, Clock, ShieldCheck, CreditCard, RotateCcw, AlertTriangle, Star, MessageSquare, Send, X, LockKeyhole } from "lucide-react";
 
 const statusLabel: Record<string, string> = { pending: "Payment Pending", confirmed: "Confirmed", active: "Active Rental", return_requested: "Return Requested", returned: "Returned", completed: "Completed", cancelled: "Cancelled", rejected: "Rejected" };
 const lifecycleStatuses = ["pending", "confirmed", "active", "return_requested", "returned", "completed"];
@@ -29,7 +29,7 @@ export function BookingDetailPage() {
   const { data: paymentInfo } = useQuery({ queryKey: ["booking-payment", id], queryFn: async () => { const { data } = await api.get(`/payments/booking/${id}`); return data.data; }, enabled: !!id });
 
   const payMutation = useMutation({
-    mutationFn: async (method: "esewa" | "khalti") => {
+    mutationFn: async (method: "esewa" | "card") => {
       setErrorMsg(null);
       const { data } = await api.post("/payments/process", { bookingId: id, paymentMethod: method });
       const payment = data.data;
@@ -50,7 +50,7 @@ export function BookingDetailPage() {
         form.submit();
         return;
       }
-      if (!payment?.payment_url) throw new Error("Card payment gateway could not be initialized.");
+      if (!payment?.payment_url) throw new Error("Debit/credit card gateway could not be initialized.");
       window.location.assign(payment.payment_url);
     },
     onError: (err: any) => setErrorMsg(getErrorMessage(err, "Unable to start payment. Please try again.")),
@@ -106,12 +106,12 @@ export function BookingDetailPage() {
           <div><span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider">Booking ID: {bookingId.substring(0, 13)}</span><h1 className="text-3xl font-extrabold text-white mt-1">Rental Details</h1><p className="text-xs text-slate-500 mt-1">Created {formatDate(booking.createdAt, "MMM d, yyyy h:mm a")}</p></div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="px-3 py-2 rounded-xl bg-cyan-950/70 border border-cyan-800 text-cyan-300 text-xs font-bold">{statusLabel[booking.status] || booking.status}</span>
-            {booking.status === "pending" && isCustomer && <div className="flex flex-wrap gap-2"><button onClick={() => payMutation.mutate("esewa")} disabled={payMutation.isPending} className="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-slate-950 text-xs font-extrabold shadow-lg shadow-cyan-500/20 transition flex items-center gap-2"><CreditCard className="w-4 h-4" />{payMutation.isPending ? "Opening payment..." : "Pay with eSewa"}</button><button onClick={() => payMutation.mutate("khalti")} disabled={payMutation.isPending} className="px-4 py-2.5 rounded-xl bg-violet-500 hover:bg-violet-400 disabled:opacity-50 text-white text-xs font-extrabold shadow-lg shadow-violet-500/20 transition flex items-center gap-2"><WalletCards className="w-4 h-4" />{payMutation.isPending ? "Opening payment..." : "Pay by Card"}</button></div>}
+            {booking.status === "pending" && isCustomer && <div className="flex flex-wrap gap-2"><button onClick={() => payMutation.mutate("esewa")} disabled={payMutation.isPending} className="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-slate-950 text-xs font-extrabold shadow-lg shadow-cyan-500/20 transition flex items-center gap-2"><CreditCard className="w-4 h-4" />{payMutation.isPending ? "Opening payment..." : "Pay with eSewa"}</button><button onClick={() => payMutation.mutate("card")} disabled={payMutation.isPending} className="px-4 py-2.5 rounded-xl bg-violet-500 hover:bg-violet-400 disabled:opacity-50 text-white text-xs font-extrabold shadow-lg shadow-violet-500/20 transition flex items-center gap-2"><CreditCard className="w-4 h-4" />{payMutation.isPending ? "Opening payment..." : "Debit / Credit Card"}</button></div>}
             {booking.status === "active" && isCustomer && <button onClick={() => returnMutation.mutate()} disabled={returnMutation.isPending} className="px-4 py-2.5 rounded-xl bg-violet-500 hover:bg-violet-400 disabled:opacity-50 text-white text-xs font-extrabold shadow-lg shadow-violet-500/20 transition flex items-center gap-2"><RotateCcw className="w-4 h-4" />{returnMutation.isPending ? "Requesting..." : "Request Return"}</button>}
             {canReview && <button onClick={() => setIsReviewOpen(true)} className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-extrabold transition flex items-center gap-2"><Star className="w-4 h-4" />Leave a Review</button>}
           </div>
         </div>
-        {booking.status === "pending" && isCustomer && <div className="bg-slate-900 rounded-3xl border border-slate-800 p-5 shadow-xl"><div className="flex items-start gap-3"><ShieldCheck className="w-5 h-5 text-emerald-400 mt-0.5" /><div><p className="text-sm font-bold text-white">Choose your payment method</p><p className="text-xs text-slate-500 mt-1">eSewa uses the eSewa checkout. Card payments are securely handled by Khalti; RentHub does not collect or store your card number.</p></div></div></div>}
+        {booking.status === "pending" && isCustomer && <div className="bg-slate-900 rounded-3xl border border-slate-800 p-5 shadow-xl"><div className="flex items-start gap-3"><LockKeyhole className="w-5 h-5 text-emerald-400 mt-0.5" /><div><p className="text-sm font-bold text-white">Secure payment</p><p className="text-xs text-slate-500 mt-1">Choose eSewa or Debit / Credit Card. RentHub never asks you to enter or store your full card number or CVV.</p></div></div></div>}
         <div className="bg-slate-900 rounded-3xl border border-slate-800 p-6 shadow-2xl shadow-black/20"><div className="flex items-center justify-between gap-3 mb-6"><div><h3 className="text-sm font-bold text-white">Rental Lifecycle</h3><p className="text-[11px] text-slate-500 mt-1">Track every stage of your rental</p></div><Clock className="w-5 h-5 text-cyan-400" /></div><div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">{["Booked", "Confirmed", "Active", "Return Requested", "Returned", "Completed"].map((label, index) => { const complete = currentIndex >= index && currentIndex !== -1 && !["cancelled", "rejected"].includes(booking.status); return <div key={label} className="space-y-2"><div className={`h-1.5 rounded-full ${complete ? "bg-cyan-400" : "bg-slate-800"}`} /><p className={`text-[11px] font-bold ${complete ? "text-white" : "text-slate-600"}`}>{label}</p></div>; })}</div></div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-7 bg-slate-900 rounded-3xl border border-slate-800 p-6 shadow-xl space-y-6">
