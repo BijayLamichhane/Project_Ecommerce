@@ -25,34 +25,25 @@ function ProtectedRoute({ children, role }: { children: React.ReactNode; role?: 
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-[#050816]">
         <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  if (role === "admin" && user.role !== "admin") {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  if (role === "seller" && user.role !== "seller" && user.role !== "admin") {
-    return <Navigate to="/become-seller" replace />;
-  }
+  if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
+  if (role === "admin" && user.role !== "admin") return <Navigate to="/dashboard" replace />;
+  if (role === "seller" && user.role !== "seller" && user.role !== "admin") return <Navigate to="/become-seller" replace />;
 
   return <>{children}</>;
 }
 
 export function AppRoutes() {
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8FAFC]">
+    <div className="min-h-screen flex flex-col bg-[#050816] text-slate-100">
       <Navbar />
       <main className="flex-1">
         <Routes>
-          {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/products/:id" element={<ProductDetailPage />} />
@@ -60,93 +51,18 @@ export function AppRoutes() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/become-seller" element={<BecomeSellerPage />} />
 
-          {/* Customer Authenticated Routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/cart"
-            element={
-              <ProtectedRoute>
-                <CartPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/wishlist"
-            element={
-              <ProtectedRoute>
-                <WishlistPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/bookings"
-            element={
-              <ProtectedRoute>
-                <BookingsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/bookings/:id"
-            element={
-              <ProtectedRoute>
-                <BookingDetailPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/messages"
-            element={
-              <ProtectedRoute>
-                <MessagesPage />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+          <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
+          <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
+          <Route path="/bookings" element={<ProtectedRoute><BookingsPage /></ProtectedRoute>} />
+          <Route path="/bookings/:id" element={<ProtectedRoute><BookingDetailPage /></ProtectedRoute>} />
+          <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
 
-          {/* Seller Routes */}
-          <Route
-            path="/seller"
-            element={
-              <ProtectedRoute role="seller">
-                <SellerDashboardPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/seller/products/new"
-            element={
-              <ProtectedRoute role="seller">
-                <SellerProductEditorPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/seller/products/:id/edit"
-            element={
-              <ProtectedRoute role="seller">
-                <SellerProductEditorPage />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/seller" element={<ProtectedRoute role="seller"><SellerDashboardPage /></ProtectedRoute>} />
+          <Route path="/seller/products/new" element={<ProtectedRoute role="seller"><SellerProductEditorPage /></ProtectedRoute>} />
+          <Route path="/seller/products/:id/edit" element={<ProtectedRoute role="seller"><SellerProductEditorPage /></ProtectedRoute>} />
 
-          {/* Admin Routes */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute role="admin">
-                <AdminDashboardPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Fallback */}
+          <Route path="/admin" element={<ProtectedRoute role="admin"><AdminDashboardPage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
