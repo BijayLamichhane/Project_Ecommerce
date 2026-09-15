@@ -4,65 +4,81 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 243.4 75.4% 58.6%; /* #4F46E5 Indigo */
+    --background: 222 47% 6%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 10%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 10%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 243.4 75.4% 58.6%;
     --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 243.4 75.4% 58.6%;
-
+    --border: 217 25% 22%;
+    --input: 217 25% 22%;
+    --ring: 187 92% 56%;
     --radius: 0.75rem;
+  }
+
+  html, body, #root {
+    min-height: 100%;
+  }
+
+  html {
+    background: #050816;
+  }
+
+  body {
+    margin: 0;
+    background: #050816;
+    color: #f8fafc;
   }
 }
 
 @layer utilities {
   .glass-card {
-    background: rgba(255, 255, 255, 0.85);
+    background: rgba(15, 23, 42, 0.82);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(226, 232, 240, 0.8);
+    border: 1px solid rgba(51, 65, 85, 0.8);
   }
 
-  .text-balance {
-    text-wrap: balance;
-  }
+  .text-balance { text-wrap: balance; }
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* Keep legacy light utility classes readable while the application uses a dark visual system. */
+.bg-white { background-color: #0f172a !important; }
+.bg-slate-50 { background-color: #080d1a !important; }
+.bg-slate-100 { background-color: #111827 !important; }
+.bg-slate-200 { background-color: #1e293b !important; }
+.bg-gray-50 { background-color: #080d1a !important; }
+.bg-gray-100 { background-color: #111827 !important; }
+.text-slate-900 { color: #f8fafc !important; }
+.text-slate-800 { color: #e2e8f0 !important; }
+.text-slate-700 { color: #cbd5e1 !important; }
+.text-slate-600 { color: #94a3b8 !important; }
+.text-slate-500 { color: #64748b !important; }
+.text-gray-900 { color: #f8fafc !important; }
+.text-gray-800 { color: #e2e8f0 !important; }
+.text-gray-700 { color: #cbd5e1 !important; }
+.text-gray-600 { color: #94a3b8 !important; }
+.border-slate-100 { border-color: #1e293b !important; }
+.border-slate-200 { border-color: #273449 !important; }
+.border-slate-300 { border-color: #334155 !important; }
+.border-gray-200 { border-color: #273449 !important; }
+.border-gray-300 { border-color: #334155 !important; }
+.divide-slate-100 > :not([hidden]) ~ :not([hidden]) { border-color: #1e293b !important; }
+
+input, textarea, select {
+  color-scheme: dark;
 }
 
-::-webkit-scrollbar-track {
-  background: #f1f5f9;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #080d1a; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #475569; }
