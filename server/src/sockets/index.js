@@ -4,10 +4,15 @@ import { auth } from "../config/auth.js";
 import { logger } from "../utils/logger.js";
 import { messagingService } from "../modules/messaging/messaging.service.js";
 
+const socketOrigins =
+  env.NODE_ENV === "production"
+    ? [env.CLIENT_URL]
+    : Array.from(new Set([env.CLIENT_URL, "http://localhost:3000", "http://localhost:5173"]));
+
 export function initSocketIO(httpServer) {
   const io = new Server(httpServer, {
     cors: {
-      origin: [env.CLIENT_URL],
+      origin: socketOrigins,
       methods: ["GET", "POST"],
       credentials: true,
     },
@@ -15,15 +20,11 @@ export function initSocketIO(httpServer) {
 
   io.use(async (socket, next) => {
     try {
-      const session = await auth.api.getSession({
-        headers: socket.handshake.headers,
-      });
-
+      const session = await auth.api.getSession({ headers: socket.handshake.headers });
       if (!session?.user?.id) {
         next(new Error("Authentication required"));
         return;
       }
-
       socket.userId = String(session.user.id);
       next();
     } catch (error) {
@@ -56,7 +57,7 @@ export function initSocketIO(httpServer) {
         const result = await messagingService.sendMessage(socket.userId, data);
         io.to(`conversation:${result.conversationId}`).emit("new_message", result.message);
 
-        if (result.message?.senderId && data?.recipientId) {
+        if (data?.recipientId) {
           io.to(`user:${data.recipientId}`).emit("message_notification", {
             conversationId: result.conversationId,
             message: result.message,
