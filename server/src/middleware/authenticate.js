@@ -12,6 +12,10 @@ export async function authenticate(req, res, next) {
       return;
     }
     req.user = session.user;
+    if (req.user) {
+      if (!req.user.id && req.user._id) req.user.id = String(req.user._id);
+      if (!req.user._id && req.user.id) req.user._id = String(req.user.id);
+    }
     req.session = session.session;
     next();
   } catch (error) {
@@ -27,6 +31,8 @@ export async function optionalAuth(req, res, next) {
     });
     if (session?.user) {
       req.user = session.user;
+      if (!req.user.id && req.user._id) req.user.id = String(req.user._id);
+      if (!req.user._id && req.user.id) req.user._id = String(req.user.id);
       req.session = session.session;
     }
   } catch {

@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/axios";
 import { Booking, BookingStatus } from "../types";
-import { formatCurrency, formatDate } from "../lib/utils";
+import { formatCurrency, formatDate, getErrorMessage } from "../lib/utils";
 import { useAuth } from "../hooks/useAuth";
 import {
   Calendar,
@@ -29,6 +29,7 @@ export function BookingDetailPage() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewTitle, setReviewTitle] = useState("");
   const [reviewComment, setReviewComment] = useState("");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const { data: booking, isLoading } = useQuery({
     queryKey: ["booking", id],
@@ -51,6 +52,7 @@ export function BookingDetailPage() {
   // Payment Mutation
   const payMutation = useMutation({
     mutationFn: async () => {
+      setErrorMsg(null);
       await api.post("/payments/process", {
         bookingId: id,
         paymentMethod: "simulated_card",
@@ -60,11 +62,15 @@ export function BookingDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["booking", id] });
       queryClient.invalidateQueries({ queryKey: ["booking-payment", id] });
     },
+    onError: (err: any) => {
+      setErrorMsg(getErrorMessage(err, "Payment failed. Please try again."));
+    },
   });
 
   // Return Mutation
   const returnMutation = useMutation({
     mutationFn: async () => {
+      setErrorMsg(null);
       await api.post(`/bookings/${id}/return`, {
         condition: returnCondition,
         notes: returnNotes,
@@ -73,11 +79,15 @@ export function BookingDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["booking", id] });
     },
+    onError: (err: any) => {
+      setErrorMsg(getErrorMessage(err, "Failed to submit the return request."));
+    },
   });
 
   // Review Submission Mutation
   const reviewMutation = useMutation({
     mutationFn: async () => {
+      setErrorMsg(null);
       const firstItem = booking?.bookingItems?.[0];
       if (!firstItem) return;
       await api.post("/reviews", {
@@ -91,6 +101,9 @@ export function BookingDetailPage() {
     onSuccess: () => {
       setIsReviewOpen(false);
       queryClient.invalidateQueries({ queryKey: ["booking", id] });
+    },
+    onError: (err: any) => {
+      setErrorMsg(getErrorMessage(err, "Failed to submit your review."));
     },
   });
 
@@ -113,8 +126,9 @@ export function BookingDetailPage() {
     );
   }
 
-  const isCustomer = user?.id === booking.customerId;
-  const isSeller = user?.id === booking.sellerId;
+  const userId = user?.id || user?._id;
+  const isCustomer = userId === booking.customerId;
+  const isSeller = userId === booking.sellerId;
   const firstItem = booking.bookingItems?.[0];
   const product = firstItem?.product;
 
@@ -128,11 +142,18 @@ export function BookingDetailPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+      {errorMsg && (
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
           <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider">
-            Booking ID: {booking.id.substring(0, 13)}
+            Booking ID: {(booking.id || booking._id || "").substring(0, 13)}
           </span>
           <h1 className="text-2xl font-extrabold text-slate-900 mt-0.5">Rental Details</h1>
         </div>
@@ -227,7 +248,7 @@ export function BookingDetailPage() {
               />
               <div className="space-y-1">
                 <Link
-                  to={`/products/${product.id}`}
+                  to={`/products/${product.id || product._id}`}
                   className="text-sm font-bold text-slate-900 hover:text-indigo-600"
                 >
                   {product.name}
@@ -367,7 +388,7 @@ export function BookingDetailPage() {
               <button
                 type="button"
                 onClick={() => reviewMutation.mutate()}
-                disabled={reviewMutation.isPending || !reviewComment}
+                disabled={reviewMutation.isPending || reviewComment.trim().length < 5}
                 className="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md"
               >
                 {reviewMutation.isPending ? "Submitting..." : "Submit Review"}

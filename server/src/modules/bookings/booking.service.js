@@ -84,14 +84,16 @@ export class BookingService {
           item.endDate
         );
         let lockAcquired = true;
-        try {
-          const res = await redis.set(lockKey, customerId, "EX", env.BOOKING_LOCK_TTL_SECONDS, "NX");
-          if (!res) lockAcquired = false;
-        } catch (err) {
-          // Redis is optional — fall back to the database-level overlap
-          // check below — but log it so an unreachable Redis in production
-          // doesn't silently disable the distributed lock with no trace.
-          logger.warn({ err, lockKey }, "Booking lock unavailable (Redis unreachable); relying on database overlap check only");
+        if (redis) {
+          try {
+            const res = await redis.set(lockKey, customerId, "EX", env.BOOKING_LOCK_TTL_SECONDS, "NX");
+            if (!res) lockAcquired = false;
+          } catch (err) {
+            // Redis is optional — fall back to the database-level overlap
+            // check below — but log it so an unreachable Redis in production
+            // doesn't silently disable the distributed lock with no trace.
+            logger.warn({ err, lockKey }, "Booking lock unavailable (Redis unreachable); relying on database overlap check only");
+          }
         }
 
         if (!lockAcquired) {
@@ -106,7 +108,9 @@ export class BookingService {
           startDate,
           endDate
         );
-        if (overlaps.length > 0) {
+        const alreadyBookedQuantity = overlaps.reduce((sum, o) => sum + (o.quantity || 1), 0);
+        const totalQuantity = product.totalQuantity || 1;
+        if (alreadyBookedQuantity + item.quantity > totalQuantity) {
           throw new BookingConflictError(
             `Product "${product.name}" is not available for the selected dates`
           );
@@ -167,11 +171,13 @@ export class BookingService {
 
       return bookingRepository.findById(bookingId);
     } finally {
-      for (const lockKey of acquiredLocks) {
-        try {
-          await redis.del(lockKey);
-        } catch (err) {
-          logger.warn({ err, lockKey }, "Failed to release booking lock");
+      if (redis) {
+        for (const lockKey of acquiredLocks) {
+          try {
+            await redis.del(lockKey);
+          } catch (err) {
+            logger.warn({ err, lockKey }, "Failed to release booking lock");
+          }
         }
       }
     }

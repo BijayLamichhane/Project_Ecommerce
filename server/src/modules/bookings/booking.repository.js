@@ -35,7 +35,8 @@ export class BookingRepository {
 
   async findOverlappingBookings(productId, startDate, endDate, excludeBookingId) {
     const filter = {
-      status: { $in: ["pending", "confirmed", "active", "return_requested", "returned"] },
+      // "returned" items are back in stock — only active or in-progress bookings count
+      status: { $in: ["pending", "confirmed", "active", "return_requested"] },
       bookingItems: {
         $elemMatch: {
           productId,
@@ -78,7 +79,8 @@ export class BookingRepository {
         item.startDate,
         item.endDate
       );
-      if (overlaps.length > 0) {
+      const bookedQty = overlaps.reduce((sum, o) => sum + (o.quantity || 1), 0);
+      if (bookedQty + (item.quantity || 1) > (item.totalQuantity || 1)) {
         throw new Error(`PRODUCT_UNAVAILABLE:${item.productId}`);
       }
     }

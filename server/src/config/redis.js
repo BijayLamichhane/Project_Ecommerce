@@ -4,7 +4,16 @@ import { logger } from "../utils/logger.js";
 
 let redisClient = null;
 
+/**
+ * Returns the shared Redis client, or null if Redis is disabled
+ * (REDIS_ENABLED=false, the default). Every caller in this codebase treats
+ * a null return as "no cache/lock available" and falls back to the
+ * database — see category.service.js, product.service.js,
+ * booking.service.js.
+ */
 export function getRedisClient() {
+  if (!env.REDIS_ENABLED) return null;
+
   if (!redisClient) {
     redisClient = new Redis(env.REDIS_URL, {
       maxRetriesPerRequest: 3,
@@ -28,6 +37,10 @@ export function getRedisClient() {
 }
 
 export async function connectRedis() {
+  if (!env.REDIS_ENABLED) {
+    logger.info("Redis disabled (REDIS_ENABLED=false) — running without cache/locks");
+    return;
+  }
   try {
     const client = getRedisClient();
     await client.connect();

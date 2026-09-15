@@ -16,7 +16,8 @@ const envSchema = z.object({
   // Database (MongoDB)
   MONGODB_URI: z.string().default("mongodb://127.0.0.1:27017/renthub_db"),
 
-  // Redis
+  // Redis (disabled by default — the app runs correctly without it; see config/redis.js)
+  REDIS_ENABLED: z.string().default("false").transform((v) => v === "true"),
   REDIS_URL: z.string().default("redis://localhost:6379"),
 
   // Better Auth

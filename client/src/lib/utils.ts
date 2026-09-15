@@ -50,3 +50,50 @@ export function getPostLoginRedirect(
 
   return fallback;
 }
+
+/**
+ * Walks a Zod .format() error tree and flattens it into readable
+ * "field: message" strings, e.g. "categoryId: Required",
+ * "pricing.dailyRate: Number must be greater than 0".
+ */
+function flattenZodFormatErrors(node: unknown, path: string[] = []): string[] {
+  if (!node || typeof node !== "object") return [];
+  const obj = node as Record<string, unknown>;
+  const messages: string[] = [];
+
+  if (Array.isArray(obj._errors) && obj._errors.length > 0) {
+    const label = path.length > 0 ? path.join(".") : null;
+    for (const msg of obj._errors as string[]) {
+      messages.push(label ? `${label}: ${msg}` : msg);
+    }
+  }
+
+  for (const key of Object.keys(obj)) {
+    if (key === "_errors") continue;
+    messages.push(...flattenZodFormatErrors(obj[key], [...path, key]));
+  }
+
+  return messages;
+}
+
+/**
+ * Extracts a readable message from an axios error against this API.
+ * The server sends { error: { message, details } } for validation
+ * failures, where "message" is a generic "Invalid request data" but
+ * "details" (Zod's .format() output) has the actual field-level reason —
+ * this surfaces that instead of the generic message whenever it's present.
+ */
+export function getErrorMessage(err: unknown, fallback = "Something went wrong"): string {
+  const response = (
+    err as { response?: { data?: { error?: { message?: string; details?: unknown } } } }
+  )?.response;
+  const apiError = response?.data?.error;
+  if (!apiError) return fallback;
+
+  if (apiError.details) {
+    const fieldErrors = flattenZodFormatErrors(apiError.details);
+    if (fieldErrors.length > 0) return fieldErrors.join("; ");
+  }
+
+  return apiError.message || fallback;
+}

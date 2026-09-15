@@ -29,6 +29,10 @@ export class ReviewRepository {
     return Review.findOne({ bookingId, reviewerId }).lean({ virtuals: true });
   }
 
+  async findByProductAndReviewer(productId, reviewerId) {
+    return Review.findOne({ productId, reviewerId }).lean({ virtuals: true });
+  }
+
   async create(data) {
     const review = await Review.create(data);
     return review.toJSON();

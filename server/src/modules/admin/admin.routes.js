@@ -9,6 +9,13 @@ const router = Router();
 const userIdSchema = z.object({ userId: z.string().min(1) });
 const sellerIdSchema = z.object({ sellerId: z.string().min(1) });
 const productIdSchema = z.object({ productId: z.string().min(1) });
+const moderateSellerBodySchema = z.object({
+  status: z.enum(["approved", "rejected", "suspended", "pending"]),
+  reason: z.string().max(1000).optional(),
+});
+const toggleProductBodySchema = z.object({
+  status: z.enum(["active", "inactive", "suspended", "draft", "deleted"]),
+});
 
 router.use(authenticate, requireAdmin);
 
@@ -39,12 +46,14 @@ router.post(
 router.post(
   "/sellers/:sellerId/moderate",
   validateParams(sellerIdSchema),
+  validateBody(moderateSellerBodySchema),
   (req, res, next) => adminController.moderateSeller(req, res, next)
 );
 
 router.post(
   "/products/:productId/toggle",
   validateParams(productIdSchema),
+  validateBody(toggleProductBodySchema),
   (req, res, next) => adminController.toggleProduct(req, res, next)
 );
 

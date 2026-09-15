@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const createReviewSchema = z.object({
   productId: z.string().min(1, "Product ID is required"),
-  bookingId: z.string().min(1, "Booking ID is required"),
+  bookingId: z.string().min(1).optional(),
   rating: z.number().int().min(1).max(5),
   title: z.string().max(255).optional(),
   comment: z.string().min(5, "Comment must be at least 5 characters").max(2000),

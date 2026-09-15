@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { api } from "../lib/axios";
 import { useAuth } from "../hooks/useAuth";
-import { getPostLoginRedirect } from "../lib/utils";
+import { getPostLoginRedirect, getErrorMessage } from "../lib/utils";
 import { Layers, Lock, Mail, User as UserIcon, AlertCircle } from "lucide-react";
 
 export function RegisterPage() {
@@ -45,7 +45,7 @@ export function RegisterPage() {
         navigate(redirectTo, { replace: true });
       }
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || err.response?.data?.error?.message || "Registration failed");
+      setErrorMsg(err.response?.data?.message || getErrorMessage(err, "Registration failed"));
     } finally {
       setIsLoading(false);
     }

@@ -3,7 +3,10 @@ import { getRedisClient, CacheKeys, CacheTTL } from "../../config/redis.js";
 import { uploadImage as cloudUploadImage, deleteImage as cloudDeleteImage, CLOUDINARY_FOLDERS } from "../../config/cloudinary.js";
 import { NotFoundError, ForbiddenError } from "../../middleware/errorHandler.js";
 import { logger } from "../../utils/logger.js";
+import { env } from "../../config/env.js";
 import { v4 as uuidv4 } from "uuid";
+import fs from "node:fs/promises";
+import path from "node:path";
 
 function generateSlug(name, id) {
   const base = name
@@ -18,23 +21,27 @@ export class ProductService {
   async getById(id, incrementView = false) {
     const redis = getRedisClient();
     const cacheKey = CacheKeys.product(id);
-    try {
-      const cached = await redis.get(cacheKey);
-      if (cached) {
-        if (incrementView) await productRepository.incrementViewCount(id);
-        return JSON.parse(cached);
+    if (redis) {
+      try {
+        const cached = await redis.get(cacheKey);
+        if (cached) {
+          if (incrementView) await productRepository.incrementViewCount(id);
+          return JSON.parse(cached);
+        }
+      } catch {
+        // Redis optional
       }
-    } catch {
-      // Redis optional
     }
 
     const product = await productRepository.findById(id);
     if (!product) throw new NotFoundError("Product");
 
-    try {
-      await redis.setex(cacheKey, CacheTTL.product, JSON.stringify(product));
-    } catch {
-      // Redis optional
+    if (redis) {
+      try {
+        await redis.setex(cacheKey, CacheTTL.product, JSON.stringify(product));
+      } catch {
+        // Redis optional
+      }
     }
 
     if (incrementView) await productRepository.incrementViewCount(id);
@@ -143,7 +150,7 @@ export class ProductService {
   async uploadImages(productId, sellerId, files) {
     const product = await productRepository.findById(productId);
     if (!product) throw new NotFoundError("Product");
-    if (product.sellerId !== sellerId) throw new ForbiddenError();
+    if (String(product.sellerId) !== String(sellerId)) throw new ForbiddenError();
 
     const uploadedImages = [];
     for (let i = 0; i < files.length; i++) {
@@ -152,14 +159,34 @@ export class ProductService {
       let url = "";
       let cloudPublicId = publicId;
 
-      try {
-        const dataUri = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
-        const result = await cloudUploadImage(dataUri, CLOUDINARY_FOLDERS.products, publicId);
-        url = result.url;
-        cloudPublicId = result.publicId;
-      } catch (err) {
-        logger.warn({ err }, "Cloudinary upload failed, using placeholder");
-        url = `https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800`;
+      const hasCloudinary = Boolean(
+        env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET
+      );
+
+      if (hasCloudinary) {
+        try {
+          const dataUri = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
+          const result = await cloudUploadImage(dataUri, CLOUDINARY_FOLDERS.products, publicId);
+          url = result.url;
+          cloudPublicId = result.publicId;
+        } catch (err) {
+          logger.warn({ err }, "Cloudinary upload failed, falling back to local storage");
+        }
+      }
+
+      if (!url) {
+        try {
+          const mimeSub = file.mimetype.split("/")[1] || "jpg";
+          const ext = mimeSub === "jpeg" ? "jpg" : mimeSub;
+          const filename = `${publicId}.${ext}`;
+          const uploadsDir = path.join(process.cwd(), "uploads", "products");
+          await fs.mkdir(uploadsDir, { recursive: true });
+          await fs.writeFile(path.join(uploadsDir, filename), file.buffer);
+          url = `/uploads/products/${filename}`;
+        } catch (err) {
+          logger.error({ err }, "Local image storage failed");
+          url = `https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800`;
+        }
       }
 
       const image = await productRepository.addImage({
@@ -180,16 +207,23 @@ export class ProductService {
   async deleteImage(productId, imageId, sellerId) {
     const product = await productRepository.findById(productId);
     if (!product) throw new NotFoundError("Product");
-    if (product.sellerId !== sellerId) throw new ForbiddenError();
+    if (String(product.sellerId) !== String(sellerId)) throw new ForbiddenError();
 
     const image = product.images?.find((img) => img.id === imageId || img._id === imageId);
     if (!image) throw new NotFoundError("Image");
 
-    if (image.publicId) {
+    if (image.publicId && !image.url?.startsWith("/uploads/")) {
       try {
         await cloudDeleteImage(image.publicId);
       } catch (err) {
         logger.warn({ err }, "Failed to delete image from Cloudinary");
+      }
+    } else if (image.url?.startsWith("/uploads/")) {
+      try {
+        const localPath = path.join(process.cwd(), image.url.replace(/^\//, ""));
+        await fs.unlink(localPath).catch(() => {});
+      } catch {
+        // ignore
       }
     }
 
@@ -212,8 +246,9 @@ export class ProductService {
   }
 
   async invalidateProductCache(productId) {
+    const redis = getRedisClient();
+    if (!redis) return;
     try {
-      const redis = getRedisClient();
       await redis.del(CacheKeys.product(productId));
     } catch {
       // Redis optional

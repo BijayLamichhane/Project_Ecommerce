@@ -5,7 +5,8 @@ const reviewSchema = new mongoose.Schema(
   {
     _id: { type: String, default: () => uuidv4() },
     productId: { type: String, required: true, ref: "Product" },
-    bookingId: { type: String, required: true, ref: "Booking" },
+    bookingId: { type: String, required: false, ref: "Booking" },
+    sellerId: { type: String, required: false, ref: "User" },
     reviewerId: { type: String, required: true, ref: "User" },
     rating: { type: Number, required: true, min: 1, max: 5 },
     title: { type: String },

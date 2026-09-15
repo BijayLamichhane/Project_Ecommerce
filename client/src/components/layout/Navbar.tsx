@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
@@ -21,8 +21,20 @@ import {
 export function Navbar() {
   const { user, isAuthenticated, isSeller, isAdmin, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const { data: cartData } = useQuery({
     queryKey: ["cart"],
@@ -150,22 +162,45 @@ export function Navbar() {
                   )}
                 </Link>
 
-                {/* User Dropdown Profile Link */}
-                <Link
-                  to="/dashboard"
-                  className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full border border-slate-200 hover:border-slate-300 transition"
-                >
-                  <div className="w-7 h-7 rounded-full bg-slate-200 overflow-hidden">
-                    {user?.avatarUrl ? (
-                      <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <User className="w-4 h-4 m-1.5 text-slate-600" />
-                    )}
-                  </div>
-                  <span className="text-xs font-semibold text-slate-800 truncate max-w-[100px]">
-                    {user?.name?.split(" ")[0]}
-                  </span>
-                </Link>
+                {/* User Dropdown */}
+                <div className="relative" ref={userMenuRef}>
+                  <button
+                    onClick={() => setIsUserMenuOpen((v) => !v)}
+                    className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full border border-slate-200 hover:border-slate-300 transition"
+                  >
+                    <div className="w-7 h-7 rounded-full bg-slate-200 overflow-hidden">
+                      {user?.avatarUrl ? (
+                        <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-4 h-4 m-1.5 text-slate-600" />
+                      )}
+                    </div>
+                    <span className="text-xs font-semibold text-slate-800 truncate max-w-[100px]">
+                      {user?.name?.split(" ")[0]}
+                    </span>
+                  </button>
+                  {isUserMenuOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-lg py-1.5 z-50">
+                      <Link
+                        to="/dashboard"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                      >
+                        Dashboard
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setIsUserMenuOpen(false);
+                          logout();
+                        }}
+                        className="w-full text-left px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        Sign Out
+                      </button>
+                    </div>
+                  )}
+                </div>
               </>
             ) : (
               <div className="flex items-center gap-2">

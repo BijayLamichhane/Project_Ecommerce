@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { api } from "../lib/axios";
 import { useAuth } from "../hooks/useAuth";
-import { getPostLoginRedirect } from "../lib/utils";
+import { getPostLoginRedirect, getErrorMessage } from "../lib/utils";
 import { Layers, Lock, Mail, AlertCircle, Sparkles } from "lucide-react";
 
 export function LoginPage() {
@@ -48,7 +48,10 @@ export function LoginPage() {
         navigate(redirectTo, { replace: true });
       }
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || err.response?.data?.error?.message || "Invalid email or password");
+      // Better Auth's own errors land on response.data.message; fall back to
+      // our API's { error: { message, details } } shape for anything else
+      // (e.g. the /users/me fallback call below failing validation).
+      setErrorMsg(err.response?.data?.message || getErrorMessage(err, "Invalid email or password"));
     } finally {
       setIsLoading(false);
     }

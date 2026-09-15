@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/axios";
-import { formatCurrency, formatDate } from "../lib/utils";
+import { formatCurrency, formatDate, getErrorMessage } from "../lib/utils";
 import {
   Users,
   Building,
@@ -13,11 +13,19 @@ import {
   AlertTriangle,
   Ban,
   RotateCcw,
+  Plus,
+  Trash2,
 } from "lucide-react";
 
 export function AdminDashboardPage() {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"overview" | "users" | "sellers" | "products" | "disputes">("overview");
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "users" | "sellers" | "products" | "disputes" | "categories"
+  >("overview");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryDescription, setNewCategoryDescription] = useState("");
+  const [newCategoryIcon, setNewCategoryIcon] = useState("Package");
 
   const { data: dashboardData } = useQuery({
     queryKey: ["admin-dashboard"],
@@ -54,9 +62,19 @@ export function AdminDashboardPage() {
     enabled: activeTab === "disputes",
   });
 
+  const { data: categoriesList } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const { data } = await api.get("/categories");
+      return data.data || [];
+    },
+    enabled: activeTab === "categories",
+  });
+
   // User suspend mutation
   const toggleUserSuspendMutation = useMutation({
     mutationFn: async ({ userId, isSuspended }: { userId: string; isSuspended: boolean }) => {
+      setErrorMsg(null);
       const endpoint = isSuspended ? `/admin/users/${userId}/unsuspend` : `/admin/users/${userId}/suspend`;
       await api.post(endpoint);
     },
@@ -64,16 +82,75 @@ export function AdminDashboardPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
     },
+    onError: (err: any) => {
+      setErrorMsg(getErrorMessage(err, "Failed to update user status"));
+    },
   });
 
   // Seller moderate mutation
   const moderateSellerMutation = useMutation({
     mutationFn: async ({ sellerId, status }: { sellerId: string; status: string }) => {
+      setErrorMsg(null);
       await api.post(`/admin/sellers/${sellerId}/moderate`, { status });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-sellers"] });
       queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
+    },
+    onError: (err: any) => {
+      setErrorMsg(getErrorMessage(err, "Failed to update seller status"));
+    },
+  });
+
+  const createCategoryMutation = useMutation({
+    mutationFn: async () => {
+      setErrorMsg(null);
+      const slug = newCategoryName
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      await api.post("/categories", {
+        name: newCategoryName.trim(),
+        slug,
+        description: newCategoryDescription.trim() || undefined,
+        iconName: newCategoryIcon,
+      });
+    },
+    onSuccess: () => {
+      setNewCategoryName("");
+      setNewCategoryDescription("");
+      setNewCategoryIcon("Package");
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    },
+    onError: (err: any) => {
+      setErrorMsg(getErrorMessage(err, "Failed to create category"));
+    },
+  });
+
+  const deleteCategoryMutation = useMutation({
+    mutationFn: async (categoryId: string) => {
+      setErrorMsg(null);
+      await api.delete(`/categories/${categoryId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    },
+    onError: (err: any) => {
+      setErrorMsg(getErrorMessage(err, "Failed to delete category"));
+    },
+  });
+
+  const updateCategoryIconMutation = useMutation({
+    mutationFn: async ({ categoryId, iconName }: { categoryId: string; iconName: string }) => {
+      setErrorMsg(null);
+      await api.patch(`/categories/${categoryId}`, { iconName });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    },
+    onError: (err: any) => {
+      setErrorMsg(getErrorMessage(err, "Failed to update category icon"));
     },
   });
 
@@ -81,6 +158,13 @@ export function AdminDashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+      {errorMsg && (
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between pb-4 border-b border-slate-200">
         <div>
@@ -99,6 +183,7 @@ export function AdminDashboardPage() {
           { id: "overview", label: "Overview & Analytics" },
           { id: "users", label: "Users Management" },
           { id: "sellers", label: "Seller Moderation" },
+          { id: "categories", label: "Categories" },
           { id: "disputes", label: "Reports & Disputes" },
         ].map((tab) => (
           <button
@@ -294,6 +379,135 @@ export function AdminDashboardPage() {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* ─── Categories Tab ───────────────────────────────────── */}
+      {activeTab === "categories" && (
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-6">
+          <h3 className="text-base font-bold text-slate-900">Equipment Categories</h3>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              createCategoryMutation.mutate();
+            }}
+            className="flex flex-col sm:flex-row gap-3 items-start sm:items-end bg-slate-50 border border-slate-200 rounded-2xl p-4"
+          >
+            <div className="flex-1 space-y-1 w-full">
+              <label className="text-[11px] font-bold text-slate-700">Category Name *</label>
+              <input
+                type="text"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                placeholder="e.g. Camping Gear"
+                className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-200 rounded-xl outline-none"
+              />
+            </div>
+            <div className="flex-1 space-y-1 w-full">
+              <label className="text-[11px] font-bold text-slate-700">Description</label>
+              <input
+                type="text"
+                value={newCategoryDescription}
+                onChange={(e) => setNewCategoryDescription(e.target.value)}
+                placeholder="Optional"
+                className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-200 rounded-xl outline-none"
+              />
+            </div>
+            <div className="space-y-1 w-full sm:w-40">
+              <label className="text-[11px] font-bold text-slate-700">Icon</label>
+              <select
+                value={newCategoryIcon}
+                onChange={(e) => setNewCategoryIcon(e.target.value)}
+                className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-200 rounded-xl outline-none"
+              >
+                <option value="Package">Generic</option>
+                <option value="Camera">Camera</option>
+                <option value="Laptop">Laptop</option>
+                <option value="Tent">Tent</option>
+                <option value="Music">Music</option>
+                <option value="Wrench">Tools</option>
+                <option value="Sparkles">Party</option>
+                <option value="Gamepad2">Gaming</option>
+                <option value="Navigation">Drone</option>
+                <option value="Projector">Projector</option>
+                <option value="Bike">Sports</option>
+              </select>
+            </div>
+            <button
+              type="submit"
+              disabled={createCategoryMutation.isPending || newCategoryName.trim().length < 2}
+              className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center gap-1.5 whitespace-nowrap"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              {createCategoryMutation.isPending ? "Adding..." : "Add Category"}
+            </button>
+          </form>
+
+          {(categoriesList || []).length === 0 ? (
+            <div className="text-center py-10 text-xs text-slate-400">
+              No categories yet — add one above so sellers can list equipment.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="border-b border-slate-100 text-slate-400 font-bold uppercase">
+                  <tr>
+                    <th className="pb-3">Icon</th>
+                    <th className="pb-3">Name</th>
+                    <th className="pb-3">Slug</th>
+                    <th className="pb-3">Description</th>
+                    <th className="pb-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {(categoriesList || []).map((cat: any) => (
+                    <tr key={cat.id}>
+                      <td className="py-3">
+                        <select
+                          value={cat.iconName || "Package"}
+                          onChange={(e) =>
+                            updateCategoryIconMutation.mutate({ categoryId: cat.id, iconName: e.target.value })
+                          }
+                          disabled={updateCategoryIconMutation.isPending}
+                          className="px-2 py-1.5 text-[11px] bg-white border border-slate-200 rounded-lg outline-none"
+                        >
+                          <option value="Package">Generic</option>
+                          <option value="Camera">Camera</option>
+                          <option value="Laptop">Laptop</option>
+                          <option value="Tent">Tent</option>
+                          <option value="Music">Music</option>
+                          <option value="Wrench">Tools</option>
+                          <option value="Sparkles">Party</option>
+                          <option value="Gamepad2">Gaming</option>
+                          <option value="Navigation">Drone</option>
+                          <option value="Projector">Projector</option>
+                          <option value="Bike">Sports</option>
+                        </select>
+                      </td>
+                      <td className="py-3 font-semibold text-slate-900">{cat.name}</td>
+                      <td className="py-3 font-mono text-slate-500">{cat.slug}</td>
+                      <td className="py-3 text-slate-500">{cat.description || "—"}</td>
+                      <td className="py-3 text-right">
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Delete "${cat.name}"? This can't be undone.`)) {
+                              deleteCategoryMutation.mutate(cat.id);
+                            }
+                          }}
+                          disabled={deleteCategoryMutation.isPending}
+                          className="px-2 py-1 rounded bg-rose-50 text-rose-700 font-bold text-[11px] inline-flex items-center gap-1"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 

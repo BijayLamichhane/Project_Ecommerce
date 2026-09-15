@@ -63,10 +63,18 @@ export function CartPage() {
       return data.data;
     },
     onSuccess: (booking) => {
-      if (booking?.id) {
+      const bookingId = booking?.id || booking?._id;
+      if (bookingId) {
         queryClient.invalidateQueries({ queryKey: ["cart"] });
-        navigate(`/bookings/${booking.id}`);
+        navigate(`/bookings/${bookingId}`);
       }
+    },
+    onError: (err: any) => {
+      const msg =
+        err?.response?.data?.error?.message ||
+        err?.message ||
+        "Checkout failed. Please try again.";
+      alert(msg);
     },
   });
 
@@ -130,7 +138,7 @@ export function CartPage() {
 
             return (
               <div
-                key={item.id}
+                key={item.id || item._id}
                 className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col sm:flex-row gap-5 items-start sm:items-center justify-between"
               >
                 <div className="flex items-center gap-4">
@@ -170,7 +178,7 @@ export function CartPage() {
                   </div>
 
                   <button
-                    onClick={() => removeItemMutation.mutate(item.id)}
+                    onClick={() => removeItemMutation.mutate(item.id || item._id)}
                     className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
                   >
                     <Trash2 className="w-4 h-4" />

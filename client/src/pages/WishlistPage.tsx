@@ -6,13 +6,14 @@ import { ProductCard } from "../components/shared/ProductCard";
 import { Heart, ArrowRight } from "lucide-react";
 
 export function WishlistPage() {
-  const { data: wishlistItems, isLoading } = useQuery({
+  const { data: wishlistItemsData, isLoading } = useQuery({
     queryKey: ["wishlist"],
     queryFn: async () => {
       const { data } = await api.get("/wishlist");
       return data.data || [];
     },
   });
+  const wishlistItems = (wishlistItemsData || []).filter((item: any) => !!item.product);
 
   if (isLoading) {
     return (

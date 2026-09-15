@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { api } from "../lib/axios";
 import { useAuth } from "../hooks/useAuth";
+import { getErrorMessage } from "../lib/utils";
 import {
   ShieldCheck,
   Building,
@@ -44,15 +45,7 @@ export function BecomeSellerPage() {
       navigate("/seller", { replace: true });
     },
     onError: (err: any) => {
-      const details = err.response?.data?.error?.details;
-      let msg = err.response?.data?.error?.message || "Failed to register as a seller";
-      if (details) {
-        const firstField = Object.keys(details).find((k) => k !== "_errors" && details[k]?._errors?.length);
-        if (firstField && details[firstField]?._errors?.[0]) {
-          msg = `${firstField}: ${details[firstField]._errors[0]}`;
-        }
-      }
-      setErrorMsg(msg);
+      setErrorMsg(getErrorMessage(err, "Failed to register as a seller"));
     },
   });
 

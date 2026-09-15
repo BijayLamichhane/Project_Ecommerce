@@ -75,6 +75,9 @@ export class ProductController {
   async uploadImages(req, res, next) {
     try {
       const files = req.files;
+      if (!files || files.length === 0) {
+        return sendError(res, "VALIDATION_ERROR", "Please select at least one image file", 400);
+      }
       const images = await productService.uploadImages(
         req.params.id,
         req.user.id,

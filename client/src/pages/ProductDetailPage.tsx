@@ -5,7 +5,7 @@ import { api } from "../lib/axios";
 import { Product, Review, RentalPriceCalculation } from "../types";
 import { RentalCalendar } from "../components/shared/RentalCalendar";
 import { PriceSummary } from "../components/shared/PriceSummary";
-import { formatCurrency, formatDate } from "../lib/utils";
+import { formatCurrency, formatDate, getErrorMessage } from "../lib/utils";
 import { useAuth } from "../hooks/useAuth";
 import {
   Star,
@@ -34,6 +34,12 @@ export function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [isSubmittingBooking, setIsSubmittingBooking] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewTitle, setReviewTitle] = useState("");
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [reviewSuccess, setReviewSuccess] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
 
   // 1. Fetch Product
   const { data: product, isLoading: loadingProduct } = useQuery({
@@ -84,6 +90,31 @@ export function ProductDetailPage() {
     navigate(`/login?redirect=${encodeURIComponent(`/products/${id}`)}`);
   };
 
+  // Review Submission Mutation (from product detail page — no bookingId required)
+  const submitReviewMutation = useMutation({
+    mutationFn: async () => {
+      setReviewError(null);
+      await api.post("/reviews", {
+        productId: id,
+        rating: reviewRating,
+        title: reviewTitle || undefined,
+        comment: reviewComment,
+      });
+    },
+    onSuccess: () => {
+      setReviewSuccess(true);
+      setShowReviewForm(false);
+      setReviewTitle("");
+      setReviewComment("");
+      setReviewRating(5);
+      queryClient.invalidateQueries({ queryKey: ["product-reviews", id] });
+      queryClient.invalidateQueries({ queryKey: ["product", id] });
+    },
+    onError: (err: any) => {
+      setReviewError(getErrorMessage(err, "Failed to submit review"));
+    },
+  });
+
   // Add to Cart Mutation
   const addToCartMutation = useMutation({
     mutationFn: async () => {
@@ -103,7 +134,7 @@ export function ProductDetailPage() {
       navigate("/cart");
     },
     onError: (err: any) => {
-      setBookingError(err.response?.data?.error?.message || "Failed to add item to cart");
+      setBookingError(getErrorMessage(err, "Failed to add item to cart"));
     },
   });
 
@@ -128,12 +159,13 @@ export function ProductDetailPage() {
       return data.data;
     },
     onSuccess: (booking) => {
-      if (booking?.id) {
-        navigate(`/bookings/${booking.id}`);
+      const bookingId = booking?.id || booking?._id;
+      if (bookingId) {
+        navigate(`/bookings/${bookingId}`);
       }
     },
     onError: (err: any) => {
-      setBookingError(err.response?.data?.error?.message || "Booking creation failed");
+      setBookingError(getErrorMessage(err, "Booking creation failed"));
     },
   });
 
@@ -366,24 +398,112 @@ export function ProductDetailPage() {
 
       {/* ─── Customer Reviews Section ──────────────────────────── */}
       <section className="pt-10 border-t border-slate-200 space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h3 className="text-xl font-bold text-slate-900">Verified Renter Reviews</h3>
+            <h3 className="text-xl font-bold text-slate-900">Customer Reviews</h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Only renters with completed bookings can submit reviews
+              Share your rental experience with this listing
             </p>
           </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 font-bold text-sm">
-            <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-            <span>{parseFloat(product.averageRating || "0").toFixed(1)} / 5.0</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 font-bold text-sm">
+              <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+              <span>{parseFloat(product.averageRating || "0").toFixed(1)} / 5.0</span>
+            </div>
+            {isAuthenticated && user?.role !== "seller" && user?.role !== "admin" && (
+              <button
+                onClick={() => setShowReviewForm(!showReviewForm)}
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition"
+              >
+                {showReviewForm ? "Cancel" : "Write a Review"}
+              </button>
+            )}
           </div>
         </div>
+
+        {reviewSuccess && (
+          <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-700 font-medium">
+            ✓ Your review has been submitted successfully. Thank you!
+          </div>
+        )}
+
+        {showReviewForm && (
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+            <h4 className="text-sm font-bold text-slate-900">Write Your Review</h4>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-600">Rating *</label>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setReviewRating(star)}
+                    className="p-1 transition"
+                  >
+                    <Star
+                      className={`w-6 h-6 ${
+                        star <= reviewRating
+                          ? "fill-amber-400 text-amber-400"
+                          : "text-slate-200"
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-600">Review Headline (optional)</label>
+              <input
+                type="text"
+                placeholder="e.g. Excellent condition, smooth pickup!"
+                value={reviewTitle}
+                onChange={(e) => setReviewTitle(e.target.value)}
+                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-300"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-600">Your Experience *</label>
+              <textarea
+                rows={3}
+                placeholder="Describe gear performance, lender communication, handover ease..."
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-300"
+              />
+            </div>
+
+            {reviewError && (
+              <p className="text-xs text-rose-600 font-medium">{reviewError}</p>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => { setShowReviewForm(false); setReviewError(null); }}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => submitReviewMutation.mutate()}
+                disabled={submitReviewMutation.isPending || reviewComment.trim().length < 5}
+                className="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md disabled:opacity-50"
+              >
+                {submitReviewMutation.isPending ? "Submitting..." : "Submit Review"}
+              </button>
+            </div>
+          </div>
+        )}
 
         {reviews && reviews.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {reviews.map((rev) => (
               <div
-                key={rev.id}
+                key={rev.id || rev._id}
                 className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3"
               >
                 <div className="flex items-center justify-between">
@@ -431,7 +551,7 @@ export function ProductDetailPage() {
           </div>
         ) : (
           <div className="bg-slate-50 p-8 rounded-2xl border border-slate-200 text-center text-xs text-slate-500">
-            No reviews yet for this listing. Be the first to rent and review!
+            No reviews yet for this listing. Be the first to review!
           </div>
         )}
       </section>

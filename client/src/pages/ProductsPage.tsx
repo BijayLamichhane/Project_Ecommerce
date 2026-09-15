@@ -40,7 +40,7 @@ export function ProductsPage() {
       if (query) params.set("q", query);
       if (categorySlug) {
         const cat = categories?.find((c) => c.slug === categorySlug);
-        if (cat) params.set("categoryId", cat.id);
+        if (cat) params.set("categoryId", cat._id);
       }
       if (minPrice) params.set("minPrice", minPrice);
       if (maxPrice) params.set("maxPrice", maxPrice);
@@ -149,7 +149,7 @@ export function ProductsPage() {
               </button>
               {(categories || []).map((cat) => (
                 <button
-                  key={cat.id}
+                  key={cat._id}
                   type="button"
                   onClick={() => updateParam("category", cat.slug)}
                   className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium transition ${
@@ -215,7 +215,7 @@ export function ProductsPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard key={product._id} product={product} />
               ))}
             </div>
           )}

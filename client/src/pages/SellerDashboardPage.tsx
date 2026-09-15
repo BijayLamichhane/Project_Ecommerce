@@ -26,21 +26,24 @@ export function SellerDashboardPage() {
     },
   });
 
-  const { data: sellerBookings } = useQuery({
+  const { data: sellerBookingsData } = useQuery({
     queryKey: ["seller-bookings"],
     queryFn: async () => {
       const { data } = await api.get("/bookings/seller-bookings");
       return data.data || [];
     },
   });
+  const sellerBookings = sellerBookingsData || [];
+  console.log(sellerBookings);
 
-  const { data: myProducts } = useQuery({
+  const { data: myProductsData } = useQuery({
     queryKey: ["seller-products"],
     queryFn: async () => {
       const { data } = await api.get("/products?limit=20");
       return data.data || [];
     },
   });
+  const myProducts = myProductsData || [];
 
   // Approve / Confirm Booking Mutation
   const updateStatusMutation = useMutation({
@@ -122,6 +125,67 @@ export function SellerDashboardPage() {
         </div>
       </div>
 
+      {/* ─── Your Equipment Listings ──────────────────────────── */}
+      <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold text-slate-900">Your Equipment Listings</h3>
+          <Link
+            to="/seller/products/new"
+            className="text-xs font-semibold text-indigo-600 hover:underline flex items-center gap-1"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Add New
+          </Link>
+        </div>
+
+        {myProducts.length === 0 ? (
+          <div className="text-center py-10 text-xs text-slate-400">
+            You haven't listed any equipment yet.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider">
+                <tr>
+                  <th className="pb-3">Equipment</th>
+                  <th className="pb-3">Category</th>
+                  <th className="pb-3">Daily Rate</th>
+                  <th className="pb-3">Status</th>
+                  <th className="pb-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700">
+                {myProducts.map((p: any) => (
+                  <tr key={p._id} className="hover:bg-slate-50/60">
+                    <td className="py-3 font-semibold text-slate-900">{p.name}</td>
+                    <td className="py-3 text-slate-500">{p.category?.name || "—"}</td>
+                    <td className="py-3 font-bold text-slate-900">
+                      {p.pricing?.dailyRate ? formatCurrency(p.pricing.dailyRate) : "—"}
+                    </td>
+                    <td className="py-3">
+                      <span className="capitalize px-2 py-0.5 rounded-md font-bold text-[11px] bg-slate-100 text-slate-800">
+                        {p.status}
+                      </span>
+                    </td>
+                    <td className="py-3 text-right space-x-3">
+                      <Link
+                        to={`/seller/products/${p._id}/edit`}
+                        className="text-indigo-600 hover:underline font-semibold text-[11px]"
+                      >
+                        Edit
+                      </Link>
+                      <Link to={`/products/${p._id}`} className="text-slate-500 hover:underline text-[11px]">
+                        View
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       {/* ─── Active & Pending Bookings Management ─────────────── */}
       <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-6">
         <h3 className="text-lg font-bold text-slate-900">Rental Bookings Management</h3>
@@ -145,7 +209,7 @@ export function SellerDashboardPage() {
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
                 {sellerBookings.map((b: any) => (
-                  <tr key={b.id} className="hover:bg-slate-50/60">
+                  <tr key={b._id} className="hover:bg-slate-50/60">
                     <td className="py-3 font-semibold text-slate-900">
                       {b.customer?.name || "Customer"}
                     </td>
@@ -173,7 +237,7 @@ export function SellerDashboardPage() {
                         <>
                           <button
                             onClick={() =>
-                              updateStatusMutation.mutate({ bookingId: b.id, status: "confirmed" })
+                              updateStatusMutation.mutate({ bookingId: b._id, status: "confirmed" })
                             }
                             className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold text-[11px]"
                           >
@@ -181,7 +245,7 @@ export function SellerDashboardPage() {
                           </button>
                           <button
                             onClick={() =>
-                              updateStatusMutation.mutate({ bookingId: b.id, status: "rejected" })
+                              updateStatusMutation.mutate({ bookingId: b._id, status: "rejected" })
                             }
                             className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-[11px]"
                           >
@@ -193,7 +257,7 @@ export function SellerDashboardPage() {
                       {b.status === "confirmed" && (
                         <button
                           onClick={() =>
-                            updateStatusMutation.mutate({ bookingId: b.id, status: "active" })
+                            updateStatusMutation.mutate({ bookingId: b._id, status: "active" })
                           }
                           className="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold text-[11px]"
                         >
@@ -204,7 +268,7 @@ export function SellerDashboardPage() {
                       {b.status === "return_requested" && (
                         <button
                           onClick={() =>
-                            updateStatusMutation.mutate({ bookingId: b.id, status: "completed" })
+                            updateStatusMutation.mutate({ bookingId: b._id, status: "completed" })
                           }
                           className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-bold text-[11px]"
                         >
@@ -213,7 +277,7 @@ export function SellerDashboardPage() {
                       )}
 
                       <Link
-                        to={`/bookings/${b.id}`}
+                        to={`/bookings/${b._id}`}
                         className="text-slate-500 hover:underline text-[11px]"
                       >
                         Details

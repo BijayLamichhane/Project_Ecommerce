@@ -17,12 +17,16 @@ import paymentRoutes from "./modules/payments/payment.routes.js";
 import reviewRoutes from "./modules/reviews/review.routes.js";
 import messagingRoutes from "./modules/messaging/messaging.routes.js";
 import notificationRoutes from "./modules/notifications/notification.routes.js";
+import path from "node:path";
 import userRoutes from "./modules/users/user.routes.js";
 import adminRoutes from "./modules/admin/admin.routes.js";
 
 export function createApp() {
   const app = express();
   initCloudinary();
+
+  app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+  app.use("/api/v1/uploads", express.static(path.join(process.cwd(), "uploads")));
 
   app.use(
     helmet({

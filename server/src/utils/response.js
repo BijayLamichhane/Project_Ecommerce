@@ -1,7 +1,25 @@
+export function normalizeIds(obj) {
+  if (!obj || typeof obj !== "object") return obj;
+  if (obj instanceof Date || obj instanceof RegExp) return obj;
+  if (Array.isArray(obj)) return obj.map(normalizeIds);
+
+  const res = {};
+  for (const key of Object.keys(obj)) {
+    res[key] = normalizeIds(obj[key]);
+  }
+  if (res._id !== undefined && res.id === undefined) {
+    res.id = String(res._id);
+  } else if (res.id !== undefined && res._id === undefined) {
+    res._id = String(res.id);
+  }
+  return res;
+}
+
 export function sendSuccess(res, data, message, statusCode = 200, meta) {
+  const normalizedData = normalizeIds(data);
   const response = {
     success: true,
-    data,
+    data: normalizedData,
     ...(message && { message }),
     ...(meta && { meta }),
   };

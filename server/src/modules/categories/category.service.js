@@ -6,18 +6,22 @@ export class CategoryService {
   async getAll() {
     const redis = getRedisClient();
     const cacheKey = CacheKeys.categoryList();
-    try {
-      const cached = await redis.get(cacheKey);
-      if (cached) return JSON.parse(cached);
-    } catch {
-      // Redis optional
+    if (redis) {
+      try {
+        const cached = await redis.get(cacheKey);
+        if (cached) return JSON.parse(cached);
+      } catch {
+        // Redis optional
+      }
     }
 
     const cats = await categoryRepository.findAll();
-    try {
-      await redis.setex(cacheKey, CacheTTL.categoryList, JSON.stringify(cats));
-    } catch {
-      // Redis optional
+    if (redis) {
+      try {
+        await redis.setex(cacheKey, CacheTTL.categoryList, JSON.stringify(cats));
+      } catch {
+        // Redis optional
+      }
     }
     return cats;
   }
@@ -64,8 +68,9 @@ export class CategoryService {
   }
 
   async invalidateCache() {
+    const redis = getRedisClient();
+    if (!redis) return;
     try {
-      const redis = getRedisClient();
       await redis.del(CacheKeys.categoryList());
     } catch {
       // Redis optional

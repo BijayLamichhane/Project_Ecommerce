@@ -19,7 +19,7 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
 
   const toggleWishlistMutation = useMutation({
     mutationFn: async () => {
-      await api.post("/wishlist/toggle", { productId: product.id });
+      await api.post("/wishlist/toggle", { productId: product._id });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wishlist"] });
@@ -38,7 +38,7 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
     <div className="group relative bg-white rounded-2xl border border-slate-200/80 hover:border-slate-300 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
       {/* Product Image Container */}
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
-        <Link to={`/products/${product.id}`} className="block w-full h-full">
+        <Link to={`/products/${product._id}`} className="block w-full h-full">
           <img
             src={primaryImage}
             alt={product.name}
@@ -67,7 +67,7 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
           onClick={(e) => {
             e.preventDefault();
             if (!isAuthenticated) {
-              navigate(`/login?redirect=${encodeURIComponent(`/products/${product.id}`)}`);
+              navigate(`/login?redirect=${encodeURIComponent(`/products/${product._id}`)}`);
               return;
             }
             toggleWishlistMutation.mutate();
@@ -111,7 +111,7 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
           </div>
 
           {/* Title */}
-          <Link to={`/products/${product.id}`}>
+          <Link to={`/products/${product._id}`}>
             <h3 className="text-sm font-bold text-slate-900 line-clamp-2 hover:text-indigo-600 transition leading-snug">
               {product.name}
             </h3>
@@ -134,7 +134,7 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
           </div>
 
           <Link
-            to={`/products/${product.id}`}
+            to={`/products/${product._id}`}
             className="px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:text-white bg-indigo-50 hover:bg-indigo-600 rounded-lg transition"
           >
             Rent Now

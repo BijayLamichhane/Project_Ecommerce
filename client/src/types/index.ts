@@ -11,7 +11,8 @@ export type BookingStatus =
   | "disputed";
 
 export interface User {
-  id: string;
+  _id: string;
+  id?: string;
   email: string;
   name: string;
   role: UserRole;
@@ -24,7 +25,8 @@ export interface User {
 }
 
 export interface Profile {
-  id: string;
+  _id: string;
+  id?: string;
   userId: string;
   bio?: string;
   address?: string;
@@ -35,7 +37,8 @@ export interface Profile {
 }
 
 export interface SellerProfile {
-  id: string;
+  _id: string;
+  id?: string;
   userId: string;
   businessName: string;
   businessDescription?: string;
@@ -48,7 +51,8 @@ export interface SellerProfile {
 }
 
 export interface Category {
-  id: string;
+  _id: string;
+  id?: string;
   name: string;
   slug: string;
   description?: string;
@@ -70,8 +74,10 @@ export interface ProductPricing {
 }
 
 export interface ProductImage {
-  id: string;
-  productId: string;
+  _id: string;
+  id?: string;
+  product_Id?: string;
+  productId?: string;
   url: string;
   altText?: string;
   isPrimary: boolean;
@@ -79,7 +85,8 @@ export interface ProductImage {
 }
 
 export interface ProductRules {
-  id: string;
+  _id?: string;
+  id?: string;
   rules?: string[];
   restrictions?: string[];
   requirements?: string[];
@@ -89,7 +96,8 @@ export interface ProductRules {
 }
 
 export interface Product {
-  id: string;
+  _id: string;
+  id?: string;
   sellerId: string;
   categoryId: string;
   name: string;
@@ -112,14 +120,16 @@ export interface Product {
   rules?: ProductRules;
   category?: Category;
   seller?: {
-    id: string;
+    _id: string;
+    id?: string;
     name: string;
     avatarUrl?: string;
   };
 }
 
 export interface BookingItem {
-  id: string;
+  _id: string;
+  id?: string;
   bookingId: string;
   productId: string;
   quantity: number;
@@ -133,7 +143,8 @@ export interface BookingItem {
 }
 
 export interface Booking {
-  id: string;
+  _id: string;
+  id?: string;
   customerId: string;
   sellerId: string;
   status: BookingStatus;
@@ -150,14 +161,15 @@ export interface Booking {
   completedAt?: string;
   createdAt: string;
   bookingItems: BookingItem[];
-  customer?: { id: string; name: string; email: string; avatarUrl?: string };
-  seller?: { id: string; name: string; email: string; avatarUrl?: string };
+  customer?: { _id: string; id?: string; name: string; email: string; avatarUrl?: string };
+  seller?: { _id: string; id?: string; name: string; email: string; avatarUrl?: string };
 }
 
 export interface Review {
-  id: string;
+  _id: string;
+  id?: string;
   productId: string;
-  bookingId: string;
+  bookingId?: string;
   reviewerId: string;
   rating: number;
   title?: string;
@@ -165,14 +177,16 @@ export interface Review {
   sellerResponse?: string;
   createdAt: string;
   reviewer?: {
-    id: string;
+    _id: string;
+    id?: string;
     name: string;
     avatarUrl?: string;
   };
 }
 
 export interface Notification {
-  id: string;
+  _id: string;
+  id?: string;
   userId: string;
   type: string;
   title: string;
@@ -183,30 +197,33 @@ export interface Notification {
 }
 
 export interface Conversation {
-  id: string;
+  _id: string;
+  id?: string;
   customerId: string;
   sellerId: string;
   productId?: string;
   lastMessageAt?: string;
-  customer?: { id: string; name: string; avatarUrl?: string };
-  seller?: { id: string; name: string; avatarUrl?: string };
-  product?: { id: string; name: string; slug: string; images?: { url: string }[] };
+  customer?: { _id: string; id?: string; name: string; avatarUrl?: string };
+  seller?: { _id: string; id?: string; name: string; avatarUrl?: string };
+  product?: { _id: string; id?: string; name: string; slug: string; images?: { url: string }[] };
   messages?: Message[];
 }
 
 export interface Message {
-  id: string;
+  _id: string;
+  id?: string;
   conversationId: string;
   senderId: string;
   content: string;
   imageUrl?: string;
   isRead: boolean;
   createdAt: string;
-  sender?: { id: string; name: string; avatarUrl?: string };
+  sender?: { _id: string; id?: string; name: string; avatarUrl?: string };
 }
 
 export interface CartItem {
-  id: string;
+  _id: string;
+  id?: string;
   productId: string;
   quantity: number;
   startDate: string;

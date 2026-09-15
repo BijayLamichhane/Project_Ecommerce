@@ -15,6 +15,7 @@ import {
   Navigation,
   Projector,
   Bike,
+  Package,
   ShieldCheck,
   Zap,
   RotateCcw,
@@ -42,18 +43,24 @@ export function HomePage() {
     },
   });
 
+  // Keyed by Category.iconName (e.g. "Camera", "Laptop" — see server/src/db/seed.js
+  // and the admin "Add Category" form), not by slug. Slugs are freeform
+  // (generated from whatever name an admin types), so keying by slug meant
+  // almost every category — and definitely any newly-added one — fell
+  // through to the same hardcoded fallback icon.
   const categoryIcons: Record<string, React.ReactNode> = {
-    "cameras-lenses": <Camera className="w-6 h-6" />,
-    "laptops-computers": <Laptop className="w-6 h-6" />,
-    "camping-outdoors": <Tent className="w-6 h-6" />,
-    "musical-instruments": <Music className="w-6 h-6" />,
-    "power-tools": <Wrench className="w-6 h-6" />,
-    "party-events": <Sparkles className="w-6 h-6" />,
-    "gaming-vr": <Gamepad2 className="w-6 h-6" />,
-    "drones-aerial": <Navigation className="w-6 h-6" />,
-    "projectors-av": <Projector className="w-6 h-6" />,
-    "sports-fitness": <Bike className="w-6 h-6" />,
+    Camera: <Camera className="w-6 h-6" />,
+    Laptop: <Laptop className="w-6 h-6" />,
+    Tent: <Tent className="w-6 h-6" />,
+    Music: <Music className="w-6 h-6" />,
+    Wrench: <Wrench className="w-6 h-6" />,
+    Sparkles: <Sparkles className="w-6 h-6" />,
+    Gamepad2: <Gamepad2 className="w-6 h-6" />,
+    Navigation: <Navigation className="w-6 h-6" />,
+    Projector: <Projector className="w-6 h-6" />,
+    Bike: <Bike className="w-6 h-6" />,
   };
+  const defaultCategoryIcon = <Package className="w-6 h-6" />;
 
   return (
     <div className="space-y-20 pb-16">
@@ -142,7 +149,7 @@ export function HomePage() {
               className="group p-5 rounded-2xl bg-white border border-slate-200/80 hover:border-indigo-300 hover:shadow-md transition-all flex flex-col items-center text-center gap-3"
             >
               <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors flex items-center justify-center shadow-sm">
-                {categoryIcons[category.slug] || <Camera className="w-6 h-6" />}
+                {(category.iconName && categoryIcons[category.iconName]) || defaultCategoryIcon}
               </div>
               <div>
                 <h3 className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition">

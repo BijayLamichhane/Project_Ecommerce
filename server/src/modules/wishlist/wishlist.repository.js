@@ -2,7 +2,7 @@ import { Wishlist } from "../../models/Wishlist.js";
 
 export class WishlistRepository {
   async findByUserId(userId) {
-    return Wishlist.find({ userId })
+    const items = await Wishlist.find({ userId })
       .populate({
         path: "product",
         populate: [
@@ -11,6 +11,9 @@ export class WishlistRepository {
       })
       .sort({ createdAt: -1 })
       .lean({ virtuals: true });
+    // A wishlisted product can be deleted later, leaving the populate empty —
+    // drop those rather than send the client an item with no product to show.
+    return items.filter((item) => !!item.product);
   }
 
   async findByUserAndProduct(userId, productId) {
