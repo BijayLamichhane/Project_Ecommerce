@@ -2,23 +2,21 @@ import { useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import { useAuth } from "./useAuth";
 
+const SOCKET_URL = import.meta.env.VITE_API_URL || undefined;
+
 export function useSocket() {
   const { user } = useAuth();
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    if (!user) {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
-      }
+    if (!user?.id) {
+      socketRef.current?.disconnect();
+      socketRef.current = null;
       return;
     }
 
-    const socket = io({
-      auth: {
-        userId: user.id,
-      },
+    const socket = io(SOCKET_URL, {
+      withCredentials: true,
     });
 
     socketRef.current = socket;
