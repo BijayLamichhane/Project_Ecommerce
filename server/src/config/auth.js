@@ -1,13 +1,13 @@
-import { betterAuth } from "better-auth";
+import { betterAuth } from "better-auth/minimal";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { MongoClient } from "mongodb";
 import { env } from "./env.js";
 
-const client = new MongoClient(env.MONGODB_URI);
-const db = client.db();
+export const authClient = new MongoClient(env.MONGODB_URI);
+export const authDb = authClient.db();
 
 export const auth = betterAuth({
-  database: mongodbAdapter(db),
+  database: mongodbAdapter(authDb, { client: authClient }),
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.BETTER_AUTH_URL,
   emailAndPassword: {
@@ -16,11 +16,11 @@ export const auth = betterAuth({
     minPasswordLength: 8,
   },
   session: {
-    expiresIn: 60 * 60 * 24 * 30, // 30 days
-    updateAge: 60 * 60 * 24, // 24 hours
+    expiresIn: 60 * 60 * 24 * 30,
+    updateAge: 60 * 60 * 24,
     cookieCache: {
       enabled: true,
-      maxAge: 60 * 5, // 5 minutes
+      maxAge: 60 * 5,
     },
   },
   user: {
@@ -47,6 +47,9 @@ export const auth = betterAuth({
   },
   trustedOrigins: [env.CLIENT_URL],
   advanced: {
+    database: {
+      joins: true,
+    },
     crossSubDomainCookies: { enabled: false },
     useSecureCookies: env.NODE_ENV === "production",
     defaultCookieAttributes: {
