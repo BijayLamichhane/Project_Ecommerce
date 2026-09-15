@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { useAuth } from "./useAuth";
 
@@ -6,26 +6,28 @@ const SOCKET_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export function useSocket() {
   const { user } = useAuth();
-  const socketRef = useRef<Socket | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
     if (!user?.id) {
-      socketRef.current?.disconnect();
-      socketRef.current = null;
+      setSocket((current) => {
+        current?.disconnect();
+        return null;
+      });
       return;
     }
 
-    const socket = io(SOCKET_URL, {
+    const nextSocket = io(SOCKET_URL, {
       withCredentials: true,
     });
 
-    socketRef.current = socket;
+    setSocket(nextSocket);
 
     return () => {
-      socket.disconnect();
-      socketRef.current = null;
+      nextSocket.disconnect();
+      setSocket((current) => (current === nextSocket ? null : current));
     };
   }, [user?.id]);
 
-  return socketRef.current;
+  return socket;
 }
