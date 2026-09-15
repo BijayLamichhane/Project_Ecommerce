@@ -20,9 +20,23 @@ RentHub is a production-quality full-stack web application for renting physical 
 ## ✨ Recent Rental Experience Improvements
 
 - **Rental Details messaging**: Customers can ask the seller a question directly from a booking. The question starts or reuses a messaging conversation and opens the Messages page after sending.
-- **Booking history on Dashboard**: Previous completed, returned, cancelled, and rejected bookings are now visible from the customer dashboard and link directly to their rental details.
+- **Booking history on Dashboard**: Previous completed, returned, cancelled, and rejected bookings are visible from the customer dashboard and link directly to rental details.
 - **Rental review flow**: Reviews can be opened for returned or completed rentals, with the product ID resolved from the booking item when necessary.
-- **Dark rental experience**: Dashboard and Rental Details use a dark interface with vivid cyan, violet, amber, and emerald accents for clearer status and action hierarchy.
+- **Dark application theme**: The global UI now uses a dark surface system with vivid cyan, violet, amber, and emerald accents. Legacy light utility classes are mapped to dark equivalents so older pages remain visually consistent.
+- **Verified eSewa checkout**: The old simulated payment path no longer marks a booking as paid. Customers are redirected to eSewa, and the server only confirms the booking after validating the gateway response, matching the amount, and checking the eSewa transaction status.
+
+### Payment Environment
+
+The server includes eSewa UAT defaults for development. For production, set the merchant values explicitly in `.env`:
+
+```env
+ESEWA_PRODUCT_CODE=your_merchant_product_code
+ESEWA_SECRET_KEY=your_merchant_secret_key
+ESEWA_CHECKOUT_URL=https://epay.esewa.com.np/api/epay/main/v2/form
+ESEWA_STATUS_URL=https://epay.esewa.com.np/api/epay/transaction/status/
+```
+
+Never use UAT credentials in production. Payment confirmation is intentionally performed on the server instead of trusting a frontend success state.
 
 ---
 
