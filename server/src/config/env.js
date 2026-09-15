@@ -36,7 +36,7 @@ const envSchema = z.object({
   ESEWA_CHECKOUT_URL: z.string().url().optional().default("https://rc-epay.esewa.com.np/api/epay/main/v2/form"),
   ESEWA_STATUS_URL: z.string().url().optional().default("https://rc.esewa.com.np/api/epay/transaction/status/"),
   CARD_GATEWAY_ENABLED: z.string().default("false").transform((v) => v === "true"),
-  CARD_GATEWAY_CHECKOUT_URL: z.string().url().optional().default("http://localhost:5000/api/v1/payments/card/checkout"),
+  CARD_GATEWAY_CHECKOUT_URL: z.string().url().optional(),
   CARD_GATEWAY_MERCHANT_ID: z.string().optional().default(""),
   CARD_GATEWAY_SECRET: z.string().optional().default(""),
   BOOKING_LOCK_TTL_SECONDS: z.coerce.number().int().positive().default(60),
