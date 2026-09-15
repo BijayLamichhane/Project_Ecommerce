@@ -20,9 +20,9 @@ export class PaymentService {
   async processPayment(userId, input) {
     const bookingId = input?.bookingId;
     if (!bookingId) throw new ValidationError("Booking ID is required");
-    if (!["esewa", "khalti"].includes(input.paymentMethod)) throw new ValidationError("Choose a supported online payment method");
-    return input.paymentMethod === "khalti"
-      ? this.initiateKhaltiPayment(userId, bookingId)
+    if (!["esewa", "card"].includes(input.paymentMethod)) throw new ValidationError("Choose a supported online payment method");
+    return input.paymentMethod === "card"
+      ? this.initiateCardPayment(userId, bookingId)
       : this.initiateEsewaPayment(userId, bookingId);
   }
 
@@ -39,7 +39,7 @@ export class PaymentService {
   }
 
   async initiateEsewaPayment(userId, bookingId) {
-    const { booking, existingPayment, totalAmount } = await this.getPayableBooking(userId, bookingId);
+    const { existingPayment, totalAmount } = await this.getPayableBooking(userId, bookingId);
     const transactionUuid = uuidv4().replace(/[^a-zA-Z0-9-]/g, "");
     const amount = totalAmount.toFixed(2);
     const paymentId = existingPayment?.id || uuidv4();
@@ -65,33 +65,12 @@ export class PaymentService {
     return { paymentId, bookingId, paymentMethod: "esewa", action: env.ESEWA_CHECKOUT_URL, fields, amount, currency: "NPR" };
   }
 
-  async initiateKhaltiPayment(userId, bookingId) {
-    if (!env.KHALTI_SECRET_KEY) throw new ValidationError("Card payments are not configured. Add KHALTI_SECRET_KEY to the server environment.");
-    const { booking, existingPayment, totalAmount } = await this.getPayableBooking(userId, bookingId);
-    const paymentId = existingPayment?.id || uuidv4();
-    const purchaseOrderId = paymentId;
-    const amountPaisa = Math.round(totalAmount * 100);
-    const payload = {
-      return_url: `${env.BETTER_AUTH_URL}/api/v1/payments/khalti/success`,
-      website_url: env.CLIENT_URL,
-      amount: amountPaisa,
-      purchase_order_id: purchaseOrderId,
-      purchase_order_name: `RentHub booking ${String(bookingId).slice(0, 12)}`,
-    };
-    const response = await fetch(`${env.KHALTI_BASE_URL}/epayment/initiate/`, {
-      method: "POST",
-      headers: { Authorization: `Key ${env.KHALTI_SECRET_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const result = await response.json().catch(() => null);
-    if (!response.ok || !result?.pidx || !result?.payment_url) throw new ValidationError(result?.detail || result?.error_key || "Could not initialize card payment with Khalti");
-    const amount = totalAmount.toFixed(2);
-    if (!existingPayment) {
-      await paymentRepository.createPayment({ _id: paymentId, bookingId, userId, amount, currency: "NPR", status: "pending", paymentMethod: "khalti", transactionId: result.pidx });
-    } else {
-      await paymentRepository.updatePayment(existingPayment.id, { status: "pending", paymentMethod: "khalti", transactionId: result.pidx, amount });
+  async initiateCardPayment(userId, bookingId) {
+    const { totalAmount } = await this.getPayableBooking(userId, bookingId);
+    if (!env.CARD_GATEWAY_ENABLED) {
+      throw new ValidationError("Debit/credit card payments are not configured yet. Configure the bank card gateway before enabling this option.");
     }
-    return { paymentId, bookingId, paymentMethod: "khalti", payment_url: result.payment_url, pidx: result.pidx, amount, currency: "NPR" };
+    throw new ValidationError("Debit/credit card gateway credentials are configured, but the provider-specific checkout adapter is not enabled yet.");
   }
 
   async handleEsewaSuccess(encodedData) {
@@ -119,30 +98,6 @@ export class PaymentService {
     const verified = await statusResponse.json();
     if (verified.status !== "COMPLETE") throw new ValidationError(`eSewa transaction verification returned ${verified.status || "unknown"}`);
     const completed = await paymentRepository.updatePayment(payment.id, { status: "completed", paymentGatewayResponse: { response, verification: verified } });
-    if (booking.status === "pending") await bookingRepository.updateStatus(payment.bookingId, "confirmed");
-    return { payment: completed, bookingId: payment.bookingId };
-  }
-
-  async handleKhaltiSuccess(query) {
-    const pidx = query?.pidx;
-    if (!pidx) throw new ValidationError("Missing Khalti payment reference");
-    const payment = await paymentRepository.findByTransactionId(pidx);
-    if (!payment) throw new NotFoundError("Payment");
-    if (payment.status === "completed") return { payment, bookingId: payment.bookingId };
-    const booking = await bookingRepository.findById(payment.bookingId);
-    if (!booking) throw new NotFoundError("Booking");
-    if (String(query.purchase_order_id || "") !== String(payment.id)) throw new ValidationError("Khalti payment order does not match the booking");
-    const amountPaisa = Math.round(Number(payment.amount) * 100);
-    if (Number(query.total_amount ?? query.amount) !== amountPaisa) throw new ValidationError("Khalti payment amount does not match the booking");
-    const response = await fetch(`${env.KHALTI_BASE_URL}/epayment/lookup/`, {
-      method: "POST",
-      headers: { Authorization: `Key ${env.KHALTI_SECRET_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ pidx }),
-    });
-    const verified = await response.json().catch(() => null);
-    if (!response.ok || verified?.status !== "Completed") throw new ValidationError(verified?.detail || "Khalti payment could not be verified");
-    if (Number(verified.total_amount) !== amountPaisa) throw new ValidationError("Verified Khalti amount does not match the booking");
-    const completed = await paymentRepository.updatePayment(payment.id, { status: "completed", transactionId: verified.transaction_id || pidx, paymentGatewayResponse: { callback: query, verification: verified } });
     if (booking.status === "pending") await bookingRepository.updateStatus(payment.bookingId, "confirmed");
     return { payment: completed, bookingId: payment.bookingId };
   }
