@@ -2,9 +2,7 @@ import { z } from "zod";
 
 export const processPaymentSchema = z.object({
   bookingId: z.string().min(1, "Booking ID is required"),
-  paymentMethod: z
-    .enum(["simulated_card", "khalti", "esewa", "cash_on_pickup"])
-    .default("simulated_card"),
+  paymentMethod: z.enum(["esewa", "simulated_card", "khalti", "cash_on_pickup"]).default("esewa"),
 });
 
 export const adjustDepositSchema = z.object({
