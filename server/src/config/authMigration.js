@@ -3,6 +3,9 @@ import { authDb } from "./auth.js";
 import { v4 as uuidv4 } from "uuid";
 import { logger } from "../utils/logger.js";
 
+const CREDENTIAL_PROVIDER = "credential";
+const CREDENTIAL_ISSUER = "local:credential";
+
 export async function migrateLegacyCredentials() {
   const legacyUsers = await User.find({ password: { $exists: true, $type: "string", $ne: "" } })
     .select("+password email")
@@ -16,7 +19,8 @@ export async function migrateLegacyCredentials() {
   for (const user of legacyUsers) {
     const userId = String(user._id);
     const existing = await accounts.findOne({
-      providerId: "credential",
+      providerId: CREDENTIAL_PROVIDER,
+      issuer: CREDENTIAL_ISSUER,
       accountId: userId,
     });
 
@@ -25,8 +29,8 @@ export async function migrateLegacyCredentials() {
       await accounts.insertOne({
         _id: uuidv4(),
         accountId: userId,
-        providerId: "credential",
-        issuer: "local:credential",
+        providerId: CREDENTIAL_PROVIDER,
+        issuer: CREDENTIAL_ISSUER,
         userId,
         password: user.password,
         createdAt: now,
@@ -34,10 +38,7 @@ export async function migrateLegacyCredentials() {
       });
       migrated += 1;
     } else if (!existing.password) {
-      await accounts.updateOne(
-        { _id: existing._id },
-        { $set: { password: user.password, updatedAt: now } }
-      );
+      await accounts.updateOne({ _id: existing._id }, { $set: { password: user.password, updatedAt: now } });
       migrated += 1;
     }
 
