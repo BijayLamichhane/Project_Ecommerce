@@ -66,11 +66,14 @@ export class PaymentService {
   }
 
   async initiateCardPayment(userId, bookingId) {
-    const { totalAmount } = await this.getPayableBooking(userId, bookingId);
+    await this.getPayableBooking(userId, bookingId);
     if (!env.CARD_GATEWAY_ENABLED) {
-      throw new ValidationError("Debit/credit card payments are not configured yet. Configure the bank card gateway before enabling this option.");
+      throw new ValidationError("Debit/credit card payments are not enabled. Configure the bank card gateway merchant credentials first.");
     }
-    throw new ValidationError("Debit/credit card gateway credentials are configured, but the provider-specific checkout adapter is not enabled yet.");
+    if (!env.CARD_GATEWAY_CHECKOUT_URL || !env.CARD_GATEWAY_MERCHANT_ID || !env.CARD_GATEWAY_SECRET) {
+      throw new ValidationError("Debit/credit card gateway configuration is incomplete.");
+    }
+    throw new ValidationError("The card gateway adapter requires the provider-issued integration specification before live card checkout can be enabled.");
   }
 
   async handleEsewaSuccess(encodedData) {
