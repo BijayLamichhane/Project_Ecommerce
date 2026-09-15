@@ -16,10 +16,11 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const productId = product.id || product._id;
 
   const toggleWishlistMutation = useMutation({
     mutationFn: async () => {
-      await api.post("/wishlist/toggle", { productId: product._id });
+      await api.post("/wishlist/toggle", { productId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wishlist"] });
@@ -36,9 +37,8 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
 
   return (
     <div className="group relative bg-white rounded-2xl border border-slate-200/80 hover:border-slate-300 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
-      {/* Product Image Container */}
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
-        <Link to={`/products/${product._id}`} className="block w-full h-full">
+        <Link to={`/products/${productId}`} className="block w-full h-full">
           <img
             src={primaryImage}
             alt={product.name}
@@ -47,7 +47,6 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
           />
         </Link>
 
-        {/* Top Badges */}
         <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 pointer-events-none">
           {product.isFeatured && (
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500 text-white shadow-sm">
@@ -62,12 +61,11 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
           )}
         </div>
 
-        {/* Wishlist Button */}
         <button
           onClick={(e) => {
             e.preventDefault();
             if (!isAuthenticated) {
-              navigate(`/login?redirect=${encodeURIComponent(`/products/${product._id}`)}`);
+              navigate(`/login?redirect=${encodeURIComponent(`/products/${productId}`)}`);
               return;
             }
             toggleWishlistMutation.mutate();
@@ -82,7 +80,6 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
           />
         </button>
 
-        {/* Location tag bottom overlay */}
         {product.city && (
           <div className="absolute bottom-2.5 left-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-900/70 backdrop-blur-sm text-white">
             <MapPin className="w-3 h-3 text-indigo-400" />
@@ -91,10 +88,8 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
         )}
       </div>
 
-      {/* Product Content Details */}
       <div className="p-4 flex flex-col flex-1 justify-between gap-3">
         <div>
-          {/* Category & Rating */}
           <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
             <span className="font-medium truncate max-w-[140px]">
               {product.category?.name || product.brand || "Rental Gear"}
@@ -110,15 +105,13 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
             </div>
           </div>
 
-          {/* Title */}
-          <Link to={`/products/${product._id}`}>
+          <Link to={`/products/${productId}`}>
             <h3 className="text-sm font-bold text-slate-900 line-clamp-2 hover:text-indigo-600 transition leading-snug">
               {product.name}
             </h3>
           </Link>
         </div>
 
-        {/* Rental Pricing & Deposit */}
         <div className="pt-2 border-t border-slate-100 flex items-end justify-between gap-2">
           <div>
             <div className="text-base font-extrabold text-slate-900">
@@ -134,7 +127,7 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
           </div>
 
           <Link
-            to={`/products/${product._id}`}
+            to={`/products/${productId}`}
             className="px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:text-white bg-indigo-50 hover:bg-indigo-600 rounded-lg transition"
           >
             Rent Now
