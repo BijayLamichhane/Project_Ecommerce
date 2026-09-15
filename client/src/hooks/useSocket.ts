@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import { useAuth } from "./useAuth";
 
-const SOCKET_URL = import.meta.env.VITE_API_URL || undefined;
+const SOCKET_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export function useSocket() {
   const { user } = useAuth();
