@@ -4,18 +4,8 @@ import { Product } from "../../models/Product.js";
 
 function formatUser(user) {
   if (!user) return null;
-  if (!user.id && user._id) {
-    user.id = String(user._id);
-  }
+  if (!user.id && user._id) user.id = String(user._id);
   return user;
-}
-
-function detectCardBrand(number) {
-  if (/^4/.test(number)) return "Visa";
-  if (/^(5[1-5]|2(2[2-9]|[3-6]\d|7[01]|720))/.test(number)) return "Mastercard";
-  if (/^3[47]/.test(number)) return "American Express";
-  if (/^(6011|65|64[4-9])/.test(number)) return "Discover";
-  return "Card";
 }
 
 export class UserRepository {
@@ -53,11 +43,10 @@ export class UserRepository {
     };
 
     if (payoutMethod === "debit_credit_card") {
-      const cardNumber = String(data.cardNumber || "").replace(/\s+/g, "");
       payoutSettings.type = "debit_credit_card";
       payoutSettings.cardholderName = data.cardHolderName;
-      payoutSettings.cardBrand = detectCardBrand(cardNumber);
-      payoutSettings.last4 = cardNumber.slice(-4);
+      payoutSettings.cardBrand = "Demo Card";
+      payoutSettings.last4 = data.cardLast4;
       payoutSettings.expiry = data.cardExpiry;
       payoutSettings.isDemo = true;
     } else {
@@ -84,12 +73,7 @@ export class UserRepository {
 
     const user = await User.findByIdAndUpdate(
       userId,
-      {
-        $set: {
-          role: "seller",
-          sellerProfile,
-        },
-      },
+      { $set: { role: "seller", sellerProfile } },
       { new: true }
     ).lean({ virtuals: true });
 
@@ -98,13 +82,42 @@ export class UserRepository {
 
   async updateSellerSettings(userId, data) {
     const update = {};
-    for (const [key, value] of Object.entries(data)) {
-      update[`sellerProfile.${key}`] = value;
+    const allowed = [
+      "businessName",
+      "businessDescription",
+      "businessAddress",
+      "businessCity",
+      "panNumber",
+      "bankAccountName",
+      "bankAccountNumber",
+      "bankName",
+    ];
+
+    for (const key of allowed) {
+      if (data[key] !== undefined) update[`sellerProfile.${key}`] = data[key];
     }
 
-    const updated = await User.findByIdAndUpdate(userId, { $set: update }, { new: true }).lean({
-      virtuals: true,
-    });
+    if (data.payoutMethod === "bank_account") {
+      update["sellerProfile.payoutSettings.method"] = "bank_account";
+      update["sellerProfile.payoutSettings.type"] = "bank_account";
+      update["sellerProfile.payoutSettings.status"] = "configured";
+      if (data.bankName !== undefined) update["sellerProfile.payoutSettings.bankName"] = data.bankName;
+      if (data.bankAccountName !== undefined) update["sellerProfile.payoutSettings.accountName"] = data.bankAccountName;
+      if (data.bankAccountNumber !== undefined) {
+        update["sellerProfile.payoutSettings.accountLast4"] = String(data.bankAccountNumber).slice(-4);
+      }
+    } else if (data.payoutMethod === "debit_credit_card") {
+      update["sellerProfile.payoutSettings.method"] = "debit_credit_card";
+      update["sellerProfile.payoutSettings.type"] = "debit_credit_card";
+      update["sellerProfile.payoutSettings.status"] = "demo";
+      update["sellerProfile.payoutSettings.isDemo"] = true;
+      if (data.cardHolderName !== undefined) update["sellerProfile.payoutSettings.cardholderName"] = data.cardHolderName;
+      if (data.cardLast4 !== undefined) update["sellerProfile.payoutSettings.last4"] = data.cardLast4;
+      if (data.cardExpiry !== undefined) update["sellerProfile.payoutSettings.expiry"] = data.cardExpiry;
+      update["sellerProfile.payoutSettings.cardBrand"] = "Demo Card";
+    }
+
+    const updated = await User.findByIdAndUpdate(userId, { $set: update }, { new: true }).lean({ virtuals: true });
     return updated?.sellerProfile;
   }
 
@@ -118,10 +131,7 @@ export class UserRepository {
       Product.countDocuments({ sellerId, status: "active" }),
     ]);
 
-    const totalEarnings = completedBookings.reduce(
-      (sum, b) => sum + Number(b.totalRentalPrice || 0),
-      0
-    );
+    const totalEarnings = completedBookings.reduce((sum, b) => sum + Number(b.totalRentalPrice || 0), 0);
 
     return {
       profile: seller?.sellerProfile,
