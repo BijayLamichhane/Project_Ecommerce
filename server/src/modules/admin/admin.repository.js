@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { User } from "../../models/User.js";
 import { Product } from "../../models/Product.js";
 import { Booking } from "../../models/Booking.js";
@@ -21,6 +22,15 @@ const normalizeUser = (user) => ({
   id: normalizeId(user?.id ?? user?._id),
   _id: undefined,
 });
+
+const buildUserIdFilter = (value) => {
+  const id = normalizeId(value);
+  if (!id) return null;
+  if (mongoose.isValidObjectId(id)) {
+    return { $or: [{ _id: id }, { _id: new mongoose.Types.ObjectId(id) }] };
+  }
+  return { _id: id };
+};
 
 export class AdminRepository {
   async getDashboardAnalytics() {
@@ -87,24 +97,28 @@ export class AdminRepository {
   }
 
   async updateUserStatus(userId, status) {
-    return User.findByIdAndUpdate(
-      userId,
+    const filter = buildUserIdFilter(userId);
+    if (!filter) return null;
+    return User.findOneAndUpdate(
+      filter,
       { $set: { status } },
-      { new: true }
+      { new: true, runValidators: true }
     ).lean({ virtuals: true });
   }
 
   async updateSellerStatus(userId, status) {
+    const filter = buildUserIdFilter(userId);
+    if (!filter) return null;
     return User.findOneAndUpdate(
-      { _id: userId, role: "seller" },
+      { ...filter, role: "seller" },
       { $set: { "sellerProfile.status": status } },
-      { new: true }
+      { new: true, runValidators: true }
     ).lean({ virtuals: true });
   }
 
   async logAdminAction(data) {
     const log = await AuditLog.create({
-      userId: data.adminId,
+      userId: normalizeId(data.adminId),
       action: data.actionType,
       entityType: data.actionType.includes("user")
         ? "user"
@@ -113,8 +127,7 @@ export class AdminRepository {
         : data.actionType.includes("product")
         ? "product"
         : "booking",
-      entityId:
-        data.targetUserId || data.targetProductId || data.targetBookingId,
+      entityId: normalizeId(data.targetUserId || data.targetProductId || data.targetBookingId),
       details: { reason: data.reason },
     });
     return log.toJSON();
