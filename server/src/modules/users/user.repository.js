@@ -10,6 +10,14 @@ function formatUser(user) {
   return user;
 }
 
+function detectCardBrand(number) {
+  if (/^4/.test(number)) return "Visa";
+  if (/^(5[1-5]|2(2[2-9]|[3-6]\d|7[01]|720))/.test(number)) return "Mastercard";
+  if (/^3[47]/.test(number)) return "American Express";
+  if (/^(6011|65|64[4-9])/.test(number)) return "Discover";
+  return "Card";
+}
+
 export class UserRepository {
   async findById(id) {
     const user = await User.findById(id).lean({ virtuals: true });
@@ -38,15 +46,37 @@ export class UserRepository {
   }
 
   async createSellerProfile(userId, data) {
+    const payoutMethod = data.payoutMethod || "bank_account";
+    const payoutSettings = {
+      method: payoutMethod,
+      status: payoutMethod === "debit_credit_card" ? "demo" : "configured",
+    };
+
+    if (payoutMethod === "debit_credit_card") {
+      const cardNumber = String(data.cardNumber || "").replace(/\s+/g, "");
+      payoutSettings.type = "debit_credit_card";
+      payoutSettings.cardholderName = data.cardHolderName;
+      payoutSettings.cardBrand = detectCardBrand(cardNumber);
+      payoutSettings.last4 = cardNumber.slice(-4);
+      payoutSettings.expiry = data.cardExpiry;
+      payoutSettings.isDemo = true;
+    } else {
+      payoutSettings.type = "bank_account";
+      payoutSettings.bankName = data.bankName;
+      payoutSettings.accountName = data.bankAccountName;
+      payoutSettings.accountLast4 = String(data.bankAccountNumber || "").slice(-4);
+    }
+
     const sellerProfile = {
       businessName: data.businessName,
       businessDescription: data.businessDescription,
       businessAddress: data.businessAddress,
       businessCity: data.businessCity,
       panNumber: data.panNumber,
-      bankAccountName: data.bankAccountName,
-      bankAccountNumber: data.bankAccountNumber,
-      bankName: data.bankName,
+      bankAccountName: payoutMethod === "bank_account" ? data.bankAccountName : "",
+      bankAccountNumber: payoutMethod === "bank_account" ? data.bankAccountNumber : "",
+      bankName: payoutMethod === "bank_account" ? data.bankName : "",
+      payoutSettings,
       status: "approved",
       isVerified: true,
       verifiedAt: new Date(),
