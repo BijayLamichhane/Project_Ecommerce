@@ -1,8 +1,9 @@
 import http from "http";
 import { createApp } from "./app.js";
 import { env } from "./config/env.js";
-import { connectDatabase } from "./config/database.js";
+import { connectDatabase, disconnectDatabase } from "./config/database.js";
 import { connectRedis } from "./config/redis.js";
+import { authClient } from "./config/auth.js";
 import { migrateLegacyCredentials } from "./config/authMigration.js";
 import { initSocketIO } from "./sockets/index.js";
 import { logger } from "./utils/logger.js";
@@ -23,8 +24,9 @@ async function startServer() {
 
     const shutdown = async (signal) => {
       logger.info(`Received ${signal}, shutting down gracefully...`);
-      server.close(() => {
+      server.close(async () => {
         logger.info("HTTP server closed.");
+        await Promise.allSettled([authClient.close(), disconnectDatabase()]);
         process.exit(0);
       });
     };
