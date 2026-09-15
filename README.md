@@ -17,6 +17,15 @@ RentHub is a production-quality full-stack web application for renting physical 
 
 ---
 
+## ✨ Recent Rental Experience Improvements
+
+- **Rental Details messaging**: Customers can ask the seller a question directly from a booking. The question starts or reuses a messaging conversation and opens the Messages page after sending.
+- **Booking history on Dashboard**: Previous completed, returned, cancelled, and rejected bookings are now visible from the customer dashboard and link directly to their rental details.
+- **Rental review flow**: Reviews can be opened for returned or completed rentals, with the product ID resolved from the booking item when necessary.
+- **Dark rental experience**: Dashboard and Rental Details use a dark interface with vivid cyan, violet, amber, and emerald accents for clearer status and action hierarchy.
+
+---
+
 ## 🛠️ Technology Stack
 
 | Layer | Technologies |
@@ -138,7 +147,7 @@ E-commerce-Project/
 │   │   ├── components/         # Layout (Navbar, Footer), ProductCard, RentalCalendar, PriceSummary
 │   │   ├── hooks/              # useAuth, useSocket
 │   │   ├── lib/                # Axios, TanStack queryClient, formatters
-│   │   ├── pages/              # Home, Catalog, ProductDetail, Cart, Bookings, Messages, Seller, Admin
+│   │   ├── pages/              # Home, Catalog, ProductDetail, Cart, Wishlist, Bookings, Messages, Seller, Admin
 │   │   └── types/              # Domain TypeScript interfaces
 │   └── package.json
 ```
