@@ -49,7 +49,7 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     emailVerified: { type: Boolean, default: false },
     name: { type: String, required: true },
-    password: { type: String },
+    password: { type: String, select: false },
     role: {
       type: String,
       enum: ["customer", "seller", "admin"],
@@ -73,6 +73,7 @@ const userSchema = new mongoose.Schema(
       virtuals: true,
       transform: (doc, ret) => {
         ret.id = String(ret._id);
+        delete ret.password;
         delete ret.__v;
         return ret;
       },
@@ -81,6 +82,7 @@ const userSchema = new mongoose.Schema(
       virtuals: true,
       transform: (doc, ret) => {
         ret.id = String(ret._id);
+        delete ret.password;
         delete ret.__v;
         return ret;
       },
