@@ -5,6 +5,10 @@ export class PaymentRepository {
     return Payment.findOne({ bookingId }).lean({ virtuals: true });
   }
 
+  async findByTransactionId(transactionId) {
+    return Payment.findOne({ transactionId }).lean({ virtuals: true });
+  }
+
   async findDepositByBookingId(bookingId) {
     return Payment.findOne({ bookingId, type: "security_deposit" }).lean({ virtuals: true });
   }
@@ -22,5 +26,4 @@ export class PaymentRepository {
     return Payment.findByIdAndUpdate(id, { $set: data }, { new: true }).lean({ virtuals: true });
   }
 }
-
 export const paymentRepository = new PaymentRepository();
