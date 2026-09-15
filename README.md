@@ -22,8 +22,9 @@ RentHub is a production-quality full-stack web application for renting physical 
 - **Rental Details messaging**: Customers can ask the seller a question directly from a booking. The question starts or reuses a messaging conversation and opens the Messages page after sending.
 - **Booking history on Dashboard**: Previous completed, returned, cancelled, and rejected bookings are visible from the customer dashboard and link directly to rental details.
 - **Rental review flow**: Reviews can be opened for returned or completed rentals, with the product ID resolved from the booking item when necessary.
-- **Dark application theme**: The global UI now uses a dark surface system with vivid cyan, violet, amber, and emerald accents. Legacy light utility classes are mapped to dark equivalents so older pages remain visually consistent.
+- **Dark application theme**: The global UI uses a dark surface system with vivid cyan, violet, amber, and emerald accents. Legacy light utility classes, including translucent light backgrounds, are mapped to dark equivalents so older pages remain visually consistent.
 - **Verified eSewa checkout**: The old simulated payment path no longer marks a booking as paid. Customers are redirected to eSewa, and the server only confirms the booking after validating the gateway response, matching the amount, and checking the eSewa transaction status.
+- **Seller payout choices**: Seller onboarding now supports either a bank account or a debit/credit card demo payout method. The demo card flow stores only a masked card reference, last four digits, brand, and expiry; CVV and the full card number are not persisted.
 
 ### Payment Environment
 
@@ -37,6 +38,18 @@ ESEWA_STATUS_URL=https://epay.esewa.com.np/api/epay/transaction/status/
 ```
 
 Never use UAT credentials in production. Payment confirmation is intentionally performed on the server instead of trusting a frontend success state.
+
+### Seller Demo Card
+
+For local/university demonstrations, seller onboarding includes a **Fill Demo Card** action using:
+
+```text
+Card:   4242 4242 4242 4242
+Expiry: 12/30
+CVV:    123
+```
+
+This is a demo payout profile only; it is not a real card-processing integration.
 
 ---
 
