@@ -66,7 +66,49 @@ export class PaymentService {
   }
 
   async initiateCardPayment(userId, bookingId) {
-    await this.getPayableBooking(userId, bookingId);
+    const { existingPayment, totalAmount } = await this.getPayableBooking(userId, bookingId);
+
+    if (env.NODE_ENV !== "production") {
+      const amount = totalAmount.toFixed(2);
+      const paymentId = existingPayment?.id || uuidv4();
+      const transactionId = `DEMO-CARD-${uuidv4()}`;
+      const paymentData = {
+        bookingId,
+        userId,
+        amount,
+        currency: "NPR",
+        status: "completed",
+        paymentMethod: "card",
+        transactionId,
+        paymentGatewayResponse: {
+          mode: "development-demo",
+          provider: "RentHub Demo Card Gateway",
+          cardNetwork: "Visa",
+          last4: "4242",
+        },
+      };
+
+      const completedPayment = existingPayment
+        ? await paymentRepository.updatePayment(existingPayment.id, paymentData)
+        : await paymentRepository.createPayment({ _id: paymentId, ...paymentData });
+
+      if (existingPayment?.status !== "completed") {
+        await bookingRepository.updateStatus(bookingId, "confirmed");
+      }
+
+      return {
+        paymentId,
+        bookingId,
+        paymentMethod: "card",
+        demo: true,
+        message: "Development demo card payment completed successfully",
+        amount,
+        currency: "NPR",
+        card: { network: "Visa", last4: "4242" },
+        payment: completedPayment,
+      };
+    }
+
     if (!env.CARD_GATEWAY_ENABLED) {
       throw new ValidationError("Debit/credit card payments are not enabled. Configure the bank card gateway merchant credentials first.");
     }
