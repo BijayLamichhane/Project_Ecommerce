@@ -44,9 +44,18 @@ export function BecomeSellerPage() {
     mutationFn: async () => {
       setErrorMsg(null);
       const payload = {
-        ...formData,
+        businessName: formData.businessName,
+        businessDescription: formData.businessDescription,
+        businessAddress: formData.businessAddress,
+        businessCity: formData.businessCity,
+        panNumber: formData.panNumber,
         payoutMethod,
-        cardNumber: formData.cardNumber.replace(/\s+/g, ""),
+        bankAccountName: payoutMethod === "bank_account" ? formData.bankAccountName : undefined,
+        bankAccountNumber: payoutMethod === "bank_account" ? formData.bankAccountNumber : undefined,
+        bankName: payoutMethod === "bank_account" ? formData.bankName : undefined,
+        cardHolderName: payoutMethod === "debit_credit_card" ? formData.cardHolderName : undefined,
+        cardLast4: payoutMethod === "debit_credit_card" ? formData.cardNumber.replace(/\s+/g, "").slice(-4) : undefined,
+        cardExpiry: payoutMethod === "debit_credit_card" ? formData.cardExpiry : undefined,
       };
       const { data } = await api.post("/users/become-seller", payload);
       return data.data;
@@ -169,39 +178,21 @@ export function BecomeSellerPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <button
-                type="button"
-                onClick={() => selectPayoutMethod("bank_account")}
-                className={`text-left rounded-2xl border p-4 transition ${payoutMethod === "bank_account" ? "border-cyan-400 bg-cyan-400/10 shadow-lg shadow-cyan-500/10" : "border-slate-700 bg-slate-950 hover:border-slate-500"}`}
-              >
+              <button type="button" onClick={() => selectPayoutMethod("bank_account")} className={`text-left rounded-2xl border p-4 transition ${payoutMethod === "bank_account" ? "border-cyan-400 bg-cyan-400/10 shadow-lg shadow-cyan-500/10" : "border-slate-700 bg-slate-950 hover:border-slate-500"}`}>
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-cyan-400/10 text-cyan-300 flex items-center justify-center">
-                      <Landmark className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-white">Bank Account</p>
-                      <p className="text-xs text-slate-500">Direct transfer to your bank</p>
-                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-cyan-400/10 text-cyan-300 flex items-center justify-center"><Landmark className="w-5 h-5" /></div>
+                    <div><p className="text-sm font-bold text-white">Bank Account</p><p className="text-xs text-slate-500">Direct transfer to your bank</p></div>
                   </div>
                   {payoutMethod === "bank_account" && <CheckCircle2 className="w-5 h-5 text-cyan-300" />}
                 </div>
               </button>
 
-              <button
-                type="button"
-                onClick={() => selectPayoutMethod("debit_credit_card")}
-                className={`text-left rounded-2xl border p-4 transition ${payoutMethod === "debit_credit_card" ? "border-fuchsia-400 bg-fuchsia-400/10 shadow-lg shadow-fuchsia-500/10" : "border-slate-700 bg-slate-950 hover:border-slate-500"}`}
-              >
+              <button type="button" onClick={() => selectPayoutMethod("debit_credit_card")} className={`text-left rounded-2xl border p-4 transition ${payoutMethod === "debit_credit_card" ? "border-fuchsia-400 bg-fuchsia-400/10 shadow-lg shadow-fuchsia-500/10" : "border-slate-700 bg-slate-950 hover:border-slate-500"}`}>
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-fuchsia-400/10 text-fuchsia-300 flex items-center justify-center">
-                      <CreditCard className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-white">Debit / Credit Card</p>
-                      <p className="text-xs text-slate-500">Demo card payout option</p>
-                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-fuchsia-400/10 text-fuchsia-300 flex items-center justify-center"><CreditCard className="w-5 h-5" /></div>
+                    <div><p className="text-sm font-bold text-white">Debit / Credit Card</p><p className="text-xs text-slate-500">Demo card payout option</p></div>
                   </div>
                   {payoutMethod === "debit_credit_card" && <CheckCircle2 className="w-5 h-5 text-fuchsia-300" />}
                 </div>
@@ -210,45 +201,24 @@ export function BecomeSellerPage() {
 
             {payoutMethod === "bank_account" ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-2xl bg-slate-950/70 border border-slate-800 p-5">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-300">Account Holder Name *</label>
-                  <input type="text" placeholder="Full name as per bank record" value={formData.bankAccountName} onChange={(e) => updateField("bankAccountName", e.target.value)} className={inputClass} required />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-300">Bank Name *</label>
-                  <input type="text" placeholder="e.g. Nabil Bank Ltd." value={formData.bankName} onChange={(e) => updateField("bankName", e.target.value)} className={inputClass} required />
-                </div>
-                <div className="sm:col-span-2 space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-300">Bank Account Number *</label>
-                  <input type="text" placeholder="e.g. 01234567890123" value={formData.bankAccountNumber} onChange={(e) => updateField("bankAccountNumber", e.target.value)} className={`${inputClass} font-mono`} required />
-                </div>
+                <div className="space-y-1.5"><label className="text-xs font-semibold text-slate-300">Account Holder Name *</label><input type="text" placeholder="Full name as per bank record" value={formData.bankAccountName} onChange={(e) => updateField("bankAccountName", e.target.value)} className={inputClass} required /></div>
+                <div className="space-y-1.5"><label className="text-xs font-semibold text-slate-300">Bank Name *</label><input type="text" placeholder="e.g. Nabil Bank Ltd." value={formData.bankName} onChange={(e) => updateField("bankName", e.target.value)} className={inputClass} required /></div>
+                <div className="sm:col-span-2 space-y-1.5"><label className="text-xs font-semibold text-slate-300">Bank Account Number *</label><input type="text" placeholder="e.g. 01234567890123" value={formData.bankAccountNumber} onChange={(e) => updateField("bankAccountNumber", e.target.value)} className={`${inputClass} font-mono`} required /></div>
               </div>
             ) : (
               <div className="rounded-2xl bg-slate-950/70 border border-slate-800 p-5 space-y-4">
                 <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-400/10 border border-amber-300/20">
                   <LockKeyhole className="w-4 h-4 text-amber-300 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-amber-100/80">This is a demo payout method for the university project. The server stores only a masked card reference, never the CVV or full card number.</p>
+                  <p className="text-xs text-amber-100/80">This is a demo payout method for the university project. The server receives only a masked card reference, never the CVV or full card number.</p>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-300">Cardholder Name *</label>
-                  <input type="text" placeholder="Name on card" value={formData.cardHolderName} onChange={(e) => updateField("cardHolderName", e.target.value)} className={inputClass} required />
-                </div>
+                <div className="space-y-1.5"><label className="text-xs font-semibold text-slate-300">Cardholder Name *</label><input type="text" placeholder="Name on card" value={formData.cardHolderName} onChange={(e) => updateField("cardHolderName", e.target.value)} className={inputClass} required /></div>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-300">Debit / Credit Card Number *</label>
-                  <input type="text" inputMode="numeric" autoComplete="cc-number" maxLength={19} placeholder="4242 4242 4242 4242" value={formData.cardNumber} onChange={(e) => updateField("cardNumber", e.target.value.replace(/[^0-9 ]/g, ""))} className={`${inputClass} font-mono tracking-wider`} required />
-                </div>
+                <div className="space-y-1.5"><label className="text-xs font-semibold text-slate-300">Debit / Credit Card Number *</label><input type="text" inputMode="numeric" autoComplete="cc-number" maxLength={19} placeholder="4242 4242 4242 4242" value={formData.cardNumber} onChange={(e) => updateField("cardNumber", e.target.value.replace(/[^0-9 ]/g, ""))} className={`${inputClass} font-mono tracking-wider`} required /></div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300">Expiry (MM/YY) *</label>
-                    <input type="text" inputMode="numeric" autoComplete="cc-exp" maxLength={5} placeholder="12/30" value={formData.cardExpiry} onChange={(e) => updateField("cardExpiry", e.target.value.replace(/[^0-9/]/g, "").slice(0, 5))} className={`${inputClass} font-mono`} required />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300">CVV *</label>
-                    <input type="password" inputMode="numeric" autoComplete="cc-csc" maxLength={4} placeholder="123" value={formData.cardCvv} onChange={(e) => updateField("cardCvv", e.target.value.replace(/\D/g, "").slice(0, 4))} className={`${inputClass} font-mono`} required />
-                  </div>
+                  <div className="space-y-1.5"><label className="text-xs font-semibold text-slate-300">Expiry (MM/YY) *</label><input type="text" inputMode="numeric" autoComplete="cc-exp" maxLength={5} placeholder="12/30" value={formData.cardExpiry} onChange={(e) => updateField("cardExpiry", e.target.value.replace(/[^0-9/]/g, "").slice(0, 5))} className={`${inputClass} font-mono`} required /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-semibold text-slate-300">CVV *</label><input type="password" inputMode="numeric" autoComplete="cc-csc" maxLength={4} placeholder="123" value={formData.cardCvv} onChange={(e) => updateField("cardCvv", e.target.value.replace(/\D/g, "").slice(0, 4))} className={`${inputClass} font-mono`} required /></div>
                 </div>
 
                 <div className="text-xs text-slate-500">Demo card: <span className="font-mono text-slate-300">4242 4242 4242 4242</span> · Expiry <span className="font-mono text-slate-300">12/30</span> · CVV <span className="font-mono text-slate-300">123</span></div>
@@ -256,11 +226,7 @@ export function BecomeSellerPage() {
             )}
           </div>
 
-          <button
-            type="submit"
-            disabled={registerMutation.isPending}
-            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 via-fuchsia-600 to-cyan-500 hover:brightness-110 text-white font-bold text-sm shadow-lg shadow-indigo-900/30 transition disabled:opacity-60 disabled:cursor-not-allowed"
-          >
+          <button type="submit" disabled={registerMutation.isPending} className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 via-fuchsia-600 to-cyan-500 hover:brightness-110 text-white font-bold text-sm shadow-lg shadow-indigo-900/30 transition disabled:opacity-60 disabled:cursor-not-allowed">
             {registerMutation.isPending ? "Setting up Seller Account..." : "Complete Seller Registration"}
           </button>
         </form>
