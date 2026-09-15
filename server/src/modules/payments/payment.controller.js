@@ -1,4 +1,5 @@
 import { paymentService } from "./payment.service.js";
+import { env } from "../../config/env.js";
 import { sendSuccess } from "../../utils/response.js";
 
 export class PaymentController {
@@ -6,27 +7,22 @@ export class PaymentController {
     try {
       const result = await paymentService.processPayment(req.user.id, req.body);
       sendSuccess(res, result, "Payment initialized");
-    } catch (error) {
-      next(error);
-    }
+    } catch (error) { next(error); }
   }
 
   async getPaymentByBooking(req, res, next) {
     try {
       const result = await paymentService.getPaymentByBooking(req.user.id, req.params.bookingId, req.user.role);
       sendSuccess(res, result);
-    } catch (error) {
-      next(error);
-    }
+    } catch (error) { next(error); }
   }
 
   async esewaSuccess(req, res) {
     try {
-      await paymentService.handleEsewaSuccess(req.query.data);
-      res.redirect(`${process.env.CLIENT_URL || "http://localhost:3000"}/bookings/${encodeURIComponent(req.query.data ? "" : "")}?payment=success`);
+      const result = await paymentService.handleEsewaSuccess(req.query.data);
+      res.redirect(`${env.CLIENT_URL}/bookings/${encodeURIComponent(result.bookingId)}?payment=success`);
     } catch (error) {
-      const bookingId = req.query.bookingId || "";
-      res.redirect(`${process.env.CLIENT_URL || "http://localhost:3000"}/bookings/${encodeURIComponent(bookingId)}?payment=failed&reason=${encodeURIComponent(error.message || "Payment verification failed")}`);
+      res.redirect(`${env.CLIENT_URL}/bookings?payment=failed&reason=${encodeURIComponent(error.message || "Payment verification failed")}`);
     }
   }
 
@@ -34,18 +30,14 @@ export class PaymentController {
     try {
       const result = await paymentService.releaseDeposit(req.user.id, req.params.bookingId, req.user.role);
       sendSuccess(res, result, "Security deposit released");
-    } catch (error) {
-      next(error);
-    }
+    } catch (error) { next(error); }
   }
 
   async deductDeposit(req, res, next) {
     try {
       const result = await paymentService.deductDeposit(req.user.id, req.params.bookingId, req.body, req.user.role);
       sendSuccess(res, result, "Deposit deduction applied");
-    } catch (error) {
-      next(error);
-    }
+    } catch (error) { next(error); }
   }
 }
 export const paymentController = new PaymentController();
