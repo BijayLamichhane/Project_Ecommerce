@@ -7,6 +7,15 @@ import { env } from "./env.js";
 export const authClient = new MongoClient(env.MONGODB_URI);
 export const authDb = authClient.db();
 
+const trustedOrigins = Array.from(
+  new Set([
+    env.CLIENT_URL,
+    ...(env.NODE_ENV === "development"
+      ? ["http://localhost:3000", "http://localhost:5173"]
+      : []),
+  ])
+);
+
 export const auth = betterAuth({
   database: mongodbAdapter(authDb, { client: authClient }),
   secret: env.BETTER_AUTH_SECRET,
@@ -50,7 +59,7 @@ export const auth = betterAuth({
       },
     },
   },
-  trustedOrigins: [env.CLIENT_URL],
+  trustedOrigins,
   advanced: {
     database: {
       joins: true,
