@@ -16,9 +16,8 @@ const sellerPayoutFields = {
   bankAccountNumber: z.string().max(50).optional().or(z.literal("")),
   bankName: z.string().max(255).optional().or(z.literal("")),
   cardHolderName: z.string().max(255).optional().or(z.literal("")),
-  cardNumber: z.string().regex(/^\d{12,19}$/, "Enter a valid card number").optional().or(z.literal("")),
+  cardLast4: z.string().regex(/^\d{4}$/, "Card reference must contain the last 4 digits").optional().or(z.literal("")),
   cardExpiry: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, "Use MM/YY format").optional().or(z.literal("")),
-  cardCvv: z.string().regex(/^\d{3,4}$/, "Enter a valid CVV").optional().or(z.literal("")),
 };
 
 export const sellerOnboardingSchema = z
@@ -33,30 +32,15 @@ export const sellerOnboardingSchema = z
   })
   .superRefine((data, ctx) => {
     if (data.payoutMethod === "bank_account") {
-      if (!data.bankAccountName?.trim()) {
-        ctx.addIssue({ code: "custom", path: ["bankAccountName"], message: "Account holder name is required" });
-      }
-      if (!data.bankAccountNumber?.trim()) {
-        ctx.addIssue({ code: "custom", path: ["bankAccountNumber"], message: "Account number is required" });
-      }
-      if (!data.bankName?.trim()) {
-        ctx.addIssue({ code: "custom", path: ["bankName"], message: "Bank name is required" });
-      }
+      if (!data.bankAccountName?.trim()) ctx.addIssue({ code: "custom", path: ["bankAccountName"], message: "Account holder name is required" });
+      if (!data.bankAccountNumber?.trim()) ctx.addIssue({ code: "custom", path: ["bankAccountNumber"], message: "Account number is required" });
+      if (!data.bankName?.trim()) ctx.addIssue({ code: "custom", path: ["bankName"], message: "Bank name is required" });
     }
 
     if (data.payoutMethod === "debit_credit_card") {
-      if (!data.cardHolderName?.trim()) {
-        ctx.addIssue({ code: "custom", path: ["cardHolderName"], message: "Cardholder name is required" });
-      }
-      if (!data.cardNumber?.trim()) {
-        ctx.addIssue({ code: "custom", path: ["cardNumber"], message: "Card number is required" });
-      }
-      if (!data.cardExpiry?.trim()) {
-        ctx.addIssue({ code: "custom", path: ["cardExpiry"], message: "Card expiry is required" });
-      }
-      if (!data.cardCvv?.trim()) {
-        ctx.addIssue({ code: "custom", path: ["cardCvv"], message: "CVV is required" });
-      }
+      if (!data.cardHolderName?.trim()) ctx.addIssue({ code: "custom", path: ["cardHolderName"], message: "Cardholder name is required" });
+      if (!data.cardLast4?.trim()) ctx.addIssue({ code: "custom", path: ["cardLast4"], message: "Card reference is required" });
+      if (!data.cardExpiry?.trim()) ctx.addIssue({ code: "custom", path: ["cardExpiry"], message: "Card expiry is required" });
     }
   });
 
