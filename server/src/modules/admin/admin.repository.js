@@ -4,6 +4,24 @@ import { Booking } from "../../models/Booking.js";
 import { Payment } from "../../models/Payment.js";
 import { Report, AuditLog } from "../../models/Moderation.js";
 
+const normalizeId = (value) => {
+  if (typeof value === "string" || typeof value === "number") return String(value);
+  if (value && typeof value === "object") {
+    if (typeof value.$oid === "string") return value.$oid;
+    if (typeof value.toString === "function") {
+      const stringValue = value.toString();
+      if (stringValue !== "[object Object]") return stringValue;
+    }
+  }
+  return "";
+};
+
+const normalizeUser = (user) => ({
+  ...user,
+  id: normalizeId(user?.id ?? user?._id),
+  _id: undefined,
+});
+
 export class AdminRepository {
   async getDashboardAnalytics() {
     const [
@@ -53,17 +71,19 @@ export class AdminRepository {
   }
 
   async getAllUsers(limit = 50, offset = 0) {
-    return User.find()
+    const users = await User.find()
       .sort({ createdAt: -1 })
       .skip(offset)
       .limit(limit)
       .lean({ virtuals: true });
+    return users.map(normalizeUser);
   }
 
   async getAllSellers() {
-    return User.find({ role: "seller" })
+    const sellers = await User.find({ role: "seller" })
       .sort({ createdAt: -1 })
       .lean({ virtuals: true });
+    return sellers.map(normalizeUser);
   }
 
   async updateUserStatus(userId, status) {
