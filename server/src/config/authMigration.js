@@ -20,8 +20,8 @@ export async function migrateLegacyCredentials() {
       accountId: userId,
     });
 
+    const now = new Date();
     if (!existing) {
-      const now = new Date();
       await accounts.insertOne({
         _id: uuidv4(),
         accountId: userId,
@@ -32,6 +32,12 @@ export async function migrateLegacyCredentials() {
         createdAt: now,
         updatedAt: now,
       });
+      migrated += 1;
+    } else if (!existing.password) {
+      await accounts.updateOne(
+        { _id: existing._id },
+        { $set: { password: user.password, updatedAt: now } }
+      );
       migrated += 1;
     }
 
