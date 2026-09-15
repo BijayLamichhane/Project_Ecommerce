@@ -3,13 +3,15 @@ import { createApp } from "./app.js";
 import { env } from "./config/env.js";
 import { connectDatabase } from "./config/database.js";
 import { connectRedis } from "./config/redis.js";
+import { migrateLegacyCredentials } from "./config/authMigration.js";
 import { initSocketIO } from "./sockets/index.js";
 import { logger } from "./utils/logger.js";
 
 async function startServer() {
   try {
     await connectDatabase();
-    await connectRedis(); // non-blocking: logs a warning and continues if Redis is unreachable
+    await migrateLegacyCredentials();
+    await connectRedis();
     const app = createApp();
     const server = http.createServer(app);
     initSocketIO(server);
