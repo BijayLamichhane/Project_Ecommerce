@@ -9,6 +9,7 @@ const router = Router();
 const bookingIdSchema = z.object({ bookingId: z.string().min(1) });
 
 router.get("/esewa/success", (req, res) => paymentController.esewaSuccess(req, res));
+router.get("/khalti/success", (req, res) => paymentController.khaltiSuccess(req, res));
 router.use(authenticate);
 router.post("/process", validateBody(processPaymentSchema), (req, res, next) => paymentController.processPayment(req, res, next));
 router.get("/booking/:bookingId", validateParams(bookingIdSchema), (req, res, next) => paymentController.getPaymentByBooking(req, res, next));
