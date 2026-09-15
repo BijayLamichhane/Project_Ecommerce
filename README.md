@@ -2,29 +2,33 @@
 
 > **Rent what you need. Without buying what you don't.**
 
-RentHub is a production-quality full-stack web application for renting physical products (cameras, laptops, camping gear, drones, instruments, and tools) for specific time periods.
+RentHub is a full-stack web application for renting physical products such as cameras, laptops, camping gear, drones, instruments, and tools for specific time periods.
 
 ---
 
 ## 🌟 Key Architectural Features
 
-- **Availability & Conflict Engine**: Non-overlapping booking date enforcement using PostgreSQL transactional locks (`FOR UPDATE`) and Redis distributed locks.
+- **Availability & Conflict Engine**: Non-overlapping booking date enforcement with MongoDB availability checks and optional Redis distributed locks.
 - **Security Deposit Architecture**: Refundable security deposits tracked separately from rental revenue and released upon verified return.
-- **Dynamic Tiered Pricing**: Hourly, daily, weekly, and monthly discount tier calculations computed strictly on the backend.
-- **Real-Time Communication**: Socket.IO integration for buyer-seller messaging, typing indicators, and instant order notifications.
+- **Dynamic Tiered Pricing**: Hourly, daily, weekly, and monthly pricing calculated on the backend.
+- **Real-Time Communication**: Socket.IO integration for customer-seller messaging, typing indicators, and instant notifications.
 - **Role-Based Access Control**: RBAC for `customer`, `seller`, and `admin` roles.
-- **Fast Redis Caching**: Product catalogs, categories, and rate-limiting.
+- **Redis Caching & Locking**: Optional Redis support for caching, booking locks, and rate limiting.
+- **Server-Verified Payments**: eSewa checkout is verified server-side before a booking is confirmed.
 
 ---
 
-## ✨ Recent Rental Experience Improvements
+## ✨ Recent Reliability & Security Improvements
 
-- **Rental Details messaging**: Customers can ask the seller a question directly from a booking. The question starts or reuses a messaging conversation and opens the Messages page after sending.
-- **Booking history on Dashboard**: Previous completed, returned, cancelled, and rejected bookings are visible from the customer dashboard and link directly to rental details.
-- **Rental review flow**: Reviews can be opened for returned or completed rentals, with the product ID resolved from the booking item when necessary.
-- **Dark application theme**: The global UI uses a dark surface system with vivid cyan, violet, amber, and emerald accents. Legacy light utility classes, including translucent light backgrounds, are mapped to dark equivalents so older pages remain visually consistent.
-- **Verified eSewa checkout**: The old simulated payment path no longer marks a booking as paid. Customers are redirected to eSewa, and the server only confirms the booking after validating the gateway response, matching the amount, and checking the eSewa transaction status.
-- **Seller payout choices**: Seller onboarding now supports either a bank account or a debit/credit card demo payout method. The demo card flow stores only a masked card reference, last four digits, brand, and expiry; CVV and the full card number are not persisted.
+- **Authentication compatibility**: Existing seeded bcrypt credentials are migrated into Better Auth credential accounts automatically during server startup.
+- **Session normalization**: Login and registration fetch the canonical `/users/me` profile after Better Auth creates the session, keeping application roles and profile fields consistent.
+- **Origin protection**: Better Auth and Socket.IO trust only configured frontend origins.
+- **WebSocket authentication**: Socket connections derive the user identity from the Better Auth session instead of accepting a client-supplied user ID.
+- **Conversation authorization**: Users can only read, join, or send messages in conversations where they are actual participants.
+- **Password protection**: The application user model no longer exposes or returns stored password hashes.
+- **Production secret checks**: The server refuses to start in production when development authentication/payment secrets are still being used.
+- **Seller payout choices**: Seller onboarding supports a bank account or debit/credit card demo payout profile. Only masked card details are stored; full card numbers and CVV are never persisted.
+- **Dark application theme**: The UI uses dark surfaces with vivid cyan, violet, amber, and emerald accents, including legacy components that still use older light utility classes.
 
 ### Payment Environment
 
@@ -58,10 +62,10 @@ This is a demo payout profile only; it is not a real card-processing integration
 | Layer | Technologies |
 |---|---|
 | **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, TanStack Query, Lucide Icons, Recharts |
-| **Backend** | Node.js, Express.js, TypeScript, Better Auth, Socket.IO, Zod validation |
-| **Database & ORM** | PostgreSQL 16, Drizzle ORM, Drizzle Kit |
-| **Cache & Realtime** | Redis 7 (`ioredis`), Socket.IO |
-| **Infrastructure** | Docker Compose (Postgres, Redis, Adminer) |
+| **Backend** | Node.js, Express.js, Better Auth, Socket.IO, Zod validation |
+| **Database** | MongoDB, Mongoose |
+| **Cache & Realtime** | Redis (`ioredis`), Socket.IO |
+| **Infrastructure** | Optional Docker / local MongoDB and Redis |
 
 ---
 
@@ -69,72 +73,63 @@ This is a demo payout profile only; it is not a real card-processing integration
 
 ### 1. Prerequisites
 - [Node.js](https://nodejs.org/) (v20+ recommended)
-- [Docker Desktop](https://www.docker.com/) (for PostgreSQL and Redis)
+- MongoDB
+- Redis (optional; the application can run with Redis disabled)
 
 ### 2. Clone & Setup Environment
 ```bash
-# Copy example environment file
 cp .env.example .env
 ```
 
-### 3. Start Database & Redis Services
+### 3. Install Dependencies
 ```bash
-docker-compose up -d
-```
-This launches:
-- **PostgreSQL**: `localhost:5432` (`renthub_db`)
-- **Redis**: `localhost:6379`
-- **Adminer DB UI**: `http://localhost:8080`
-
-### 4. Install Dependencies
-```bash
-# In server directory
+# Server
 cd server
 npm install
 
-# In client directory (in another terminal or root)
+# Client, in another terminal
 cd ../client
 npm install
 ```
 
-### 5. Run Database Migrations & Realistic Seed Data
+### 4. Seed Realistic Demo Data
 ```bash
 cd server
-npm run db:generate
-npm run db:migrate
 npm run db:seed
 ```
 
-The seed script loads:
-- **10+ Categories**: Cameras, Laptops, Camping, Musical Instruments, Drones, Tools, VR, etc.
-- **20+ Realistic Products**: With specifications, high-res photography, and multi-tier pricing.
-- **5 Verified Lenders**: (e.g. Apex Cine Rentals, Himalayan Adventure Gear).
-- **Pre-populated Rentals & Verified Reviews**.
+The seed script creates demo users, verified sellers, categories, products, bookings, reviews, and notifications.
 
-### 6. Start Development Servers
+### 5. Start Development Servers
 ```bash
-# Start backend API (Port 5000)
+# Backend API
 cd server
 npm run dev
 
-# Start frontend UI (Port 3000)
+# Frontend
 cd client
 npm run dev
 ```
 
-Visit **`http://localhost:3000`** in your browser.
+The default development URLs are **`http://localhost:5000`** for the API and **`http://localhost:3000`** for the client.
 
 ---
 
 ## 🔑 Pre-Configured Demo Accounts
 
-For fast review and pair testing:
+All seeded demo accounts use the same password:
 
-| Role | Email | Password | Details |
-|---|---|---|---|
-| **Admin** | `[EMAIL_ADDRESS]` | `admin123` | Full governance, moderation, dispute analytics |
-| **Seller / Lender** | `[EMAIL_ADDRESS]` | `seller123` | Camera rental shop with live bookings & earnings |
-| **Customer** | `[EMAIL_ADDRESS]` | `customer123` | Renter with active and past rentals |
+```text
+Password123!
+```
+
+| Role | Email | Details |
+|---|---|---|
+| **Admin** | `admin@renthub.app` | Governance, moderation, analytics |
+| **Seller / Lender** | `apex.rentals@renthub.app` | Camera rental shop, bookings and earnings |
+| **Customer** | `prashant@example.com` | Customer account with active and past rentals |
+
+The server automatically migrates seeded legacy bcrypt passwords into Better Auth credential accounts when required.
 
 ---
 
@@ -143,38 +138,30 @@ For fast review and pair testing:
 cd server
 npm test
 ```
-Runs unit and integration test suites:
-- Price tier calculation algorithms
-- Date overlap and booking conflict detection
-- Booking state machine transition integrity
+
+The test suite covers core pricing, booking conflict, and booking state-machine behavior.
 
 ---
 
-## 📁 Project Directory Structure
+## 📁 Project Structure
 
 ```text
-E-commerce-Project/
-├── docker-compose.yml          # PostgreSQL, Redis, Adminer containers
-├── .env.example                # Environment variables template
-├── server/                     # Modular Express + TypeScript Backend
+Project_Ecommerce/
+├── server/
 │   ├── src/
-│   │   ├── config/             # DB, Redis, Auth, Cloudinary, Env
-│   │   ├── db/                 # Drizzle schema (20+ tables), migrations & seed
-│   │   ├── middleware/         # Auth, RBAC guards, validation, error handler
-│   │   ├── modules/            # Bookings, Products, Cart, Wishlist, Payments, Reviews, Users, Admin
-│   │   ├── sockets/            # Socket.IO handlers
-│   │   ├── utils/              # Pricing engine, availability conflict algorithms
-│   │   ├── app.ts              # Express factory
-│   │   └── server.ts           # Server entrypoint
+│   │   ├── config/             # Auth, MongoDB, Redis, Cloudinary, environment
+│   │   ├── middleware/         # Authentication, RBAC, validation, errors, uploads
+│   │   ├── models/             # Mongoose domain models
+│   │   ├── modules/            # Users, Products, Bookings, Payments, Reviews, Messaging, etc.
+│   │   ├── sockets/             # Authenticated Socket.IO handlers
+│   │   └── utils/              # Pricing, availability, logging and response helpers
 │   └── package.json
-│
-├── client/                     # Feature-Based React + Vite Frontend
-│   ├── src/
-│   │   ├── app/                # Root App & React Router
-│   │   ├── components/         # Layout (Navbar, Footer), ProductCard, RentalCalendar, PriceSummary
-│   │   ├── hooks/              # useAuth, useSocket
-│   │   ├── lib/                # Axios, TanStack queryClient, formatters
-│   │   ├── pages/              # Home, Catalog, ProductDetail, Cart, Wishlist, Bookings, Messages, Seller, Admin
-│   │   └── types/              # Domain TypeScript interfaces
-│   └── package.json
+└── client/
+    ├── src/
+    │   ├── app/                # Application and routes
+    │   ├── components/         # Shared and layout components
+    │   ├── hooks/              # Authentication and socket hooks
+    │   ├── lib/                # Axios, React Query, utilities
+    │   └── pages/              # Marketplace, customer, seller and admin pages
+    └── package.json
 ```
