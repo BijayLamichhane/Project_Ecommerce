@@ -106,6 +106,7 @@ export class PaymentService {
         currency: "NPR",
         card: { network: "Visa", last4: "4242" },
         payment: completedPayment,
+        payment_url: `${env.CLIENT_URL}/bookings/${encodeURIComponent(bookingId)}?payment=success&demo=card`,
       };
     }
 
