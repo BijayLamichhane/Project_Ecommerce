@@ -114,6 +114,23 @@ export function AdminDashboardPage() {
     onError: (err: any) => setErrorMsg(getErrorMessage(err, "Failed to update seller status")),
   });
 
+  const handleSellerModeration = (seller: any, status: "approved" | "rejected") => {
+    const sellerId = getEntityId(seller);
+    if (!sellerId) {
+      setErrorMsg("Seller ID is missing from the admin seller record.");
+      return;
+    }
+
+    if (seller.sellerProfile?.disbandRequested && status === "approved") {
+      const confirmed = window.confirm(
+        "Approve this seller disband request? The account will return to customer status and its active/draft listings will be taken offline."
+      );
+      if (!confirmed) return;
+    }
+
+    moderateSellerMutation.mutate({ sellerId, status });
+  };
+
   const createCategoryMutation = useMutation({
     mutationFn: async () => {
       setErrorMsg(null);
@@ -243,8 +260,14 @@ export function AdminDashboardPage() {
 
       {activeTab === "sellers" && (
         <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
-          <h3 className="text-base font-bold text-slate-900">Seller Moderation</h3>
-          <div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead className="border-b border-slate-100 text-slate-400 font-bold uppercase"><tr><th className="pb-3">Business Name</th><th className="pb-3">City</th><th className="pb-3">PAN</th><th className="pb-3">Status</th><th className="pb-3 text-right">Actions</th></tr></thead><tbody className="divide-y divide-slate-100 text-slate-700">{(sellersList || []).map((s: any, index: number) => { const sellerId = getEntityId(s); const rowKey = sellerId || `${s.email || "seller"}-${index}`; return <tr key={rowKey}><td className="py-3 font-semibold text-slate-900">{s.sellerProfile?.businessName || s.businessName}</td><td className="py-3">{s.sellerProfile?.businessCity || s.businessCity}</td><td className="py-3 font-mono">{s.sellerProfile?.panNumber || s.panNumber}</td><td className="py-3"><span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-800">{s.sellerProfile?.status || s.status}</span></td><td className="py-3 text-right space-x-2"><button onClick={() => moderateSellerMutation.mutate({ sellerId, status: "approved" })} disabled={!sellerId || moderateSellerMutation.isPending} className="px-2 py-1 rounded bg-emerald-50 text-emerald-700 font-bold text-[11px] disabled:opacity-50">Approve</button><button onClick={() => moderateSellerMutation.mutate({ sellerId, status: "rejected" })} disabled={!sellerId || moderateSellerMutation.isPending} className="px-2 py-1 rounded bg-rose-50 text-rose-700 font-bold text-[11px] disabled:opacity-50">Reject</button></td></tr>; })}</tbody></table></div>
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">Seller Moderation</h3>
+              <p className="text-[11px] text-slate-500 mt-1">Disband requests are reviewed here. Approving one returns the account to customer status and takes active/draft listings offline.</p>
+            </div>
+            <ShieldAlert className="w-5 h-5 text-amber-500 shrink-0" />
+          </div>
+          <div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead className="border-b border-slate-100 text-slate-400 font-bold uppercase"><tr><th className="pb-3">Business Name</th><th className="pb-3">City</th><th className="pb-3">PAN</th><th className="pb-3">Status</th><th className="pb-3 text-right">Actions</th></tr></thead><tbody className="divide-y divide-slate-100 text-slate-700">{(sellersList || []).map((s: any, index: number) => { const sellerId = getEntityId(s); const rowKey = sellerId || `${s.email || "seller"}-${index}`; const disbandRequested = Boolean(s.sellerProfile?.disbandRequested); return <tr key={rowKey}><td className="py-3 font-semibold text-slate-900">{s.sellerProfile?.businessName || s.businessName}</td><td className="py-3">{s.sellerProfile?.businessCity || s.businessCity}</td><td className="py-3 font-mono">{s.sellerProfile?.panNumber || s.panNumber}</td><td className="py-3"><span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${disbandRequested ? "bg-amber-50 text-amber-800" : "bg-slate-100 text-slate-800"}`}>{disbandRequested ? "Disband Requested" : s.sellerProfile?.status || s.status}</span></td><td className="py-3 text-right space-x-2">{disbandRequested ? <><button onClick={() => handleSellerModeration(s, "approved")} disabled={!sellerId || moderateSellerMutation.isPending} className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-[11px] disabled:opacity-50">Approve Disband</button><button onClick={() => handleSellerModeration(s, "rejected")} disabled={!sellerId || moderateSellerMutation.isPending} className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold text-[11px] disabled:opacity-50">Keep Seller</button></> : <><button onClick={() => handleSellerModeration(s, "approved")} disabled={!sellerId || moderateSellerMutation.isPending} className="px-2 py-1 rounded bg-emerald-50 text-emerald-700 font-bold text-[11px] disabled:opacity-50">Approve</button><button onClick={() => handleSellerModeration(s, "rejected")} disabled={!sellerId || moderateSellerMutation.isPending} className="px-2 py-1 rounded bg-rose-50 text-rose-700 font-bold text-[11px] disabled:opacity-50">Reject</button></>}</td></tr>; })}</tbody></table></div>
         </div>
       )}
 
