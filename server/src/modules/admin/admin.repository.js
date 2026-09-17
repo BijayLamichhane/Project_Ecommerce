@@ -32,6 +32,8 @@ const buildUserIdFilter = (value) => {
   return { _id: id };
 };
 
+const OPEN_SELLER_BOOKING_STATUSES = ["pending", "confirmed", "active", "return_requested"];
+
 export class AdminRepository {
   async getDashboardAnalytics() {
     const [
@@ -96,6 +98,19 @@ export class AdminRepository {
     return sellers.map(normalizeUser);
   }
 
+  async getSellerById(userId) {
+    const filter = buildUserIdFilter(userId);
+    if (!filter) return null;
+    return User.findOne({ ...filter, role: "seller" }).lean({ virtuals: true });
+  }
+
+  async countOpenSellerBookings(sellerId) {
+    return Booking.countDocuments({
+      sellerId: normalizeId(sellerId),
+      status: { $in: OPEN_SELLER_BOOKING_STATUSES },
+    });
+  }
+
   async updateUserStatus(userId, status) {
     const filter = buildUserIdFilter(userId);
     if (!filter) return null;
@@ -114,6 +129,51 @@ export class AdminRepository {
       { $set: { "sellerProfile.status": status } },
       { new: true, runValidators: true }
     ).lean({ virtuals: true });
+  }
+
+  async rejectSellerDisband(userId) {
+    const filter = buildUserIdFilter(userId);
+    if (!filter) return null;
+    return User.findOneAndUpdate(
+      { ...filter, role: "seller", "sellerProfile.disbandRequested": true },
+      {
+        $set: {
+          "sellerProfile.disbandRequested": false,
+          "sellerProfile.status": "approved",
+        },
+        $unset: { "sellerProfile.disbandRequestedAt": 1 },
+      },
+      { new: true, runValidators: true }
+    ).lean({ virtuals: true });
+  }
+
+  async disbandSeller(userId) {
+    const filter = buildUserIdFilter(userId);
+    if (!filter) return null;
+
+    const updated = await User.findOneAndUpdate(
+      { ...filter, role: "seller", "sellerProfile.disbandRequested": true },
+      {
+        $set: {
+          role: "customer",
+          "sellerProfile.status": "suspended",
+          "sellerProfile.isVerified": false,
+          "sellerProfile.disbandRequested": false,
+          "sellerProfile.disbandedAt": new Date(),
+        },
+        $unset: { "sellerProfile.disbandRequestedAt": 1 },
+      },
+      { new: true, runValidators: true }
+    ).lean({ virtuals: true });
+
+    if (updated) {
+      await Product.updateMany(
+        { sellerId: normalizeId(userId), status: { $in: ["active", "draft"] } },
+        { $set: { status: "inactive" } }
+      );
+    }
+
+    return updated;
   }
 
   async logAdminAction(data) {
