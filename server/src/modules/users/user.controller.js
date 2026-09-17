@@ -23,16 +23,16 @@ export class UserController {
   async registerAsSeller(req, res, next) {
     try {
       const seller = await userService.registerAsSeller(req.user.id, req.body);
-      sendCreated(res, seller, "Successfully registered as a seller");
+      sendCreated(res, seller, "Seller application submitted for admin approval");
     } catch (error) {
       next(error);
     }
   }
 
-  async requestSellerDisband(req, res, next) {
+  async disbandSeller(req, res, next) {
     try {
-      const sellerProfile = await userService.requestSellerDisband(req.user.id);
-      sendSuccess(res, sellerProfile, "Seller disband request submitted for admin approval");
+      const customer = await userService.disbandSeller(req.user.id);
+      sendSuccess(res, customer, "Seller account disbanded successfully");
     } catch (error) {
       next(error);
     }
