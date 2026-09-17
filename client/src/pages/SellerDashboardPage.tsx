@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/axios";
 import { formatCurrency, formatDate, getErrorMessage } from "../lib/utils";
-import { Package, Clock, Plus, RotateCcw, Trash2, AlertTriangle } from "lucide-react";
+import { Package, Clock, Plus, RotateCcw, Trash2, AlertTriangle, ShieldAlert } from "lucide-react";
 
 const getEntityId = (entity: any): string => {
   const rawId = entity?.id ?? entity?._id;
@@ -67,6 +67,18 @@ export function SellerDashboardPage() {
     onError: (err: any) => setErrorMsg(getErrorMessage(err, "Failed to delete the product.")),
   });
 
+  const requestSellerDisbandMutation = useMutation({
+    mutationFn: async () => {
+      setErrorMsg(null);
+      await api.post("/users/seller/disband-request");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["seller-earnings"] });
+      setErrorMsg(null);
+    },
+    onError: (err: any) => setErrorMsg(getErrorMessage(err, "Failed to submit the seller disband request.")),
+  });
+
   const handleDeleteProduct = (product: any) => {
     const productId = getEntityId(product);
     if (!productId) {
@@ -79,7 +91,16 @@ export function SellerDashboardPage() {
     if (confirmed) deleteProductMutation.mutate(productId);
   };
 
+  const handleSellerDisbandRequest = () => {
+    if (requestSellerDisbandMutation.isPending || earningsData?.profile?.disbandRequested) return;
+    const confirmed = window.confirm(
+      "Request admin approval to leave the seller role? Your seller account can only be disbanded after an admin approves the request."
+    );
+    if (confirmed) requestSellerDisbandMutation.mutate();
+  };
+
   const metrics = earningsData?.metrics;
+  const disbandRequested = Boolean(earningsData?.profile?.disbandRequested);
 
   if (isLoading) {
     return (
@@ -103,14 +124,38 @@ export function SellerDashboardPage() {
           <div className="text-xs font-bold uppercase tracking-wider text-indigo-600">Lender Command Center</div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-0.5">Seller Dashboard</h1>
         </div>
-        <Link
-          to="/seller/products/new"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-200 transition"
-        >
-          <Plus className="w-4 h-4" />
-          List New Equipment
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          {disbandRequested ? (
+            <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold">
+              <ShieldAlert className="w-4 h-4" />
+              Disband Request Pending Admin Approval
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={handleSellerDisbandRequest}
+              disabled={requestSellerDisbandMutation.isPending}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 text-xs font-bold transition disabled:opacity-50"
+            >
+              <ShieldAlert className="w-4 h-4" />
+              {requestSellerDisbandMutation.isPending ? "Requesting..." : "Request Seller Disband"}
+            </button>
+          )}
+          <Link
+            to="/seller/products/new"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-200 transition"
+          >
+            <Plus className="w-4 h-4" />
+            List New Equipment
+          </Link>
+        </div>
       </div>
+
+      {disbandRequested && (
+        <div className="rounded-2xl border border-amber-800 bg-amber-950/50 p-4 text-xs text-amber-200">
+          Your request is waiting for an administrator. The seller role is not removed automatically. Any unresolved rentals must be settled before an admin can approve the disbandment.
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
