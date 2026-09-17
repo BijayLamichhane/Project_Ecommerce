@@ -31,6 +31,7 @@ RentHub is a full-stack web application for renting physical products such as ca
 - **Dark application theme**: The UI uses dark surfaces with vivid cyan, violet, amber, and emerald accents, including legacy components that still use older light utility classes.
 - **Seller product isolation**: Seller dashboards load only products owned by the authenticated seller through a protected `/products/mine` endpoint; public product search remains available for marketplace browsing.
 - **Seller product deletion**: Sellers can delete their own listings from the dashboard. Deletion uses the existing authorization-protected product delete operation and removes the listing from seller inventory/search results without allowing sellers to delete another seller's product.
+- **Seller disband approval workflow**: Sellers can request to leave the seller role, but the role is not removed by the seller themselves. The request must be approved by an admin. Requests are blocked while the seller has unresolved pending, confirmed, active, or return-requested rentals; an approved disband returns the account to `customer` and takes active/draft seller listings offline.
 
 ### Payment Environment
 
