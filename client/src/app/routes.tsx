@@ -14,6 +14,7 @@ import { DashboardPage } from "../pages/DashboardPage";
 import { SellerDashboardPage } from "../pages/SellerDashboardPage";
 import { SellerProductEditorPage } from "../pages/SellerProductEditorPage";
 import { BecomeSellerPage } from "../pages/BecomeSellerPage";
+import { SuspendedAccountPage } from "../pages/SuspendedAccountPage";
 import { AdminDashboardPage } from "../pages/AdminDashboardPage";
 import { LoginPage } from "../pages/LoginPage";
 import { RegisterPage } from "../pages/RegisterPage";
@@ -32,6 +33,7 @@ function ProtectedRoute({ children, role }: { children: React.ReactNode; role?: 
   }
 
   if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
+  if (user.status === "suspended") return <Navigate to="/account-suspended" replace />;
   if (role === "admin" && user.role !== "admin") return <Navigate to="/dashboard" replace />;
   if (role === "seller" && user.role !== "seller" && user.role !== "admin") return <Navigate to="/become-seller" replace />;
 
@@ -50,6 +52,7 @@ export function AppRoutes() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/become-seller" element={<BecomeSellerPage />} />
+          <Route path="/account-suspended" element={<SuspendedAccountPage />} />
 
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
