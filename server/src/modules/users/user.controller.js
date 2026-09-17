@@ -29,6 +29,15 @@ export class UserController {
     }
   }
 
+  async requestSellerDisband(req, res, next) {
+    try {
+      const sellerProfile = await userService.requestSellerDisband(req.user.id);
+      sendSuccess(res, sellerProfile, "Seller disband request submitted for admin approval");
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async updateSellerSettings(req, res, next) {
     try {
       const updated = await userService.updateSellerSettings(req.user.id, req.body);
