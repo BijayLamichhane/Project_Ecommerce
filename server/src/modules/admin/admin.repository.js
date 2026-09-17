@@ -92,8 +92,13 @@ export class AdminRepository {
   }
 
   async getAllSellers() {
-    const sellers = await User.find({ role: "seller" })
-      .sort({ createdAt: -1 })
+    const sellers = await User.find({
+      $or: [
+        { role: "seller" },
+        { "sellerProfile.status": "pending" },
+      ],
+    })
+      .sort({ "sellerProfile.status": 1, createdAt: -1 })
       .lean({ virtuals: true });
     return sellers.map(normalizeUser);
   }
@@ -101,7 +106,12 @@ export class AdminRepository {
   async getSellerById(userId) {
     const filter = buildUserIdFilter(userId);
     if (!filter) return null;
-    return User.findOne({ ...filter, role: "seller" }).lean({ virtuals: true });
+    return User.findOne({
+      $and: [
+        filter,
+        { $or: [{ role: "seller" }, { "sellerProfile.status": "pending" }] },
+      ],
+    }).lean({ virtuals: true });
   }
 
   async countOpenSellerBookings(sellerId) {
@@ -109,6 +119,55 @@ export class AdminRepository {
       sellerId: normalizeId(sellerId),
       status: { $in: OPEN_SELLER_BOOKING_STATUSES },
     });
+  }
+
+  async approveSellerApplication(userId) {
+    const filter = buildUserIdFilter(userId);
+    if (!filter) return null;
+    return User.findOneAndUpdate(
+      {
+        $and: [
+          filter,
+          { role: "customer", "sellerProfile.status": "pending" },
+        ],
+      },
+      {
+        $set: {
+          role: "seller",
+          "sellerProfile.status": "approved",
+          "sellerProfile.isVerified": true,
+          "sellerProfile.verifiedAt": new Date(),
+        },
+        $unset: {
+          "sellerProfile.rejectionReason": 1,
+          "sellerProfile.rejectedAt": 1,
+        },
+      },
+      { new: true, runValidators: true }
+    ).lean({ virtuals: true });
+  }
+
+  async rejectSellerApplication(userId, reason) {
+    const filter = buildUserIdFilter(userId);
+    if (!filter) return null;
+    return User.findOneAndUpdate(
+      {
+        $and: [
+          filter,
+          { role: "customer", "sellerProfile.status": "pending" },
+        ],
+      },
+      {
+        $set: {
+          "sellerProfile.status": "rejected",
+          "sellerProfile.rejectionReason": reason,
+          "sellerProfile.rejectedAt": new Date(),
+          "sellerProfile.isVerified": false,
+        },
+        $unset: { "sellerProfile.verifiedAt": 1 },
+      },
+      { new: true, runValidators: true }
+    ).lean({ virtuals: true });
   }
 
   async updateUserStatus(userId, status) {
@@ -121,28 +180,27 @@ export class AdminRepository {
     ).lean({ virtuals: true });
   }
 
-  async updateSellerStatus(userId, status) {
+  async updateSellerStatus(userId, status, reason) {
     const filter = buildUserIdFilter(userId);
     if (!filter) return null;
+    const update = { $set: { "sellerProfile.status": status } };
+    if (status === "approved") {
+      update.$set["sellerProfile.isVerified"] = true;
+      update.$set["sellerProfile.verifiedAt"] = new Date();
+      update.$unset = {
+        "sellerProfile.rejectionReason": 1,
+        "sellerProfile.rejectedAt": 1,
+      };
+    } else if (status === "rejected") {
+      update.$set["sellerProfile.isVerified"] = false;
+      update.$set["sellerProfile.rejectionReason"] = reason;
+      update.$set["sellerProfile.rejectedAt"] = new Date();
+      update.$unset = { "sellerProfile.verifiedAt": 1 };
+    }
+
     return User.findOneAndUpdate(
       { ...filter, role: "seller" },
-      { $set: { "sellerProfile.status": status } },
-      { new: true, runValidators: true }
-    ).lean({ virtuals: true });
-  }
-
-  async rejectSellerDisband(userId) {
-    const filter = buildUserIdFilter(userId);
-    if (!filter) return null;
-    return User.findOneAndUpdate(
-      { ...filter, role: "seller", "sellerProfile.disbandRequested": true },
-      {
-        $set: {
-          "sellerProfile.disbandRequested": false,
-          "sellerProfile.status": "approved",
-        },
-        $unset: { "sellerProfile.disbandRequestedAt": 1 },
-      },
+      update,
       { new: true, runValidators: true }
     ).lean({ virtuals: true });
   }
@@ -152,7 +210,7 @@ export class AdminRepository {
     if (!filter) return null;
 
     const updated = await User.findOneAndUpdate(
-      { ...filter, role: "seller", "sellerProfile.disbandRequested": true },
+      { ...filter, role: "seller" },
       {
         $set: {
           role: "customer",
