@@ -34,6 +34,7 @@ RentHub is a full-stack web application for renting physical products such as ca
 - **Seller application approval**: Customers submit seller applications while remaining `customer` accounts. An administrator reviews pending applications and must approve one before the account becomes a `seller`.
 - **Seller application rejection reasons**: Administrators must provide a reason when rejecting a seller application. The rejection reason is stored on the seller profile and shown to the customer so they can understand what needs to be addressed before reapplying.
 - **Direct seller disbandment**: Active sellers can disband their seller role without admin approval, provided they have no unresolved pending, confirmed, active, or return-requested rentals. Disbanding immediately returns the account to `customer` and takes active/draft seller listings offline.
+- **Suspended account enforcement**: Administrators can suspend users, and suspended accounts are blocked from authenticated actions such as becoming a seller, purchasing/renting, managing listings, messaging, reviews, and other protected API operations. Suspended WebSocket connections are also blocked from joining conversations or sending/typing messages, and the client redirects them to a dedicated suspension screen.
 
 ### Payment Environment
 
