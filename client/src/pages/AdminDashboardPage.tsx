@@ -5,14 +5,8 @@ import { formatCurrency, formatDate, getErrorMessage } from "../lib/utils";
 import {
   Users,
   Building,
-  Package,
-  TrendingUp,
   ShieldAlert,
-  CheckCircle2,
-  XCircle,
   AlertTriangle,
-  Ban,
-  RotateCcw,
   Plus,
   Trash2,
 } from "lucide-react";
@@ -43,7 +37,8 @@ export function AdminDashboardPage() {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryDescription, setNewCategoryDescription] = useState("");
   const [newCategoryIcon, setNewCategoryIcon] = useState("Package");
-  const [sellerDisbandModal, setSellerDisbandModal] = useState<{ seller: any } | null>(null);
+  const [sellerRejectionModal, setSellerRejectionModal] = useState<{ seller: any } | null>(null);
+  const [sellerRejectionReason, setSellerRejectionReason] = useState("");
 
   const { data: dashboardData } = useQuery({
     queryKey: ["admin-dashboard"],
@@ -93,7 +88,9 @@ export function AdminDashboardPage() {
     mutationFn: async ({ userId, isSuspended }: { userId: string; isSuspended: boolean }) => {
       setErrorMsg(null);
       if (!userId) throw new Error("User ID is missing from the admin user record.");
-      const endpoint = isSuspended ? `/admin/users/${encodeURIComponent(userId)}/unsuspend` : `/admin/users/${encodeURIComponent(userId)}/suspend`;
+      const endpoint = isSuspended
+        ? `/admin/users/${encodeURIComponent(userId)}/unsuspend`
+        : `/admin/users/${encodeURIComponent(userId)}/suspend`;
       await api.post(endpoint);
     },
     onSuccess: () => {
@@ -104,14 +101,19 @@ export function AdminDashboardPage() {
   });
 
   const moderateSellerMutation = useMutation({
-    mutationFn: async ({ sellerId, status }: { sellerId: string; status: string }) => {
+    mutationFn: async ({ sellerId, status, reason }: { sellerId: string; status: string; reason?: string }) => {
       setErrorMsg(null);
       if (!sellerId) throw new Error("Seller ID is missing from the admin seller record.");
-      await api.post(`/admin/sellers/${encodeURIComponent(sellerId)}/moderate`, { status });
+      await api.post(`/admin/sellers/${encodeURIComponent(sellerId)}/moderate`, {
+        status,
+        reason,
+      });
     },
     onSuccess: () => {
-      setSellerDisbandModal(null);
+      setSellerRejectionModal(null);
+      setSellerRejectionReason("");
       queryClient.invalidateQueries({ queryKey: ["admin-sellers"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
     },
     onError: (err: any) => setErrorMsg(getErrorMessage(err, "Failed to update seller status")),
@@ -124,22 +126,28 @@ export function AdminDashboardPage() {
       return;
     }
 
-    if (seller.sellerProfile?.disbandRequested && status === "approved") {
-      setSellerDisbandModal({ seller });
+    if (status === "rejected") {
+      setSellerRejectionReason("");
+      setSellerRejectionModal({ seller });
       return;
     }
 
-    moderateSellerMutation.mutate({ sellerId, status });
+    moderateSellerMutation.mutate({ sellerId, status: "approved" });
   };
 
-  const approveSellerDisband = () => {
-    const sellerId = sellerDisbandModal ? getEntityId(sellerDisbandModal.seller) : "";
+  const rejectSeller = () => {
+    const sellerId = sellerRejectionModal ? getEntityId(sellerRejectionModal.seller) : "";
+    const reason = sellerRejectionReason.trim();
     if (!sellerId) {
-      setSellerDisbandModal(null);
+      setSellerRejectionModal(null);
       setErrorMsg("Seller ID is missing from the admin seller record.");
       return;
     }
-    moderateSellerMutation.mutate({ sellerId, status: "approved" });
+    if (reason.length < 5) {
+      setErrorMsg("Please provide a rejection reason of at least 5 characters.");
+      return;
+    }
+    moderateSellerMutation.mutate({ sellerId, status: "rejected", reason });
   };
 
   const createCategoryMutation = useMutation({
@@ -188,7 +196,7 @@ export function AdminDashboardPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       {errorMsg && (
         <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-start gap-2">
-          <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+          <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0" />
           <span>{errorMsg}</span>
         </div>
       )}
@@ -217,7 +225,12 @@ export function AdminDashboardPage() {
       {activeTab === "overview" && (
         <div className="space-y-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[{ label: "Platform Revenue", value: formatCurrency(metrics?.totalRevenue ?? 0), hint: "Gross rental GMV" }, { label: "Total Users", value: metrics?.totalUsers ?? 0, hint: "Registered members" }, { label: "Active Listings", value: metrics?.totalProducts ?? 0, hint: "Rentable gear" }, { label: "Active Rentals", value: metrics?.activeRentals ?? 0, hint: "Currently in use" }].map((metric) => (
+            {[
+              { label: "Platform Revenue", value: formatCurrency(metrics?.totalRevenue ?? 0), hint: "Gross rental GMV" },
+              { label: "Total Users", value: metrics?.totalUsers ?? 0, hint: "Registered members" },
+              { label: "Active Listings", value: metrics?.totalProducts ?? 0, hint: "Rentable gear" },
+              { label: "Active Rentals", value: metrics?.activeRentals ?? 0, hint: "Currently in use" },
+            ].map((metric) => (
               <div key={metric.label} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
                 <div className="text-xs font-bold uppercase tracking-wider text-slate-400">{metric.label}</div>
                 <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">{metric.value}</div>
@@ -228,11 +241,11 @@ export function AdminDashboardPage() {
 
           <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
             <h3 className="text-base font-bold text-slate-900">Recent Platform Activity</h3>
-            {dashboardData?.recentActivity && dashboardData.recentActivity.length > 0 ? (
+            {dashboardData?.recentActivity?.length ? (
               <div className="divide-y divide-slate-100 text-xs">
                 {dashboardData.recentActivity.map((act: any, index: number) => {
                   const action = act?.action ?? act?.actionType;
-                  const key = getEntityId(act) || `activity-${getActionLabel(action).replace(/\s+/g, "-")}-${act?.createdAt || index}-${index}`;
+                  const key = getEntityId(act) || `activity-${index}`;
                   return (
                     <div key={key} className="py-2.5 flex items-center justify-between">
                       <div>
@@ -273,36 +286,107 @@ export function AdminDashboardPage() {
         <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
             <div>
-              <h3 className="text-base font-bold text-slate-900">Seller Moderation</h3>
-              <p className="text-[11px] text-slate-500 mt-1">Disband requests are reviewed here. Approving one returns the account to customer status and takes active/draft listings offline.</p>
+              <h3 className="text-base font-bold text-slate-900">Seller Applications & Moderation</h3>
+              <p className="text-[11px] text-slate-500 mt-1">Customer seller applications require admin approval. Sellers can disband their seller role directly; disbandment is not reviewed here.</p>
             </div>
             <ShieldAlert className="w-5 h-5 text-amber-500 shrink-0" />
           </div>
-          <div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead className="border-b border-slate-100 text-slate-400 font-bold uppercase"><tr><th className="pb-3">Business Name</th><th className="pb-3">City</th><th className="pb-3">PAN</th><th className="pb-3">Status</th><th className="pb-3 text-right">Actions</th></tr></thead><tbody className="divide-y divide-slate-100 text-slate-700">{(sellersList || []).map((s: any, index: number) => { const sellerId = getEntityId(s); const rowKey = sellerId || `${s.email || "seller"}-${index}`; const disbandRequested = Boolean(s.sellerProfile?.disbandRequested); return <tr key={rowKey}><td className="py-3 font-semibold text-slate-900">{s.sellerProfile?.businessName || s.businessName}</td><td className="py-3">{s.sellerProfile?.businessCity || s.businessCity}</td><td className="py-3 font-mono">{s.sellerProfile?.panNumber || s.panNumber}</td><td className="py-3"><span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${disbandRequested ? "bg-amber-50 text-amber-800" : "bg-slate-100 text-slate-800"}`}>{disbandRequested ? "Disband Requested" : s.sellerProfile?.status || s.status}</span></td><td className="py-3 text-right space-x-2">{disbandRequested ? <><button onClick={() => handleSellerModeration(s, "approved")} disabled={!sellerId || moderateSellerMutation.isPending} className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-[11px] disabled:opacity-50">Approve Disband</button><button onClick={() => handleSellerModeration(s, "rejected")} disabled={!sellerId || moderateSellerMutation.isPending} className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold text-[11px] disabled:opacity-50">Keep Seller</button></> : <><button onClick={() => handleSellerModeration(s, "approved")} disabled={!sellerId || moderateSellerMutation.isPending} className="px-2 py-1 rounded bg-emerald-50 text-emerald-700 font-bold text-[11px] disabled:opacity-50">Approve</button><button onClick={() => handleSellerModeration(s, "rejected")} disabled={!sellerId || moderateSellerMutation.isPending} className="px-2 py-1 rounded bg-rose-50 text-rose-700 font-bold text-[11px] disabled:opacity-50">Reject</button></>}</td></tr>; })}</tbody></table></div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="border-b border-slate-100 text-slate-400 font-bold uppercase">
+                <tr><th className="pb-3">Business Name</th><th className="pb-3">City</th><th className="pb-3">PAN</th><th className="pb-3">Status</th><th className="pb-3 text-right">Actions</th></tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700">
+                {(sellersList || []).map((s: any, index: number) => {
+                  const sellerId = getEntityId(s);
+                  const rowKey = sellerId || `${s.email || "seller"}-${index}`;
+                  const isPendingApplication = s.role === "customer" && s.sellerProfile?.status === "pending";
+                  const displayStatus = isPendingApplication ? "Application Pending" : s.sellerProfile?.status || s.status;
+                  return (
+                    <tr key={rowKey}>
+                      <td className="py-3 font-semibold text-slate-900">{s.sellerProfile?.businessName || "—"}</td>
+                      <td className="py-3">{s.sellerProfile?.businessCity || "—"}</td>
+                      <td className="py-3 font-mono">{s.sellerProfile?.panNumber || "—"}</td>
+                      <td className="py-3"><span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${isPendingApplication ? "bg-amber-50 text-amber-800" : "bg-slate-100 text-slate-800"}`}>{displayStatus}</span></td>
+                      <td className="py-3 text-right space-x-2">
+                        <button onClick={() => handleSellerModeration(s, "approved")} disabled={!sellerId || moderateSellerMutation.isPending} className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold text-[11px] disabled:opacity-50">Approve</button>
+                        <button onClick={() => handleSellerModeration(s, "rejected")} disabled={!sellerId || moderateSellerMutation.isPending} className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-[11px] disabled:opacity-50">Reject</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {!sellersList?.length && <div className="text-xs text-slate-400 py-4 text-center">No pending seller applications or active sellers.</div>}
         </div>
       )}
 
       {activeTab === "categories" && (
         <div className="space-y-6">
-          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4"><div className="flex items-center gap-2"><Plus className="w-4 h-4 text-emerald-600" /><h3 className="text-base font-bold text-slate-900">Create Category</h3></div><div className="grid grid-cols-1 md:grid-cols-3 gap-3"><input value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="Category name" className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm" /><input value={newCategoryDescription} onChange={(e) => setNewCategoryDescription(e.target.value)} placeholder="Description" className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm" /><input value={newCategoryIcon} onChange={(e) => setNewCategoryIcon(e.target.value)} placeholder="Lucide icon name" className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm" /></div><button onClick={() => createCategoryMutation.mutate()} disabled={createCategoryMutation.isPending || !newCategoryName.trim()} className="px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold disabled:opacity-50">Create Category</button></div>
-          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4"><h3 className="text-base font-bold text-slate-900">Categories</h3><div className="space-y-2">{(categoriesList || []).map((category: any, index: number) => { const categoryId = getEntityId(category); return <div key={categoryId || `${category.slug || category.name || "category"}-${index}`} className="flex flex-wrap items-center justify-between gap-3 border border-slate-100 rounded-2xl p-3"><div><p className="text-sm font-bold text-slate-900">{category.name}</p><p className="text-[11px] text-slate-500">{category.slug}</p></div><div className="flex items-center gap-2"><input value={category.iconName || "Package"} onChange={(e) => { const iconName = e.target.value; if (categoryId) updateCategoryIconMutation.mutate({ categoryId, iconName }); }} className="w-28 px-2 py-1.5 rounded-lg border border-slate-200 text-xs" /><button onClick={() => categoryId && deleteCategoryMutation.mutate(categoryId)} disabled={!categoryId || deleteCategoryMutation.isPending} className="p-2 rounded-lg bg-rose-50 text-rose-600 disabled:opacity-50"><Trash2 className="w-4 h-4" /></button></div></div>; })}</div></div>
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
+            <div className="flex items-center gap-2"><Plus className="w-4 h-4 text-emerald-600" /><h3 className="text-base font-bold text-slate-900">Create Category</h3></div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <input value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="Category name" className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm" />
+              <input value={newCategoryDescription} onChange={(e) => setNewCategoryDescription(e.target.value)} placeholder="Description" className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm" />
+              <input value={newCategoryIcon} onChange={(e) => setNewCategoryIcon(e.target.value)} placeholder="Lucide icon name" className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm" />
+            </div>
+            <button onClick={() => createCategoryMutation.mutate()} disabled={createCategoryMutation.isPending || !newCategoryName.trim()} className="px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold disabled:opacity-50">Create Category</button>
+          </div>
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
+            <h3 className="text-base font-bold text-slate-900">Categories</h3>
+            <div className="space-y-2">
+              {(categoriesList || []).map((category: any, index: number) => {
+                const categoryId = getEntityId(category);
+                return <div key={categoryId || `${category.slug || category.name || "category"}-${index}`} className="flex flex-wrap items-center justify-between gap-3 border border-slate-100 rounded-2xl p-3"><div><p className="text-sm font-bold text-slate-900">{category.name}</p><p className="text-[11px] text-slate-500">{category.slug}</p></div><div className="flex items-center gap-2"><input value={category.iconName || "Package"} onChange={(e) => { const iconName = e.target.value; if (categoryId) updateCategoryIconMutation.mutate({ categoryId, iconName }); }} className="w-28 px-2 py-1.5 rounded-lg border border-slate-200 text-xs" /><button onClick={() => categoryId && deleteCategoryMutation.mutate(categoryId)} disabled={!categoryId || deleteCategoryMutation.isPending} className="p-2 rounded-lg bg-rose-50 text-rose-600 disabled:opacity-50"><Trash2 className="w-4 h-4" /></button></div></div>;
+              })}
+            </div>
+          </div>
         </div>
       )}
 
-      {activeTab === "products" && <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm"><p className="text-sm text-slate-500">Product administration is available from seller moderation and listing workflows.</p></div>}
-      {activeTab === "disputes" && <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4"><h3 className="text-base font-bold text-slate-900">Reports & Disputes</h3>{(disputesList || []).length === 0 ? <p className="text-sm text-slate-500">No disputes found.</p> : <div className="space-y-3">{(disputesList || []).map((dispute: any, index: number) => <div key={getEntityId(dispute) || `dispute-${index}`} className="rounded-2xl border border-slate-100 p-4"><p className="text-sm font-bold text-slate-900">Booking {getEntityId(dispute)}</p><p className="text-xs text-slate-500 mt-1">{dispute.customer?.name || "Customer"} · {dispute.status}</p></div>)}</div>}</div>}
+      {activeTab === "products" && <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm"><p className="text-sm text-slate-500">Product administration is available from seller listing workflows.</p></div>}
+      {activeTab === "disputes" && (
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
+          <h3 className="text-base font-bold text-slate-900">Reports & Disputes</h3>
+          {(disputesList || []).length === 0 ? <p className="text-sm text-slate-500">No disputes found.</p> : <div className="space-y-3">{(disputesList || []).map((dispute: any, index: number) => <div key={getEntityId(dispute) || `dispute-${index}`} className="rounded-2xl border border-slate-100 p-4"><p className="text-sm font-bold text-slate-900">Booking {getEntityId(dispute)}</p><p className="text-xs text-slate-500 mt-1">{dispute.customer?.name || "Customer"} · {dispute.status}</p></div>)}</div>}
+        </div>
+      )}
 
       <ConfirmModal
-        open={Boolean(sellerDisbandModal)}
-        title="Approve Seller Disbandment"
-        message={`Approve disbandment for "${sellerDisbandModal?.seller?.sellerProfile?.businessName || sellerDisbandModal?.seller?.name || "this seller"}"? The account will return to customer status and its active/draft listings will be taken offline.`}
-        confirmLabel="Approve Disband"
+        open={Boolean(sellerRejectionModal)}
+        title="Reject Seller Application"
+        message={`Provide a reason for rejecting "${sellerRejectionModal?.seller?.sellerProfile?.businessName || sellerRejectionModal?.seller?.name || "this seller"}". The reason will be saved and shown to the customer.`}
+        confirmLabel="Reject Application"
         cancelLabel="Keep Reviewing"
-        onConfirm={approveSellerDisband}
-        onCancel={() => !moderateSellerMutation.isPending && setSellerDisbandModal(null)}
+        onConfirm={rejectSeller}
+        onCancel={() => {
+          if (!moderateSellerMutation.isPending) {
+            setSellerRejectionModal(null);
+            setSellerRejectionReason("");
+          }
+        }}
         loading={moderateSellerMutation.isPending}
         danger
-      />
+      >
+        <div className="space-y-2 pb-1">
+          <label htmlFor="seller-rejection-reason" className="text-xs font-bold text-slate-300">Rejection reason *</label>
+          <textarea
+            id="seller-rejection-reason"
+            value={sellerRejectionReason}
+            onChange={(event) => setSellerRejectionReason(event.target.value)}
+            placeholder="Explain why the seller application is being rejected..."
+            rows={4}
+            maxLength={1000}
+            disabled={moderateSellerMutation.isPending}
+            className="w-full px-3 py-2.5 rounded-xl border border-slate-700 bg-slate-950 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-400/20 disabled:opacity-50"
+          />
+          <div className="flex items-center justify-between text-[10px] text-slate-500">
+            <span>Minimum 5 characters.</span>
+            <span>{sellerRejectionReason.length}/1000</span>
+          </div>
+        </div>
+      </ConfirmModal>
     </div>
   );
 }
