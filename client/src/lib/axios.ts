@@ -34,8 +34,19 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      const path = window.location.pathname;
+    const status = error.response?.status;
+    const errorCode = error.response?.data?.error?.code;
+    const path = window.location.pathname;
+
+    if (status === 403 && errorCode === "ACCOUNT_SUSPENDED") {
+      useAuthStore.getState().logout();
+      if (path !== "/account-suspended") {
+        window.location.href = "/account-suspended";
+      }
+      return Promise.reject(error);
+    }
+
+    if (status === 401) {
       const onAuthPage = path.startsWith("/login") || path.startsWith("/register");
 
       // Only force a redirect when the store still thinks we're signed in —
