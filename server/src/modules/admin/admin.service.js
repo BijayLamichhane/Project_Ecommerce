@@ -1,6 +1,6 @@
 import { adminRepository } from "./admin.repository.js";
 import { productRepository } from "../products/product.repository.js";
-import { NotFoundError, ConflictError } from "../../middleware/errorHandler.js";
+import { NotFoundError, ConflictError, ValidationError } from "../../middleware/errorHandler.js";
 
 const OPEN_SELLER_BOOKING_MESSAGE = "This seller has unresolved pending, confirmed, active, or return-requested rentals";
 
@@ -42,48 +42,63 @@ export class AdminService {
 
   async moderateSeller(adminId, sellerId, status, reason) {
     const seller = await adminRepository.getSellerById(sellerId);
-    if (!seller) throw new NotFoundError("Seller");
+    if (!seller) throw new NotFoundError("Seller application");
 
-    if (seller.sellerProfile?.disbandRequested) {
-      if (status === "approved") {
-        const openBookings = await adminRepository.countOpenSellerBookings(sellerId);
-        if (openBookings > 0) {
-          throw new ConflictError(OPEN_SELLER_BOOKING_MESSAGE);
-        }
-
-        const customer = await adminRepository.disbandSeller(sellerId);
-        if (!customer) throw new ConflictError("Seller disband request is no longer pending");
-        await adminRepository.logAdminAction({
-          adminId,
-          actionType: "disband_seller",
-          targetUserId: sellerId,
-          reason,
-        });
-        return customer;
-      }
-
-      if (status === "rejected") {
-        const restoredSeller = await adminRepository.rejectSellerDisband(sellerId);
-        if (!restoredSeller) throw new ConflictError("Seller disband request is no longer pending");
-        await adminRepository.logAdminAction({
-          adminId,
-          actionType: "reject_seller_disband",
-          targetUserId: sellerId,
-          reason,
-        });
-        return restoredSeller;
-      }
-
-      throw new ConflictError("Approve or reject the seller disband request before changing seller moderation status");
+    if (!["approved", "rejected"].includes(status)) {
+      throw new ValidationError("Seller moderation status must be approved or rejected");
     }
 
-    const updatedSeller = await adminRepository.updateSellerStatus(sellerId, status);
-    if (!updatedSeller) throw new NotFoundError("Seller");
+    if (status === "rejected" && !reason?.trim()) {
+      throw new ValidationError("A rejection reason is required");
+    }
+
+    const isPendingApplication = seller.role === "customer" && seller.sellerProfile?.status === "pending";
+
+    if (isPendingApplication) {
+      if (status === "approved") {
+        const approvedSeller = await adminRepository.approveSellerApplication(sellerId);
+        if (!approvedSeller) throw new ConflictError("Seller application is no longer pending");
+        await adminRepository.logAdminAction({
+          adminId,
+          actionType: "approve_seller_application",
+          targetUserId: sellerId,
+        });
+        return approvedSeller;
+      }
+
+      const rejectedApplication = await adminRepository.rejectSellerApplication(sellerId, reason.trim());
+      if (!rejectedApplication) throw new ConflictError("Seller application is no longer pending");
+      await adminRepository.logAdminAction({
+        adminId,
+        actionType: "reject_seller_application",
+        targetUserId: sellerId,
+        reason: reason.trim(),
+      });
+      return rejectedApplication;
+    }
+
+    if (seller.role !== "seller") {
+      throw new ConflictError("Only pending seller applications or active sellers can be moderated");
+    }
+
+    if (status === "approved") {
+      const updatedSeller = await adminRepository.updateSellerStatus(sellerId, "approved");
+      if (!updatedSeller) throw new ConflictError("Seller is no longer available");
+      await adminRepository.logAdminAction({
+        adminId,
+        actionType: "approve_seller",
+        targetUserId: sellerId,
+      });
+      return updatedSeller;
+    }
+
+    const updatedSeller = await adminRepository.updateSellerStatus(sellerId, "rejected", reason.trim());
+    if (!updatedSeller) throw new ConflictError("Seller is no longer available");
     await adminRepository.logAdminAction({
       adminId,
-      actionType: status === "approved" ? "approve_seller" : "reject_seller",
+      actionType: "reject_seller",
       targetUserId: sellerId,
-      reason,
+      reason: reason.trim(),
     });
     return updatedSeller;
   }
