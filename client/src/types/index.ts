@@ -39,12 +39,20 @@ export interface Profile {
 export interface SellerProfile {
   _id: string;
   id?: string;
-  userId: string;
+  userId?: string;
   businessName: string;
   businessDescription?: string;
   businessAddress?: string;
   businessCity?: string;
+  panNumber?: string;
   isVerified: boolean;
+  status?: "pending" | "approved" | "rejected" | "suspended";
+  rejectionReason?: string;
+  applicationRequestedAt?: string;
+  rejectedAt?: string;
+  disbandRequested?: boolean;
+  disbandRequestedAt?: string;
+  disbandedAt?: string;
   averageRating: string;
   totalRatings: number;
   totalEarnings: string;
