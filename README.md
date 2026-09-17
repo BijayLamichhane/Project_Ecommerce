@@ -29,6 +29,8 @@ RentHub is a full-stack web application for renting physical products such as ca
 - **Production secret checks**: The server refuses to start in production when development authentication/payment secrets are still being used.
 - **Seller payout choices**: Seller onboarding supports a bank account or debit/credit card demo payout profile. Only masked card details are stored; full card numbers and CVV are never persisted.
 - **Dark application theme**: The UI uses dark surfaces with vivid cyan, violet, amber, and emerald accents, including legacy components that still use older light utility classes.
+- **Seller product isolation**: Seller dashboards load only products owned by the authenticated seller through a protected `/products/mine` endpoint; public product search remains available for marketplace browsing.
+- **Seller product deletion**: Sellers can delete their own listings from the dashboard. Deletion uses the existing authorization-protected product delete operation and removes the listing from seller inventory/search results without allowing sellers to delete another seller's product.
 
 ### Payment Environment
 
