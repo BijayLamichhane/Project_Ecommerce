@@ -7,7 +7,7 @@ export class MessagingRepository {
     })
       .populate("customer", "id name avatarUrl role")
       .populate("seller", "id name avatarUrl role")
-      .populate({ path: "productId", model: "Product", select: "id name slug images" })
+      .populate({ path: "product", model: "Product", select: "id name slug images" })
       .sort({ lastMessageAt: -1 })
       .lean({ virtuals: true });
 
@@ -26,7 +26,7 @@ export class MessagingRepository {
     return Conversation.findById(conversationId)
       .populate("customer", "id name avatarUrl")
       .populate("seller", "id name avatarUrl")
-      .populate({ path: "productId", model: "Product", select: "id name slug images pricing" })
+      .populate({ path: "product", model: "Product", select: "id name slug images pricing" })
       .lean({ virtuals: true });
   }
 
