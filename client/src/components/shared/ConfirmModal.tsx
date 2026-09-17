@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { ReactNode, useEffect } from "react";
 import { AlertTriangle, X } from "lucide-react";
 
 interface ConfirmModalProps {
@@ -11,6 +11,7 @@ interface ConfirmModalProps {
   onCancel: () => void;
   loading?: boolean;
   danger?: boolean;
+  children?: ReactNode;
 }
 
 export function ConfirmModal({
@@ -23,6 +24,7 @@ export function ConfirmModal({
   onCancel,
   loading = false,
   danger = true,
+  children,
 }: ConfirmModalProps) {
   useEffect(() => {
     if (!open) return;
@@ -55,7 +57,7 @@ export function ConfirmModal({
             <div className={`mt-0.5 w-10 h-10 rounded-xl flex items-center justify-center ${danger ? "bg-rose-500/10 text-rose-400" : "bg-cyan-500/10 text-cyan-400"}`}>
               <AlertTriangle className="w-5 h-5" />
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <h2 id="confirm-modal-title" className="text-base font-extrabold text-white">
                 {title}
               </h2>
@@ -74,6 +76,8 @@ export function ConfirmModal({
             <X className="w-4 h-4" />
           </button>
         </div>
+
+        {children && <div className="px-6 pt-5">{children}</div>}
 
         <div className="flex justify-end gap-3 p-5 bg-slate-950/40">
           <button
