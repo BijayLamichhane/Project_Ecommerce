@@ -3,11 +3,18 @@ import { env } from "../config/env.js";
 import { auth } from "../config/auth.js";
 import { logger } from "../utils/logger.js";
 import { messagingService } from "../modules/messaging/messaging.service.js";
+import { getAccountStatus } from "../middleware/accountStatus.js";
 
 const socketOrigins =
   env.NODE_ENV === "production"
     ? [env.CLIENT_URL]
     : Array.from(new Set([env.CLIENT_URL, "http://localhost:3000", "http://localhost:5173"]));
+
+const assertSocketAccountActive = async (userId) => {
+  const status = await getAccountStatus(userId);
+  if (!status) throw new Error("Account not found");
+  if (status === "suspended") throw new Error("Account is suspended");
+};
 
 export function initSocketIO(httpServer) {
   const io = new Server(httpServer, {
@@ -25,11 +32,13 @@ export function initSocketIO(httpServer) {
         next(new Error("Authentication required"));
         return;
       }
-      socket.userId = String(session.user.id);
+      const userId = String(session.user.id);
+      await assertSocketAccountActive(userId);
+      socket.userId = userId;
       next();
     } catch (error) {
-      logger.warn({ error }, "Rejected unauthenticated WebSocket connection");
-      next(new Error("Authentication failed"));
+      logger.warn({ error }, "Rejected unauthenticated or suspended WebSocket connection");
+      next(new Error(error?.message === "Account is suspended" ? "Account suspended" : "Authentication failed"));
     }
   });
 
@@ -39,6 +48,7 @@ export function initSocketIO(httpServer) {
 
     socket.on("join_conversation", async (conversationId, callback) => {
       try {
+        await assertSocketAccountActive(socket.userId);
         await messagingService.assertConversationParticipant(socket.userId, conversationId);
         await socket.join(`conversation:${conversationId}`);
         if (typeof callback === "function") callback({ ok: true });
@@ -54,6 +64,7 @@ export function initSocketIO(httpServer) {
 
     socket.on("send_message", async (data, callback) => {
       try {
+        await assertSocketAccountActive(socket.userId);
         const result = await messagingService.sendMessage(socket.userId, data);
         io.to(`conversation:${result.conversationId}`).emit("new_message", result.message);
 
@@ -74,6 +85,7 @@ export function initSocketIO(httpServer) {
     socket.on("typing", async (data) => {
       if (!data?.conversationId) return;
       try {
+        await assertSocketAccountActive(socket.userId);
         await messagingService.assertConversationParticipant(socket.userId, data.conversationId);
         socket.to(`conversation:${data.conversationId}`).emit("user_typing", {
           userId: socket.userId,
