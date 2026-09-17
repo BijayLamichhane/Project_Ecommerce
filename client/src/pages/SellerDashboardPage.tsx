@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/axios";
 import { formatCurrency, formatDate, getErrorMessage } from "../lib/utils";
 import { Package, Clock, Plus, RotateCcw, Trash2, AlertTriangle, ShieldAlert } from "lucide-react";
+import { ConfirmModal } from "../components/shared/ConfirmModal";
 
 const getEntityId = (entity: any): string => {
   const rawId = entity?.id ?? entity?._id;
@@ -15,6 +16,11 @@ const getEntityId = (entity: any): string => {
 export function SellerDashboardPage() {
   const queryClient = useQueryClient();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [confirmModal, setConfirmModal] = useState<
+    | { type: "delete"; product: any }
+    | { type: "disband" }
+    | null
+  >(null);
 
   const { data: earningsData, isLoading } = useQuery({
     queryKey: ["seller-earnings"],
@@ -62,6 +68,7 @@ export function SellerDashboardPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["seller-products"] });
       queryClient.invalidateQueries({ queryKey: ["seller-earnings"] });
+      setConfirmModal(null);
       setErrorMsg(null);
     },
     onError: (err: any) => setErrorMsg(getErrorMessage(err, "Failed to delete the product.")),
@@ -74,6 +81,7 @@ export function SellerDashboardPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["seller-earnings"] });
+      setConfirmModal(null);
       setErrorMsg(null);
     },
     onError: (err: any) => setErrorMsg(getErrorMessage(err, "Failed to submit the seller disband request.")),
@@ -85,22 +93,34 @@ export function SellerDashboardPage() {
       setErrorMsg("This product has no valid ID and cannot be deleted.");
       return;
     }
-    const confirmed = window.confirm(
-      `Delete "${product.name || "this product"}"? This will remove the listing from the marketplace.`
-    );
-    if (confirmed) deleteProductMutation.mutate(productId);
+    setConfirmModal({ type: "delete", product });
   };
 
   const handleSellerDisbandRequest = () => {
     if (requestSellerDisbandMutation.isPending || earningsData?.profile?.disbandRequested) return;
-    const confirmed = window.confirm(
-      "Request admin approval to leave the seller role? Your seller account can only be disbanded after an admin approves the request."
-    );
-    if (confirmed) requestSellerDisbandMutation.mutate();
+    setConfirmModal({ type: "disband" });
+  };
+
+  const handleConfirmAction = () => {
+    if (!confirmModal) return;
+
+    if (confirmModal.type === "delete") {
+      const productId = getEntityId(confirmModal.product);
+      if (!productId) {
+        setConfirmModal(null);
+        setErrorMsg("This product has no valid ID and cannot be deleted.");
+        return;
+      }
+      deleteProductMutation.mutate(productId);
+      return;
+    }
+
+    requestSellerDisbandMutation.mutate();
   };
 
   const metrics = earningsData?.metrics;
   const disbandRequested = Boolean(earningsData?.profile?.disbandRequested);
+  const modalLoading = deleteProductMutation.isPending || requestSellerDisbandMutation.isPending;
 
   if (isLoading) {
     return (
@@ -362,6 +382,21 @@ export function SellerDashboardPage() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        open={Boolean(confirmModal)}
+        title={confirmModal?.type === "delete" ? "Delete Equipment Listing" : "Request Seller Disband"}
+        message={
+          confirmModal?.type === "delete"
+            ? `Delete "${confirmModal.product?.name || "this product"}"? The listing will be removed from the marketplace and your seller inventory.`
+            : "Submit a request to leave the seller role? Your seller account will remain active until an administrator reviews and approves the request."
+        }
+        confirmLabel={confirmModal?.type === "delete" ? "Delete Product" : "Request Disband"}
+        onConfirm={handleConfirmAction}
+        onCancel={() => !modalLoading && setConfirmModal(null)}
+        loading={modalLoading}
+        danger
+      />
     </div>
   );
 }
