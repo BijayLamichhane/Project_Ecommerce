@@ -68,16 +68,27 @@ export class UserRepository {
       bankAccountNumber: payoutMethod === "bank_account" ? data.bankAccountNumber : "",
       bankName: payoutMethod === "bank_account" ? data.bankName : "",
       payoutSettings,
-      status: "approved",
-      isVerified: true,
-      verifiedAt: new Date(),
+      status: "pending",
+      isVerified: false,
+      verifiedAt: undefined,
+      rejectionReason: undefined,
+      applicationRequestedAt: new Date(),
+      rejectedAt: undefined,
       disbandRequested: false,
     };
 
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { $set: { role: "seller", sellerProfile } },
-      { new: true }
+    const user = await User.findOneAndUpdate(
+      {
+        _id: userId,
+        role: "customer",
+        $or: [
+          { "sellerProfile.status": { $exists: false } },
+          { "sellerProfile.status": "rejected" },
+          { "sellerProfile.status": "suspended", "sellerProfile.disbandedAt": { $exists: true } },
+        ],
+      },
+      { $set: { sellerProfile } },
+      { new: true, runValidators: true }
     ).lean({ virtuals: true });
 
     return user?.sellerProfile;
@@ -90,24 +101,30 @@ export class UserRepository {
     });
   }
 
-  async requestSellerDisband(userId) {
+  async disbandSeller(userId) {
     const updated = await User.findOneAndUpdate(
-      {
-        _id: userId,
-        role: "seller",
-        "sellerProfile.disbandRequested": { $ne: true },
-      },
+      { _id: userId, role: "seller" },
       {
         $set: {
-          "sellerProfile.disbandRequested": true,
-          "sellerProfile.disbandRequestedAt": new Date(),
-          "sellerProfile.status": "pending",
+          role: "customer",
+          "sellerProfile.status": "suspended",
+          "sellerProfile.isVerified": false,
+          "sellerProfile.disbandRequested": false,
+          "sellerProfile.disbandedAt": new Date(),
         },
+        $unset: { "sellerProfile.disbandRequestedAt": 1 },
       },
       { new: true, runValidators: true }
     ).lean({ virtuals: true });
 
-    return updated?.sellerProfile;
+    if (updated) {
+      await Product.updateMany(
+        { sellerId: String(userId), status: { $in: ["active", "draft"] } },
+        { $set: { status: "inactive" } }
+      );
+    }
+
+    return updated;
   }
 
   async updateSellerSettings(userId, data) {
