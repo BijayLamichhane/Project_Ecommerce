@@ -35,6 +35,8 @@ const sellerProfileSchema = new mongoose.Schema(
       default: "pending",
     },
     rejectionReason: { type: String },
+    applicationRequestedAt: { type: Date },
+    rejectedAt: { type: Date },
     disbandRequested: { type: Boolean, default: false },
     disbandRequestedAt: { type: Date },
     disbandedAt: { type: Date },
