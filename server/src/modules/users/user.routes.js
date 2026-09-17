@@ -29,6 +29,12 @@ router.post(
   (req, res, next) => userController.disbandSeller(req, res, next)
 );
 
+router.post(
+  "/seller/disband-request",
+  requireSeller,
+  (req, res, next) => userController.disbandSeller(req, res, next)
+);
+
 router.patch(
   "/seller/settings",
   requireSeller,
