@@ -17,20 +17,25 @@ export class UserService {
   async registerAsSeller(userId, input) {
     const user = await userRepository.findById(userId);
     if (!user) throw new NotFoundError("User");
-    if (user.role === "seller" && !user.sellerProfile?.disbandedAt) {
+    if (user.role === "seller") {
       throw new ConflictError("You are already registered as a seller");
     }
-    return userRepository.createSellerProfile(userId, input);
+    if (user.sellerProfile?.status === "pending") {
+      throw new ConflictError("Your seller application is already pending admin approval");
+    }
+
+    const sellerProfile = await userRepository.createSellerProfile(userId, input);
+    if (!sellerProfile) {
+      throw new ConflictError("You cannot submit a seller application in your current account state");
+    }
+    return sellerProfile;
   }
 
-  async requestSellerDisband(userId) {
+  async disbandSeller(userId) {
     const user = await userRepository.findById(userId);
     if (!user) throw new NotFoundError("User");
     if (user.role !== "seller") {
-      throw new ConflictError("Only active sellers can request seller disbandment");
-    }
-    if (user.sellerProfile?.disbandRequested) {
-      throw new ConflictError("Your seller disband request is already pending admin approval");
+      throw new ConflictError("Only active sellers can disband their seller account");
     }
 
     const openBookings = await userRepository.countOpenSellerBookings(userId);
@@ -38,9 +43,9 @@ export class UserService {
       throw new ConflictError(OPEN_SELLER_BOOKING_MESSAGE);
     }
 
-    const sellerProfile = await userRepository.requestSellerDisband(userId);
-    if (!sellerProfile) throw new ConflictError("Unable to create seller disband request");
-    return sellerProfile;
+    const customer = await userRepository.disbandSeller(userId);
+    if (!customer) throw new ConflictError("Unable to disband the seller account");
+    return customer;
   }
 
   async updateSellerSettings(userId, input) {
