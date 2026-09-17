@@ -13,6 +13,7 @@ import {
   CreditCard,
   CheckCircle2,
   LockKeyhole,
+  Clock3,
 } from "lucide-react";
 
 const inputClass =
@@ -20,7 +21,7 @@ const inputClass =
 
 export function BecomeSellerPage() {
   const navigate = useNavigate();
-  const { isAuthenticated, setUser } = useAuth();
+  const { user, isAuthenticated, setUser } = useAuth();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [payoutMethod, setPayoutMethod] = useState<"bank_account" | "debit_credit_card">("bank_account");
 
@@ -39,6 +40,10 @@ export function BecomeSellerPage() {
     cardExpiry: "",
     cardCvv: "",
   });
+
+  const sellerApplicationStatus = user?.sellerProfile?.status;
+  const isApplicationPending = user?.role === "customer" && sellerApplicationStatus === "pending";
+  const isApplicationRejected = user?.role === "customer" && sellerApplicationStatus === "rejected";
 
   const registerMutation = useMutation({
     mutationFn: async () => {
@@ -63,10 +68,10 @@ export function BecomeSellerPage() {
     onSuccess: async () => {
       const { data: me } = await api.get("/users/me");
       setUser(me.data);
-      navigate("/seller", { replace: true });
+      navigate("/dashboard", { replace: true });
     },
     onError: (err: any) => {
-      setErrorMsg(getErrorMessage(err, "Failed to register as a seller"));
+      setErrorMsg(getErrorMessage(err, "Failed to submit seller application"));
     },
   });
 
@@ -101,6 +106,39 @@ export function BecomeSellerPage() {
     registerMutation.mutate();
   };
 
+  if (isApplicationPending) {
+    return (
+      <div className="min-h-screen bg-[#050816] text-slate-100 px-4 sm:px-6 lg:px-8 py-16">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-[#0b1224] border border-cyan-400/20 rounded-3xl p-8 sm:p-10 shadow-2xl shadow-cyan-950/20 text-center space-y-5">
+            <div className="mx-auto w-14 h-14 rounded-2xl bg-cyan-400/10 text-cyan-300 flex items-center justify-center">
+              <Clock3 className="w-7 h-7" />
+            </div>
+            <div>
+              <div className="text-xs font-bold uppercase tracking-wider text-cyan-300">Seller Application</div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-white mt-1">Waiting for Admin Approval</h1>
+              <p className="text-sm text-slate-400 leading-relaxed mt-3">
+                Your seller application has been submitted. You remain a customer until an administrator approves the application.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-left text-xs text-slate-300 space-y-1">
+              <p><span className="text-slate-500">Business:</span> {user?.sellerProfile?.businessName || "—"}</p>
+              <p><span className="text-slate-500">City:</span> {user?.sellerProfile?.businessCity || "—"}</p>
+              <p><span className="text-slate-500">Status:</span> <span className="text-amber-300 font-bold">Pending review</span></p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate("/dashboard")}
+              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition"
+            >
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#050816] text-slate-100 px-4 sm:px-6 lg:px-8 py-12">
       <div className="max-w-4xl mx-auto space-y-8">
@@ -113,9 +151,19 @@ export function BecomeSellerPage() {
             Become a Verified Lender on RentHub
           </h1>
           <p className="text-sm text-slate-400 leading-relaxed">
-            List your cameras, drones, camping gear, and power tools. Choose how you want to receive rental earnings.
+            List your cameras, drones, camping gear, and power tools. Your seller application will be reviewed by an administrator before the seller role is enabled.
           </p>
         </div>
+
+        {isApplicationRejected && user?.sellerProfile?.rejectionReason && (
+          <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-400/30 text-xs text-rose-200 flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold">Your previous seller application was rejected.</p>
+              <p className="mt-1 text-rose-200/80">Reason: {user.sellerProfile.rejectionReason}</p>
+            </div>
+          </div>
+        )}
 
         {errorMsg && (
           <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-400/30 text-xs text-rose-200 flex items-start gap-2">
@@ -227,7 +275,7 @@ export function BecomeSellerPage() {
           </div>
 
           <button type="submit" disabled={registerMutation.isPending} className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 via-fuchsia-600 to-cyan-500 hover:brightness-110 text-white font-bold text-sm shadow-lg shadow-indigo-900/30 transition disabled:opacity-60 disabled:cursor-not-allowed">
-            {registerMutation.isPending ? "Setting up Seller Account..." : "Complete Seller Registration"}
+            {registerMutation.isPending ? "Submitting Application..." : "Submit Seller Application"}
           </button>
         </form>
       </div>
