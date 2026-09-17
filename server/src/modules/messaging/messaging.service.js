@@ -1,7 +1,18 @@
 import { messagingRepository } from "./messaging.repository.js";
 import { User } from "../../models/User.js";
+import { Product } from "../../models/Product.js";
 import { NotFoundError, ForbiddenError } from "../../middleware/errorHandler.js";
 import { v4 as uuidv4 } from "uuid";
+
+const normalizeRole = (user) => {
+  if (user?.role === "admin") return "admin";
+  if (user?.role === "seller") return "seller";
+  if (user?.role === "customer") return "customer";
+  if (user?.sellerProfile?.status === "approved" || user?.sellerProfile?.isVerified) return "seller";
+  return "customer";
+};
+
+const normalizeStatus = (user) => user?.status || "active";
 
 export class MessagingService {
   async getUserConversations(userId) {
@@ -25,21 +36,42 @@ export class MessagingService {
   }
 
   async createConversation(senderId, recipientId, productId, bookingId) {
-    const [sender, recipient] = await Promise.all([
-      User.findById(senderId).select("_id role status").lean(),
-      User.findById(recipientId).select("_id role status").lean(),
+    const [sender, recipient, product] = await Promise.all([
+      User.findById(senderId).select("_id role status sellerProfile").lean(),
+      User.findById(recipientId).select("_id role status sellerProfile").lean(),
+      productId ? Product.findById(productId).select("_id sellerId status").lean() : null,
     ]);
 
     if (!sender || !recipient) throw new NotFoundError("User");
-    if (sender.status !== "active" || recipient.status !== "active") {
+
+    const senderStatus = normalizeStatus(sender);
+    const recipientStatus = normalizeStatus(recipient);
+    if (senderStatus !== "active" || recipientStatus !== "active") {
       throw new ForbiddenError("Messaging is unavailable for this account");
     }
-    if (sender.role === recipient.role || !["customer", "seller"].includes(sender.role) || !["customer", "seller"].includes(recipient.role)) {
+
+    const senderRole = normalizeRole(sender);
+    const recipientRole = normalizeRole(recipient);
+
+    if (senderRole === "admin" || recipientRole === "admin") {
+      throw new ForbiddenError("Messaging is available only between customers and sellers");
+    }
+
+    if (senderRole !== "customer" || recipientRole !== "seller") {
       throw new ForbiddenError("A conversation must be between a customer and a seller");
     }
 
-    const customerId = sender.role === "customer" ? String(sender._id) : String(recipient._id);
-    const sellerId = sender.role === "seller" ? String(sender._id) : String(recipient._id);
+    if (productId) {
+      if (!product || product.status !== "active") {
+        throw new NotFoundError("Product");
+      }
+      if (String(product.sellerId) !== String(recipient._id)) {
+        throw new ForbiddenError("The selected recipient is not the seller of this product");
+      }
+    }
+
+    const customerId = String(sender._id);
+    const sellerId = String(recipient._id);
 
     return messagingRepository.createConversation({
       _id: uuidv4(),
