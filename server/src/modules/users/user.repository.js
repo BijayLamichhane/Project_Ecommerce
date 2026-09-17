@@ -2,6 +2,8 @@ import { User } from "../../models/User.js";
 import { Booking } from "../../models/Booking.js";
 import { Product } from "../../models/Product.js";
 
+const OPEN_SELLER_BOOKING_STATUSES = ["pending", "confirmed", "active", "return_requested"];
+
 function formatUser(user) {
   if (!user) return null;
   if (!user.id && user._id) user.id = String(user._id);
@@ -69,6 +71,7 @@ export class UserRepository {
       status: "approved",
       isVerified: true,
       verifiedAt: new Date(),
+      disbandRequested: false,
     };
 
     const user = await User.findByIdAndUpdate(
@@ -78,6 +81,33 @@ export class UserRepository {
     ).lean({ virtuals: true });
 
     return user?.sellerProfile;
+  }
+
+  async countOpenSellerBookings(sellerId) {
+    return Booking.countDocuments({
+      sellerId,
+      status: { $in: OPEN_SELLER_BOOKING_STATUSES },
+    });
+  }
+
+  async requestSellerDisband(userId) {
+    const updated = await User.findOneAndUpdate(
+      {
+        _id: userId,
+        role: "seller",
+        "sellerProfile.disbandRequested": { $ne: true },
+      },
+      {
+        $set: {
+          "sellerProfile.disbandRequested": true,
+          "sellerProfile.disbandRequestedAt": new Date(),
+          "sellerProfile.status": "pending",
+        },
+      },
+      { new: true, runValidators: true }
+    ).lean({ virtuals: true });
+
+    return updated?.sellerProfile;
   }
 
   async updateSellerSettings(userId, data) {
