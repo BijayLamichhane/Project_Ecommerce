@@ -16,6 +16,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
+import { ConfirmModal } from "../components/shared/ConfirmModal";
 
 const getEntityId = (entity: any): string => {
   const rawId = entity?.id ?? entity?._id;
@@ -42,6 +43,7 @@ export function AdminDashboardPage() {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryDescription, setNewCategoryDescription] = useState("");
   const [newCategoryIcon, setNewCategoryIcon] = useState("Package");
+  const [sellerDisbandModal, setSellerDisbandModal] = useState<{ seller: any } | null>(null);
 
   const { data: dashboardData } = useQuery({
     queryKey: ["admin-dashboard"],
@@ -108,6 +110,7 @@ export function AdminDashboardPage() {
       await api.post(`/admin/sellers/${encodeURIComponent(sellerId)}/moderate`, { status });
     },
     onSuccess: () => {
+      setSellerDisbandModal(null);
       queryClient.invalidateQueries({ queryKey: ["admin-sellers"] });
       queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
     },
@@ -122,13 +125,21 @@ export function AdminDashboardPage() {
     }
 
     if (seller.sellerProfile?.disbandRequested && status === "approved") {
-      const confirmed = window.confirm(
-        "Approve this seller disband request? The account will return to customer status and its active/draft listings will be taken offline."
-      );
-      if (!confirmed) return;
+      setSellerDisbandModal({ seller });
+      return;
     }
 
     moderateSellerMutation.mutate({ sellerId, status });
+  };
+
+  const approveSellerDisband = () => {
+    const sellerId = sellerDisbandModal ? getEntityId(sellerDisbandModal.seller) : "";
+    if (!sellerId) {
+      setSellerDisbandModal(null);
+      setErrorMsg("Seller ID is missing from the admin seller record.");
+      return;
+    }
+    moderateSellerMutation.mutate({ sellerId, status: "approved" });
   };
 
   const createCategoryMutation = useMutation({
@@ -280,6 +291,18 @@ export function AdminDashboardPage() {
 
       {activeTab === "products" && <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm"><p className="text-sm text-slate-500">Product administration is available from seller moderation and listing workflows.</p></div>}
       {activeTab === "disputes" && <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4"><h3 className="text-base font-bold text-slate-900">Reports & Disputes</h3>{(disputesList || []).length === 0 ? <p className="text-sm text-slate-500">No disputes found.</p> : <div className="space-y-3">{(disputesList || []).map((dispute: any, index: number) => <div key={getEntityId(dispute) || `dispute-${index}`} className="rounded-2xl border border-slate-100 p-4"><p className="text-sm font-bold text-slate-900">Booking {getEntityId(dispute)}</p><p className="text-xs text-slate-500 mt-1">{dispute.customer?.name || "Customer"} · {dispute.status}</p></div>)}</div>}</div>}
+
+      <ConfirmModal
+        open={Boolean(sellerDisbandModal)}
+        title="Approve Seller Disbandment"
+        message={`Approve disbandment for "${sellerDisbandModal?.seller?.sellerProfile?.businessName || sellerDisbandModal?.seller?.name || "this seller"}"? The account will return to customer status and its active/draft listings will be taken offline.`}
+        confirmLabel="Approve Disband"
+        cancelLabel="Keep Reviewing"
+        onConfirm={approveSellerDisband}
+        onCancel={() => !moderateSellerMutation.isPending && setSellerDisbandModal(null)}
+        loading={moderateSellerMutation.isPending}
+        danger
+      />
     </div>
   );
 }
