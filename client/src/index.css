@@ -4,26 +4,26 @@
 
 @layer base {
   :root {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 10%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 10%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 243.4 75.4% 58.6%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 25% 22%;
-    --input: 217 25% 22%;
-    --ring: 187 92% 56%;
-    --radius: 0.75rem;
+    --background: #F1ECE1;
+    --foreground: #211E1B;
+    --card: #F7F3EA;
+    --card-foreground: #211E1B;
+    --popover: #F7F3EA;
+    --popover-foreground: #211E1B;
+    --primary: #C17817;
+    --primary-foreground: #FFF8ED;
+    --secondary: #E4DDCF;
+    --secondary-foreground: #211E1B;
+    --muted: #E8E1D5;
+    --muted-foreground: #6F685F;
+    --accent: #E9D5B8;
+    --accent-foreground: #211E1B;
+    --destructive: #A23B2E;
+    --destructive-foreground: #FFF8ED;
+    --border: #C8C0B3;
+    --input: #B8B0A3;
+    --ring: #C17817;
+    --radius: 0.65rem;
   }
 
   html, body, #root {
@@ -31,60 +31,136 @@
   }
 
   html {
-    background: #050816;
+    background: #F1ECE1;
   }
 
   body {
     margin: 0;
-    background: #050816;
-    color: #f8fafc;
+    background: #F1ECE1;
+    color: #211E1B;
+    font-family: "IBM Plex Sans", "Public Sans", system-ui, sans-serif;
+  }
+
+  ::selection {
+    background: #C17817;
+    color: #FFF8ED;
   }
 }
 
 @layer utilities {
-  .glass-card {
-    background: rgba(15, 23, 42, 0.82);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(51, 65, 85, 0.8);
+  .text-balance { text-wrap: balance; }
+
+  .font-heading {
+    font-family: "Space Grotesk", "IBM Plex Sans", sans-serif;
   }
 
-  .text-balance { text-wrap: balance; }
+  .gear-tag {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 1px solid #B8B0A3;
+    border-radius: 0.3rem;
+    background: #E8E1D5;
+    color: #211E1B;
+    padding: 0.25rem 0.55rem;
+    box-shadow: 2px 2px 0 rgba(33, 30, 27, 0.08);
+  }
+
+  .gear-tag::after {
+    content: "";
+    width: 4px;
+    height: 4px;
+    border: 1px solid #8B8377;
+    border-radius: 999px;
+    background: #F1ECE1;
+  }
+
+  .glass-card {
+    background: #F7F3EA;
+    border: 1px solid #C8C0B3;
+    backdrop-filter: none;
+  }
 }
 
-/* Keep legacy light utility classes readable while the application uses a dark visual system. */
-.bg-white { background-color: #0f172a !important; }
-.bg-white\/95 { background-color: rgba(15, 23, 42, 0.95) !important; }
-.bg-white\/90 { background-color: rgba(15, 23, 42, 0.9) !important; }
-.bg-white\/80 { background-color: rgba(15, 23, 42, 0.8) !important; }
-.bg-white\/70 { background-color: rgba(15, 23, 42, 0.7) !important; }
-.bg-slate-50 { background-color: #080d1a !important; }
-.bg-slate-100 { background-color: #111827 !important; }
-.bg-slate-100\/80 { background-color: rgba(17, 24, 39, 0.8) !important; }
-.bg-slate-100\/70 { background-color: rgba(17, 24, 39, 0.7) !important; }
-.bg-slate-200 { background-color: #1e293b !important; }
-.bg-gray-50 { background-color: #080d1a !important; }
-.bg-gray-100 { background-color: #111827 !important; }
-.text-slate-900 { color: #f8fafc !important; }
-.text-slate-800 { color: #e2e8f0 !important; }
-.text-slate-700 { color: #cbd5e1 !important; }
-.text-slate-600 { color: #94a3b8 !important; }
-.text-slate-500 { color: #64748b !important; }
-.text-gray-900 { color: #f8fafc !important; }
-.text-gray-800 { color: #e2e8f0 !important; }
-.text-gray-700 { color: #cbd5e1 !important; }
-.text-gray-600 { color: #94a3b8 !important; }
-.border-slate-100 { border-color: #1e293b !important; }
-.border-slate-200 { border-color: #273449 !important; }
-.border-slate-300 { border-color: #334155 !important; }
-.border-gray-200 { border-color: #273449 !important; }
-.border-gray-300 { border-color: #334155 !important; }
-.divide-slate-100 > :not([hidden]) ~ :not([hidden]) { border-color: #1e293b !important; }
+/* Visual migration for legacy utility classes. This layer changes appearance only. */
+.bg-white { background-color: #F7F3EA !important; }
+.bg-white\/95 { background-color: rgba(247,243,234,.95) !important; }
+.bg-white\/90 { background-color: rgba(247,243,234,.9) !important; }
+.bg-white\/80 { background-color: rgba(247,243,234,.8) !important; }
+.bg-white\/70 { background-color: rgba(247,243,234,.7) !important; }
+.bg-slate-50, .bg-gray-50 { background-color: #F1ECE1 !important; }
+.bg-slate-100, .bg-gray-100 { background-color: #E8E1D5 !important; }
+.bg-slate-200 { background-color: #DDD5C7 !important; }
+.bg-slate-900, .bg-gray-900 { background-color: #211E1B !important; }
+.bg-slate-950 { background-color: #171513 !important; }
+
+.text-white { color: #FFF8ED !important; }
+.text-slate-900, .text-gray-900 { color: #211E1B !important; }
+.text-slate-800, .text-gray-800 { color: #2F2B27 !important; }
+.text-slate-700, .text-gray-700 { color: #514B44 !important; }
+.text-slate-600, .text-gray-600 { color: #6F685F !important; }
+.text-slate-500, .text-gray-500 { color: #8B8377 !important; }
+.text-slate-400, .text-gray-400 { color: #9A9286 !important; }
+
+.border-slate-100, .border-gray-100 { border-color: #E0D8CB !important; }
+.border-slate-200, .border-gray-200 { border-color: #C8C0B3 !important; }
+.border-slate-300, .border-gray-300 { border-color: #B8B0A3 !important; }
+.border-slate-700, .border-slate-800 { border-color: #5E574F !important; }
+
+.bg-indigo-50 { background-color: #F1E0C8 !important; }
+.bg-indigo-600, .bg-indigo-500, .bg-indigo-700 { background-color: #C17817 !important; }
+.text-indigo-300, .text-indigo-400, .text-indigo-500, .text-indigo-600, .text-indigo-700 { color: #C17817 !important; }
+.border-indigo-300, .border-indigo-400, .border-indigo-500, .border-indigo-600 { border-color: #C17817 !important; }
+
+.bg-emerald-50 { background-color: #E4E8DE !important; }
+.text-emerald-600, .text-emerald-700, .text-emerald-400 { color: #4B5D3A !important; }
+.border-emerald-200, .border-emerald-300 { border-color: #AEB9A1 !important; }
+
+.bg-rose-50 { background-color: #F3DFDB !important; }
+.text-rose-400, .text-rose-500, .text-rose-600, .text-rose-700 { color: #A23B2E !important; }
+.border-rose-200, .border-rose-300 { border-color: #D0A39C !important; }
+
+.bg-amber-400, .bg-amber-500, .bg-amber-600 { background-color: #C17817 !important; }
+.text-amber-300, .text-amber-400, .text-amber-500, .text-amber-600, .text-amber-700 { color: #C17817 !important; }
+
+.from-indigo-600, .from-indigo-500, .from-indigo-400,
+.via-indigo-200, .via-indigo-400, .to-indigo-600, .to-indigo-500,
+.to-teal-300, .to-cyan-500 {
+  --tw-gradient-from: #C17817 var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgba(193,120,23,0) var(--tw-gradient-to-position) !important;
+}
+.bg-gradient-to-b, .bg-gradient-to-r, .bg-gradient-to-br {
+  background-image: none !important;
+}
+
+.backdrop-blur-md, .backdrop-blur-sm, .backdrop-blur {
+  backdrop-filter: none !important;
+}
+.shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl {
+  box-shadow: none !important;
+}
+.hover\:shadow-md:hover, .hover\:shadow-xl:hover, .hover\:shadow-2xl:hover {
+  box-shadow: none !important;
+}
+
+.rounded-2xl, .rounded-3xl { border-radius: 0.65rem !important; }
+.rounded-full { border-radius: 999px !important; }
 
 input, textarea, select {
-  color-scheme: dark;
+  color-scheme: light;
+  background-color: #F7F3EA;
+  color: #211E1B;
+  border-color: #B8B0A3;
+}
+input::placeholder, textarea::placeholder { color: #8B8377; }
+input:focus, textarea:focus, select:focus {
+  border-color: #C17817 !important;
+  box-shadow: 0 0 0 2px rgba(193,120,23,.14);
+  outline: none;
 }
 
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: #080d1a; }
-::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #475569; }
+::-webkit-scrollbar-track { background: #E8E1D5; }
+::-webkit-scrollbar-thumb { background: #8B8377; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #6F685F; }
