@@ -65,7 +65,7 @@ export function HomePage() {
   return (
     <div className="space-y-20 pb-16">
       {/* ─── Hero Section ────────────────────────────────────────── */}
-      <section className="relative overflow-hidden pt-12 pb-20 md:py-28 bg-gradient-to-b bg-[#211E1B] text-white">
+      <section className="relative overflow-hidden pt-12 pb-20 md:py-28 bg-[#211E1B] text-white">
         {/* Ambient Glows */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-[#C17817]/20 blur-[120px] rounded-full pointer-events-none" />
         <div className="absolute top-1/2 right-10 w-[400px] h-[300px]  blur-[120px] rounded-full pointer-events-none" />
@@ -91,14 +91,14 @@ export function HomePage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
             <Link
               to="/products"
-              className="w-full sm:w-auto px-8 py-3.5 text-base font-bold text-white bg-[#C17817] hover:bg-[#A66314] rounded-xl shadow-none transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-8 py-3.5 text-base font-bold text-[#211E1B] bg-[#C17817] hover:bg-[#A66314] rounded-xl shadow-none transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
             >
               Explore Products
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
               to="/become-seller"
-              className="w-full sm:w-auto px-8 py-3.5 text-base font-bold text-[#211E1B] hover:text-white bg-[#E8E1D5] hover:bg-[#E8E1D5] border border-[#B8B0A3] rounded-xl transition"
+              className="w-full sm:w-auto px-8 py-3.5 text-base font-bold text-[#211E1B] hover:text-white bg-[#F7F3EA] hover:bg-[#F1E0C8] border border-[#B8B0A3] rounded-xl transition"
             >
               Start Renting Out Your Gear
             </Link>
@@ -126,10 +126,10 @@ export function HomePage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between mb-8">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#211E1B] tracking-tight">
               Popular Categories
             </h2>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-[#6F685F] mt-1">
               Browse top equipment rentals across Nepal
             </p>
           </div>
@@ -148,11 +148,11 @@ export function HomePage() {
               to={`/products?category=${category.slug}`}
               className="group p-5 rounded-md bg-[#F7F3EA] border border-[#C8C0B3]/80 hover:border-[#C17817]  transition-all flex flex-col items-center text-center gap-3"
             >
-              <div className="w-12 h-12 rounded-xl bg-[#F1E0C8] text-[#C17817] group-hover:bg-[#C17817] group-hover:text-white transition-colors flex items-center justify-center ">
+              <div className="w-12 h-12 rounded-xl bg-[#F1E0C8] text-[#C17817] group-hover:bg-[#C17817] group-hover:text-[#F7F3EA] transition-colors flex items-center justify-center ">
                 {(category.iconName && categoryIcons[category.iconName]) || defaultCategoryIcon}
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#C17817] transition">
+                <h3 className="text-sm font-bold text-[#211E1B] group-hover:text-[#C17817] transition">
                   {category.name}
                 </h3>
               </div>
@@ -169,7 +169,7 @@ export function HomePage() {
               <TrendingUp className="w-4 h-4" />
               High Demand
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#211E1B] tracking-tight">
               Popular Gear Near You
             </h2>
           </div>
@@ -200,10 +200,10 @@ export function HomePage() {
       <section className="bg-[#E8E1D5]/70 py-16 border-y border-[#C8C0B3]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-14 space-y-2">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#211E1B] tracking-tight">
               How RentHub Works
             </h2>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-[#6F685F]">
               Simple 4-step process designed for safety and peace of mind.
             </p>
           </div>
@@ -214,8 +214,8 @@ export function HomePage() {
               <div className="font-mono text-xs font-medium text-[#C17817] mb-4">
                 1
               </div>
-              <h3 className="text-base font-bold text-slate-900 mb-2">Find Your Gear</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <h3 className="text-base font-bold text-[#211E1B] mb-2">Find Your Gear</h3>
+              <p className="text-xs text-[#6F685F] leading-relaxed">
                 Search verified gear, inspect live availability calendar, and calculate transparent rental pricing.
               </p>
             </div>
@@ -225,8 +225,8 @@ export function HomePage() {
               <div className="font-mono text-xs font-medium text-[#C17817] mb-4">
                 2
               </div>
-              <h3 className="text-base font-bold text-slate-900 mb-2">Book with Deposit</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <h3 className="text-base font-bold text-[#211E1B] mb-2">Book with Deposit</h3>
+              <p className="text-xs text-[#6F685F] leading-relaxed">
                 Confirm your dates with security deposit protection. Instant date lock prevents conflicting bookings.
               </p>
             </div>
@@ -236,8 +236,8 @@ export function HomePage() {
               <div className="font-mono text-xs font-medium text-[#C17817] mb-4">
                 3
               </div>
-              <h3 className="text-base font-bold text-slate-900 mb-2">Pickup & Create</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <h3 className="text-base font-bold text-[#211E1B] mb-2">Pickup & Create</h3>
+              <p className="text-xs text-[#6F685F] leading-relaxed">
                 Meet the verified lender, inspect gear condition, and make your creative project or trek a reality.
               </p>
             </div>
@@ -247,8 +247,8 @@ export function HomePage() {
               <div className="font-mono text-xs font-medium text-[#C17817] mb-4">
                 4
               </div>
-              <h3 className="text-base font-bold text-slate-900 mb-2">Return & Refund</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <h3 className="text-base font-bold text-[#211E1B] mb-2">Return & Refund</h3>
+              <p className="text-xs text-[#6F685F] leading-relaxed">
                 Return the gear on schedule. Your security deposit is automatically refunded in full.
               </p>
             </div>
@@ -261,7 +261,7 @@ export function HomePage() {
         <div className="relative rounded-md bg-[#211E1B] overflow-hidden text-white p-8 sm:p-12 lg:p-16">
           <div className="relative z-10 max-w-2xl space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2F2B27] text-[#D9D0C4] text-xs font-semibold">
-              <Award className="w-4 h-4 text-amber-400" />
+              <Award className="w-4 h-4 text-[#C17817]" />
               Lender Protection Guarantee
             </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
