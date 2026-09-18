@@ -72,7 +72,7 @@ export function HomePage() {
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#E8E1D5] border border-[#B8B0A3]/80 text-xs font-semibold text-[#211E1B]">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+            <Sparkles className="w-3.5 h-3.5 text-[#C17817]" />
             The Smart Rental Marketplace
           </div>
 
@@ -83,7 +83,7 @@ export function HomePage() {
             </span>
           </h1>
 
-          <p className="text-base sm:text-lg text-[#514B44] max-w-2xl mx-auto font-normal leading-relaxed text-balance">
+          <p className="text-base sm:text-lg text-[#D9D0C4] max-w-2xl mx-auto font-normal leading-relaxed text-balance">
             Discover mirrorless cameras, MacBooks, high-altitude expedition tents, drones, and pro audio gear — available right when you need them.
           </p>
 
@@ -91,7 +91,7 @@ export function HomePage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
             <Link
               to="/products"
-              className="w-full sm:w-auto px-8 py-3.5 text-base font-bold text-white bg-[#C17817] hover:bg-[#F1E0C8]0 rounded-xl shadow-lg shadow-indigo-600/30 transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-8 py-3.5 text-base font-bold text-white bg-[#C17817] hover:bg-[#A66314] rounded-xl shadow-none transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
             >
               Explore Products
               <ArrowRight className="w-4 h-4" />
@@ -273,7 +273,7 @@ export function HomePage() {
             <div className="pt-2">
               <Link
                 to="/become-seller"
-                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-[#F7F3EA] text-indigo-900 hover:bg-[#F1E0C8] font-bold text-sm shadow-md transition"
+                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-[#F7F3EA] text-[#211E1B] hover:bg-[#F1E0C8] font-bold text-sm shadow-md transition"
               >
                 Start Renting Out Now
                 <ArrowRight className="w-4 h-4" />
@@ -282,7 +282,7 @@ export function HomePage() {
           </div>
 
           {/* Decorative graphic element */}
-          <div className="absolute right-0 bottom-0 w-96 h-96 bg-[#C17817]/30 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute right-0 bottom-0 w-96 h-96 bg-[#C17817]/20 rounded-full blur-3xl pointer-events-none" />
         </div>
       </section>
     </div>
