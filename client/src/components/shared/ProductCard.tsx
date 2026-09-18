@@ -36,8 +36,8 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
   const deposit = product.pricing?.securityDeposit ? parseFloat(product.pricing.securityDeposit) : 0;
 
   return (
-    <div className="group relative bg-white rounded-2xl border border-slate-200/80 hover:border-slate-300 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
+    <div className="group relative bg-[#F7F3EA] rounded-md border border-[#C8C0B3]/80 hover:border-slate-300  hover: transition-all duration-300 flex flex-col overflow-hidden">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#E8E1D5]">
         <Link to={`/products/${productId}`} className="block w-full h-full">
           <img
             src={primaryImage}
@@ -49,13 +49,13 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
 
         <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 pointer-events-none">
           {product.isFeatured && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500 text-white shadow-sm">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500 text-white ">
               <Sparkles className="w-3 h-3" />
               Featured
             </span>
           )}
           {product.condition === "like_new" && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#E4E8DE] text-[#4B5D3A] border border-[#AEB9A1]">
               Like New
             </span>
           )}
@@ -70,7 +70,7 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
             }
             toggleWishlistMutation.mutate();
           }}
-          className="absolute top-3 right-3 p-2 rounded-full bg-white/90 backdrop-blur-md shadow-sm hover:bg-white text-slate-600 hover:text-rose-500 transition"
+          className="absolute top-3 right-3 p-2 rounded-full bg-[#F7F3EA]/95   hover:bg-[#F7F3EA] text-[#514B44] hover:text-[#A23B2E] transition"
           title="Save to Wishlist"
         >
           <Heart
@@ -81,7 +81,7 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
         </button>
 
         {product.city && (
-          <div className="absolute bottom-2.5 left-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-900/70 backdrop-blur-sm text-white">
+          <div className="absolute bottom-2.5 left-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#F7F3EA]/70 backdrop-blur-sm text-white">
             <MapPin className="w-3 h-3 text-indigo-400" />
             {product.city}
           </div>
@@ -98,7 +98,7 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
               <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
               <span>{parseFloat(product.averageRating || "0").toFixed(1)}</span>
               {product.totalRatings > 0 && (
-                <span className="text-slate-400 font-normal text-[11px]">
+                <span className="text-[#8B8377] font-normal text-[11px]">
                   ({product.totalRatings})
                 </span>
               )}
@@ -106,7 +106,7 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
           </div>
 
           <Link to={`/products/${productId}`}>
-            <h3 className="text-sm font-bold text-slate-900 line-clamp-2 hover:text-indigo-600 transition leading-snug">
+            <h3 className="text-sm font-bold text-slate-900 line-clamp-2 hover:text-[#C17817] transition leading-snug">
               {product.name}
             </h3>
           </Link>
@@ -128,7 +128,7 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
 
           <Link
             to={`/products/${productId}`}
-            className="px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:text-white bg-indigo-50 hover:bg-indigo-600 rounded-lg transition"
+            className="px-3 py-1.5 text-xs font-semibold text-[#C17817] hover:text-white bg-[#F1E0C8] hover:bg-[#C17817] rounded-lg transition"
           >
             Rent Now
           </Link>
