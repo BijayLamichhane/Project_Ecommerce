@@ -4,7 +4,7 @@ import { Layers, Shield, Clock, RotateCcw, HeartHandshake } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="bg-slate-900 text-slate-400 text-sm mt-20 border-t border-slate-800">
+    <footer className="bg-[#F7F3EA] text-[#8B8377] text-sm mt-20 border-t border-slate-800">
       {/* Value props strip */}
       <div className="border-b border-slate-800 py-8 bg-slate-950/40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -15,7 +15,7 @@ export function Footer() {
               </div>
               <div>
                 <h4 className="text-white text-sm font-semibold">Protected Security Deposits</h4>
-                <p className="text-xs text-slate-400">Held securely until safe return</p>
+                <p className="text-xs text-[#8B8377]">Held securely until safe return</p>
               </div>
             </div>
 
@@ -25,7 +25,7 @@ export function Footer() {
               </div>
               <div>
                 <h4 className="text-white text-sm font-semibold">Verified Renters & Lenders</h4>
-                <p className="text-xs text-slate-400">Community trust and identity checks</p>
+                <p className="text-xs text-[#8B8377]">Community trust and identity checks</p>
               </div>
             </div>
 
@@ -35,7 +35,7 @@ export function Footer() {
               </div>
               <div>
                 <h4 className="text-white text-sm font-semibold">Flexible Rental Duration</h4>
-                <p className="text-xs text-slate-400">Hourly, daily, weekly, or monthly</p>
+                <p className="text-xs text-[#8B8377]">Hourly, daily, weekly, or monthly</p>
               </div>
             </div>
 
@@ -45,7 +45,7 @@ export function Footer() {
               </div>
               <div>
                 <h4 className="text-white text-sm font-semibold">Hassle-Free Handover</h4>
-                <p className="text-xs text-slate-400">Clear return terms & inspections</p>
+                <p className="text-xs text-[#8B8377]">Clear return terms & inspections</p>
               </div>
             </div>
           </div>
@@ -57,14 +57,14 @@ export function Footer() {
           {/* Brand Col */}
           <div className="col-span-2 space-y-4">
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold">
+              <div className="w-8 h-8 rounded-lg bg-[#C17817] flex items-center justify-center text-white font-bold">
                 <Layers className="w-5 h-5" />
               </div>
               <span className="text-xl font-extrabold text-white tracking-tight">
                 Rent<span className="text-indigo-400">Hub</span>
               </span>
             </Link>
-            <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
+            <p className="text-xs text-[#8B8377] max-w-sm leading-relaxed">
               RentHub is the modern circular economy rental marketplace. Rent premium cameras, laptops, expedition camping gear, and instruments when you need them.
             </p>
             <div className="text-xs text-slate-500">
