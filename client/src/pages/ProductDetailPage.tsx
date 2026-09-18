@@ -34,6 +34,7 @@ export function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [isSubmittingBooking, setIsSubmittingBooking] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
+  const [cartAdded, setCartAdded] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewTitle, setReviewTitle] = useState("");
   const [reviewComment, setReviewComment] = useState("");
@@ -131,7 +132,8 @@ export function ProductDetailPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
-      navigate("/cart");
+      setCartAdded(true);
+      window.setTimeout(() => setCartAdded(false), 1400);
     },
     onError: (err: any) => {
       setBookingError(getErrorMessage(err, "Failed to add item to cart"));
@@ -361,12 +363,16 @@ export function ProductDetailPage() {
 
               <button
                 type="button"
-                disabled={!startDate || !endDate || addToCartMutation.isPending}
+                disabled={!startDate || !endDate || addToCartMutation.isPending || cartAdded}
                 onClick={() => (isAuthenticated ? addToCartMutation.mutate() : redirectToLogin())}
-                className="w-full py-3 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed text-slate-800 font-semibold text-xs transition flex items-center justify-center gap-2"
+                className={`w-full py-3 px-4 rounded-xl bg-[#F1E0C8] hover:bg-[#E8D2B0] disabled:opacity-50 disabled:cursor-not-allowed text-[#211E1B] font-semibold text-xs transition-all duration-200 flex items-center justify-center gap-2 ${cartAdded ? "ring-2 ring-[#C17817]/30" : ""}`}
               >
-                <ShoppingCart className="w-4 h-4" />
-                Add to Rental Cart
+                {cartAdded ? (
+                  <CheckCircle className="w-4 h-4 animate-bounce text-[#4B5D3A]" />
+                ) : (
+                  <ShoppingCart className="w-4 h-4" />
+                )}
+                {cartAdded ? "Added to Cart" : "Add to Rental Cart"}
               </button>
             </div>
 
