@@ -26,8 +26,8 @@ function ProtectedRoute({ children, role }: { children: React.ReactNode; role?: 
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#050816]">
-        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+        <div className="w-8 h-8 border-4 border-[#C17817] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -42,7 +42,7 @@ function ProtectedRoute({ children, role }: { children: React.ReactNode; role?: 
 
 export function AppRoutes() {
   return (
-    <div className="min-h-screen flex flex-col bg-[#050816] text-slate-100">
+    <div className="min-h-screen flex flex-col bg-[var(--background)] text-[var(--foreground)]">
       <Navbar />
       <main className="flex-1">
         <Routes>
