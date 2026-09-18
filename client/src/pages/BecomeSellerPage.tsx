@@ -219,7 +219,7 @@ export function BecomeSellerPage() {
                 <p className="text-xs text-[#8B8377] mt-1">Choose where rental earnings should be paid.</p>
               </div>
               {payoutMethod === "debit_credit_card" && (
-                <button type="button" onClick={fillDemoCard} className="text-xs font-bold text-[#C17817] hover:text-cyan-200 border border-[#C17817]/35 bg-[#F1E0C8] px-3 py-2 rounded-md transition">
+                <button type="button" onClick={fillDemoCard} className="text-xs font-bold text-[#A66314] hover:text-[#8F5510] border border-[#C17817]/35 bg-[#F1E0C8] px-3 py-2 rounded-md transition">
                   Fill Demo Card
                 </button>
               )}
