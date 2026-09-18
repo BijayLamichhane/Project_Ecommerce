@@ -98,7 +98,7 @@ export function HomePage() {
             </Link>
             <Link
               to="/become-seller"
-              className="w-full sm:w-auto px-8 py-3.5 text-base font-bold text-[#211E1B] hover:text-white bg-[#F7F3EA] hover:bg-[#F1E0C8] border border-[#B8B0A3] rounded-xl transition"
+              className="w-full sm:w-auto px-8 py-3.5 text-base font-bold text-[#211E1B] hover:text-[#211E1B] bg-[#F7F3EA] hover:bg-[#F1E0C8] border border-[#B8B0A3] rounded-xl transition"
             >
               Start Renting Out Your Gear
             </Link>
