@@ -36,7 +36,7 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
   const deposit = product.pricing?.securityDeposit ? parseFloat(product.pricing.securityDeposit) : 0;
 
   return (
-    <div className="group relative bg-[#F7F3EA] rounded-md border border-[#C8C0B3]/80 hover:border-slate-300  hover: transition-all duration-300 flex flex-col overflow-hidden">
+    <div className="group relative bg-[#F7F3EA] rounded-md border border-[#C8C0B3]/80 hover:border-[#B8B0A3] transition-all duration-300 flex flex-col overflow-hidden">
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#E8E1D5]">
         <Link to={`/products/${productId}`} className="block w-full h-full">
           <img
@@ -75,14 +75,14 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
         >
           <Heart
             className={`w-4 h-4 transition ${
-              isInWishlist ? "fill-rose-500 text-rose-500" : ""
+              isInWishlist ? "fill-[#A23B2E] text-[#A23B2E]" : ""
             }`}
           />
         </button>
 
         {product.city && (
-          <div className="absolute bottom-2.5 left-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#F7F3EA]/70 backdrop-blur-sm text-white">
-            <MapPin className="w-3 h-3 text-indigo-400" />
+          <div className="absolute bottom-2.5 left-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#F7F3EA]/90 text-[#211E1B] border border-[#C8C0B3]/70">
+            <MapPin className="w-3 h-3 text-[#C17817]" />
             {product.city}
           </div>
         )}
