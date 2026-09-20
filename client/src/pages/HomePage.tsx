@@ -38,7 +38,6 @@ export function HomePage() {
       {/* ─── Hero Section ────────────────────────────────────────── */}
       <section className="relative overflow-hidden pt-12 pb-20 md:py-28 bg-[#211E1B] text-white">
         {/* Ambient Glows */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-[#C17817]/20 blur-[120px] rounded-full pointer-events-none" />
         <div className="absolute top-1/2 right-10 w-[400px] h-[300px]  blur-[120px] rounded-full pointer-events-none" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
@@ -62,7 +61,7 @@ export function HomePage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
             <Link
               to="/products"
-              className="w-full sm:w-auto px-8 py-3.5 text-base font-bold text-[#211E1B] bg-[#C17817] hover:bg-[#A66314] rounded-xl shadow-none transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-8 py-3.5 text-base font-bold text-[#211E1B] bg-[#C17817] hover:bg-[#A66314] rounded-xl shadow-none transition flex items-center justify-center gap-2"
             >
               Explore Products
               <ArrowRight className="w-4 h-4" />
