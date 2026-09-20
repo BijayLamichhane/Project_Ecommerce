@@ -11,6 +11,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { ConfirmModal } from "../components/shared/ConfirmModal";
+import { CATEGORY_ICON_NAMES, getCategoryIcon } from "../lib/categoryIcons";
 
 const getEntityId = (entity: any): string => {
   const rawId = entity?.id ?? entity?._id;
@@ -329,7 +330,12 @@ export function AdminDashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <input value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="Category name" className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm" />
               <input value={newCategoryDescription} onChange={(e) => setNewCategoryDescription(e.target.value)} placeholder="Description" className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm" />
-              <input value={newCategoryIcon} onChange={(e) => setNewCategoryIcon(e.target.value)} placeholder="Lucide icon name" className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm" />
+              <div className="flex items-center gap-2">
+                {React.createElement(getCategoryIcon(newCategoryIcon), { className: "w-4 h-4 text-slate-600 shrink-0" })}
+                <select value={newCategoryIcon} onChange={(e) => setNewCategoryIcon(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm bg-white">
+                  {CATEGORY_ICON_NAMES.map((iconName) => <option key={iconName} value={iconName}>{iconName}</option>)}
+                </select>
+              </div>
             </div>
             <button onClick={() => createCategoryMutation.mutate()} disabled={createCategoryMutation.isPending || !newCategoryName.trim()} className="px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold disabled:opacity-50">Create Category</button>
           </div>
@@ -338,7 +344,12 @@ export function AdminDashboardPage() {
             <div className="space-y-2">
               {(categoriesList || []).map((category: any, index: number) => {
                 const categoryId = getEntityId(category);
-                return <div key={categoryId || `${category.slug || category.name || "category"}-${index}`} className="flex flex-wrap items-center justify-between gap-3 border border-slate-100 rounded-2xl p-3"><div><p className="text-sm font-bold text-slate-900">{category.name}</p><p className="text-[11px] text-slate-500">{category.slug}</p></div><div className="flex items-center gap-2"><input value={category.iconName || "Package"} onChange={(e) => { const iconName = e.target.value; if (categoryId) updateCategoryIconMutation.mutate({ categoryId, iconName }); }} className="w-28 px-2 py-1.5 rounded-lg border border-slate-200 text-xs" /><button onClick={() => categoryId && deleteCategoryMutation.mutate(categoryId)} disabled={!categoryId || deleteCategoryMutation.isPending} className="p-2 rounded-lg bg-rose-50 text-rose-600 disabled:opacity-50"><Trash2 className="w-4 h-4" /></button></div></div>;
+                return <div key={categoryId || `${category.slug || category.name || "category"}-${index}`} className="flex flex-wrap items-center justify-between gap-3 border border-slate-100 rounded-2xl p-3"><div><p className="text-sm font-bold text-slate-900">{category.name}</p><p className="text-[11px] text-slate-500">{category.slug}</p></div><div className="flex items-center gap-2">
+                        {React.createElement(getCategoryIcon(category.iconName), { className: "w-4 h-4 text-slate-600 shrink-0" })}
+                        <select value={category.iconName || "Package"} onChange={(e) => { const iconName = e.target.value; if (categoryId) updateCategoryIconMutation.mutate({ categoryId, iconName }); }} className="w-32 px-2 py-1.5 rounded-lg border border-slate-200 text-xs bg-white">
+                          {CATEGORY_ICON_NAMES.map((iconName) => <option key={iconName} value={iconName}>{iconName}</option>)}
+                        </select>
+                        <button onClick={() => categoryId && deleteCategoryMutation.mutate(categoryId)} disabled={!categoryId || deleteCategoryMutation.isPending} className="p-2 rounded-lg bg-rose-50 text-rose-600 disabled:opacity-50"><Trash2 className="w-4 h-4" /></button></div></div>;
               })}
             </div>
           </div>
