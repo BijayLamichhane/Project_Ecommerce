@@ -8,12 +8,12 @@ RentHub is a full-stack web application for renting physical products such as ca
 
 ## 🌟 Key Architectural Features
 
-- **Availability & Conflict Engine**: Non-overlapping booking date enforcement with MongoDB availability checks and optional Redis distributed locks.
+- **Availability & Conflict Engine**: Payment-driven booking holds with expiry-aware availability and an atomic per-product/day MongoDB inventory ledger that prevents concurrent overbooking without requiring Redis locks.
 - **Security Deposit Architecture**: Refundable security deposits tracked separately from rental revenue and released upon verified return.
 - **Dynamic Tiered Pricing**: Hourly, daily, weekly, and monthly pricing calculated on the backend.
 - **Real-Time Communication**: Socket.IO integration for customer-seller messaging, typing indicators, and instant notifications.
 - **Role-Based Access Control**: RBAC for `customer`, `seller`, and `admin` roles.
-- **Redis Caching & Locking**: Optional Redis support for caching, booking locks, and rate limiting.
+- **Redis Caching & Rate Limiting**: Optional Redis support for product/category caching and rate limiting; booking concurrency is enforced by the MongoDB inventory ledger.
 - **Server-Verified Payments**: eSewa checkout is verified server-side before a booking is confirmed.
 
 ---
@@ -38,6 +38,7 @@ RentHub is a full-stack web application for renting physical products such as ca
 - **Seller application rejection reasons**: Administrators must provide a reason when rejecting a seller application. The rejection reason is stored on the seller profile and shown to the customer so they can understand what needs to be addressed before reapplying.
 - **Direct seller disbandment**: Active sellers can disband their seller role without admin approval, provided they have no unresolved pending, confirmed, active, or return-requested rentals. Disbanding immediately returns the account to `customer` and takes active/draft seller listings offline.
 - **Suspended account enforcement**: Administrators can suspend users, and suspended accounts are blocked from authenticated actions such as becoming a seller, purchasing/renting, managing listings, messaging, reviews, and other protected API operations. Suspended WebSocket connections are also blocked from joining conversations or sending/typing messages, and the client redirects them to a dedicated suspension screen.
+- **Payment-driven booking holds**: New bookings create a short-lived pending hold (`PENDING_BOOKING_TTL_MINUTES`, default 20 minutes). Successful payment confirms the booking; expiry or seller decline releases the hold and preserves the booking history as a terminal `expired`/`rejected` record. Legacy pending bookings receive an expiry during server startup migration.
 
 ### Payment Environment
 
@@ -148,7 +149,7 @@ cd server
 npm test
 ```
 
-The test suite covers core pricing, booking conflict, booking state-machine behavior, HTTP authorization boundaries, and upload signature detection.
+The test suite covers core pricing, booking conflict and expiry behavior, booking state-machine transitions, late-payment resurrection/refund handling, HTTP authorization boundaries, and upload signature detection.
 
 ---
 
