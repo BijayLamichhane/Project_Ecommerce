@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/axios";
-import { formatCurrency, formatDate, getErrorMessage } from "../lib/utils";
+import { formatCurrency, formatDate, getEntityId, getErrorMessage } from "../lib/utils";
 import {
   Users,
   Building,
@@ -12,19 +12,6 @@ import {
 } from "lucide-react";
 import { ConfirmModal } from "../components/shared/ConfirmModal";
 import { CATEGORY_ICON_NAMES, getCategoryIcon } from "../lib/categoryIcons";
-
-const getEntityId = (entity: any): string => {
-  const rawId = entity?.id ?? entity?._id;
-  if (typeof rawId === "string" || typeof rawId === "number") return String(rawId);
-  if (rawId && typeof rawId === "object") {
-    if (typeof rawId.$oid === "string") return rawId.$oid;
-    if (typeof rawId.toString === "function") {
-      const value = rawId.toString();
-      if (value !== "[object Object]") return value;
-    }
-  }
-  return "";
-};
 
 const getActionLabel = (action: unknown): string => {
   const value = typeof action === "string" && action.trim() ? action : "admin action";
