@@ -54,7 +54,7 @@ export const cancelBookingSchema = z.object({
 });
 
 export const returnRequestSchema = z.object({
-  condition: z.enum(["new", "like_new", "good", "fair", "poor"]).optional(),
+  condition: z.enum(["new", "like_new", "good", "fair", "poor", "damaged"]).optional(),
   notes: z.string().max(1000).optional(),
   imageUrls: z.array(z.string().url()).optional(),
 });
