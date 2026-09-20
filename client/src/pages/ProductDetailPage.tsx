@@ -111,7 +111,7 @@ export function ProductDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["product-reviews", id] });
       queryClient.invalidateQueries({ queryKey: ["product", id] });
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       setReviewError(getErrorMessage(err, "Failed to submit review"));
     },
   });
@@ -135,7 +135,7 @@ export function ProductDetailPage() {
       setCartAdded(true);
       window.setTimeout(() => setCartAdded(false), 1400);
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       setBookingError(getErrorMessage(err, "Failed to add item to cart"));
     },
   });
@@ -166,7 +166,7 @@ export function ProductDetailPage() {
         navigate(`/bookings/${bookingId}`);
       }
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       setBookingError(getErrorMessage(err, "Booking creation failed"));
     },
   });
