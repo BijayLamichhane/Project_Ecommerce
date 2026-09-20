@@ -43,8 +43,8 @@ export function RegisterPage() {
 
       setUser(me.data);
       navigate(redirectTo, { replace: true });
-    } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || getErrorMessage(err, "Registration failed"));
+    } catch (err: unknown) {
+      setErrorMsg(getErrorMessage(err, "Registration failed"));
     } finally {
       setIsLoading(false);
     }
