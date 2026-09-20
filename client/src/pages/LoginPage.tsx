@@ -41,11 +41,8 @@ export function LoginPage() {
 
       setUser(me.data);
       navigate(redirectTo, { replace: true });
-    } catch (err: any) {
-      setErrorMsg(
-        err.response?.data?.message ||
-          getErrorMessage(err, "Invalid email or password")
-      );
+    } catch (err: unknown) {
+      setErrorMsg(getErrorMessage(err, "Invalid email or password"));
     } finally {
       setIsLoading(false);
     }
