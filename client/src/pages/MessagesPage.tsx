@@ -102,17 +102,52 @@ export function MessagesPage() {
     if (!socket || !activeConversationId) return;
 
     socket.emit("join_conversation", activeConversationId);
-    const handleNewMessage = (newMsg: Message) => {
-      queryClient.setQueryData<ActiveThread | undefined>(["conversation-messages", activeConversationId], (old) =>
-        old ? { ...old, messages: [...(old.messages || []), newMsg] } : old
+
+    const appendMessage = (conversationId: string, newMsg: Message) => {
+      queryClient.setQueryData<ActiveThread | undefined>(
+        ["conversation-messages", conversationId],
+        (old) => {
+          if (!old) return old;
+          const existingMessage = old.messages?.some(
+            (message) => getEntityId(message) === getEntityId(newMsg)
+          );
+          if (existingMessage) return old;
+          return { ...old, messages: [...(old.messages || []), newMsg] };
+        }
       );
+    };
+
+    const handleNewMessage = (newMsg: Message) => {
+      appendMessage(activeConversationId, newMsg);
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     };
 
+    const handleMessageNotification = (payload: {
+      conversationId?: string;
+      message?: Message;
+    }) => {
+      if (!payload?.conversationId || !payload.message) return;
+
+      appendMessage(payload.conversationId, payload.message);
+      queryClient.invalidateQueries({
+        queryKey: ["conversations"],
+        refetchType: "active",
+      });
+
+      if (payload.conversationId === activeConversationId) {
+        queryClient.invalidateQueries({
+          queryKey: ["conversation-messages", activeConversationId],
+        });
+      }
+    };
+
     socket.on("new_message", handleNewMessage);
+    socket.on("message_notification", handleMessageNotification);
+
     return () => {
       socket.emit("leave_conversation", activeConversationId);
       socket.off("new_message", handleNewMessage);
+      socket.off("message_notification", handleMessageNotification);
     };
   }, [socket, activeConversationId, queryClient]);
 
