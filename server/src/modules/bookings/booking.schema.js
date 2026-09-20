@@ -10,13 +10,15 @@ export const BOOKING_STATUSES = [
   "returned",
   "completed",
   "disputed",
+  "expired",
 ];
 
 const VALID_TRANSITIONS = {
-  pending: ["confirmed", "rejected", "cancelled"],
+  pending: ["confirmed", "rejected", "cancelled", "expired"],
   confirmed: ["active", "cancelled"],
   rejected: [],
   cancelled: [],
+  expired: [],
   active: ["return_requested", "disputed"],
   return_requested: ["returned", "disputed"],
   returned: ["completed", "disputed"],

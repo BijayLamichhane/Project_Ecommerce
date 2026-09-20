@@ -6,6 +6,7 @@ describe("Booking State Machine Transitions", () => {
     expect(isValidTransition("pending", "confirmed")).toBe(true);
     expect(isValidTransition("pending", "rejected")).toBe(true);
     expect(isValidTransition("pending", "cancelled")).toBe(true);
+    expect(isValidTransition("pending", "expired")).toBe(true);
     expect(isValidTransition("confirmed", "active")).toBe(true);
     expect(isValidTransition("confirmed", "cancelled")).toBe(true);
     expect(isValidTransition("active", "return_requested")).toBe(true);
@@ -18,5 +19,7 @@ describe("Booking State Machine Transitions", () => {
     expect(isValidTransition("cancelled", "active")).toBe(false);
     expect(isValidTransition("completed", "pending")).toBe(false);
     expect(isValidTransition("rejected", "confirmed")).toBe(false);
+    expect(isValidTransition("expired", "confirmed")).toBe(false);
+    expect(isValidTransition("expired", "cancelled")).toBe(false);
   });
 });

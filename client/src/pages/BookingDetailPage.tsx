@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/axios";
@@ -7,8 +7,14 @@ import { formatCurrency, getEntityId, formatDate, getErrorMessage } from "../lib
 import { useAuth } from "../hooks/useAuth";
 import { Calendar, Clock, ShieldCheck, CreditCard, RotateCcw, AlertTriangle, Star, MessageSquare, Send, X, LockKeyhole } from "lucide-react";
 
-const statusLabel: Record<string, string> = { pending: "Payment Pending", confirmed: "Confirmed", active: "Active Rental", return_requested: "Return Requested", returned: "Returned", completed: "Completed", cancelled: "Cancelled", rejected: "Rejected" };
+const statusLabel: Record<string, string> = { pending: "Payment Pending", confirmed: "Confirmed", active: "Active Rental", return_requested: "Return Requested", returned: "Returned", completed: "Completed", cancelled: "Cancelled", rejected: "Rejected", expired: "Hold Expired" };
 const lifecycleStatuses = ["pending", "confirmed", "active", "return_requested", "returned", "completed"];
+const formatHoldTime = (milliseconds: number) => {
+  const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+};
 
 export function BookingDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -24,9 +30,31 @@ export function BookingDetailPage() {
   const [reviewComment, setReviewComment] = useState("");
   const [question, setQuestion] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [remainingHoldMs, setRemainingHoldMs] = useState<number | null>(null);
 
   const { data: booking, isLoading } = useQuery({ queryKey: ["booking", id], queryFn: async () => { const { data } = await api.get(`/bookings/${id}`); return data.data as Booking; }, enabled: !!id });
   const { data: paymentInfo } = useQuery({ queryKey: ["booking-payment", id], queryFn: async () => { const { data } = await api.get(`/payments/booking/${id}`); return data.data; }, enabled: !!id });
+
+  useEffect(() => {
+    if (booking?.status !== "pending" || !booking.expiresAt) {
+      setRemainingHoldMs(null);
+      return;
+    }
+
+    const updateCountdown = () => {
+      const remaining = Math.max(0, new Date(booking.expiresAt!).getTime() - Date.now());
+      setRemainingHoldMs(remaining);
+
+      if (remaining === 0 && id) {
+        queryClient.invalidateQueries({ queryKey: ["booking", id] });
+        queryClient.invalidateQueries({ queryKey: ["booking-payment", id] });
+      }
+    };
+
+    updateCountdown();
+    const timer = window.setInterval(updateCountdown, 1000);
+    return () => window.clearInterval(timer);
+  }, [booking?.status, booking?.expiresAt, id, queryClient]);
 
   const payMutation = useMutation({
     mutationFn: async (method: "esewa" | "card") => {
@@ -53,7 +81,14 @@ export function BookingDetailPage() {
       if (!payment?.payment_url) throw new Error("Debit/credit card gateway could not be initialized.");
       window.location.assign(payment.payment_url);
     },
-    onError: (err: unknown) => setErrorMsg(getErrorMessage(err, "Unable to start payment. Please try again.")),
+    onError: (err: unknown) => {
+      const message = getErrorMessage(err, "Unable to start payment. Please try again.");
+      setErrorMsg(
+        message.toLowerCase().includes("expired")
+          ? "This booking hold expired. Please rebook the equipment for your dates."
+          : message
+      );
+    },
   });
 
   const returnMutation = useMutation({ mutationFn: async () => { setErrorMsg(null); await api.post(`/bookings/${id}/return`, { condition: returnCondition, notes: returnNotes }); }, onSuccess: () => { setReturnNotes(""); queryClient.invalidateQueries({ queryKey: ["booking", id] }); queryClient.invalidateQueries({ queryKey: ["customer-stats"] }); }, onError: (err: unknown) => setErrorMsg(getErrorMessage(err, "Failed to submit the return request.")) });
@@ -95,6 +130,7 @@ export function BookingDetailPage() {
   const product = firstItem?.product;
   const bookingId = getEntityId(booking);
   const currentIndex = lifecycleStatuses.indexOf(booking.status);
+  const holdExpired = booking.status === "expired" || (booking.status === "pending" && remainingHoldMs === 0);
   const canReview = isCustomer && ["returned", "completed"].includes(booking.status);
   const sellerName = booking.seller?.name || "Seller";
 
@@ -106,12 +142,13 @@ export function BookingDetailPage() {
           <div><span className="text-[11px] font-bold text-[#C17817] font-mono">Booking ID: {bookingId.substring(0, 13)}</span><h1 className="text-3xl font-extrabold text-[#211E1B] mt-1">Rental Details</h1><p className="text-xs text-[#8B8377] mt-1">Created {formatDate(booking.createdAt, "MMM d, yyyy h:mm a")}</p></div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="px-3 py-2 rounded-md bg-[#F1E0C8] border border-[#C17817]/30 text-[#A66314] text-xs font-bold">{statusLabel[booking.status] || booking.status}</span>
-            {booking.status === "pending" && isCustomer && <div className="flex flex-wrap gap-2"><button onClick={() => payMutation.mutate("esewa")} disabled={payMutation.isPending} className="px-4 py-2.5 rounded-md bg-[#C17817] hover:bg-[#A66314] disabled:opacity-50 text-[#211E1B] text-xs font-extrabold transition flex items-center gap-2"><CreditCard className="w-4 h-4" />{payMutation.isPending ? "Opening payment..." : "Pay with eSewa"}</button><button onClick={() => payMutation.mutate("card")} disabled={payMutation.isPending} className="px-4 py-2.5 rounded-md bg-[#C17817] hover:bg-[#A66314] disabled:opacity-50 text-[#211E1B] text-xs font-extrabold transition flex items-center gap-2"><CreditCard className="w-4 h-4" />{payMutation.isPending ? "Opening payment..." : "Debit / Credit Card"}</button></div>}
+            {booking.status === "pending" && isCustomer && !holdExpired && <div className="flex flex-wrap gap-2"><button onClick={() => payMutation.mutate("esewa")} disabled={payMutation.isPending} className="px-4 py-2.5 rounded-md bg-[#C17817] hover:bg-[#A66314] disabled:opacity-50 text-[#211E1B] text-xs font-extrabold transition flex items-center gap-2"><CreditCard className="w-4 h-4" />{payMutation.isPending ? "Opening payment..." : "Pay with eSewa"}</button><button onClick={() => payMutation.mutate("card")} disabled={payMutation.isPending} className="px-4 py-2.5 rounded-md bg-[#C17817] hover:bg-[#A66314] disabled:opacity-50 text-[#211E1B] text-xs font-extrabold transition flex items-center gap-2"><CreditCard className="w-4 h-4" />{payMutation.isPending ? "Opening payment..." : "Debit / Credit Card"}</button></div>}
             {booking.status === "active" && isCustomer && <button onClick={() => returnMutation.mutate()} disabled={returnMutation.isPending} className="px-4 py-2.5 rounded-md bg-[#C17817] hover:bg-[#A66314] disabled:opacity-50 text-[#211E1B] text-xs font-extrabold transition flex items-center gap-2"><RotateCcw className="w-4 h-4" />{returnMutation.isPending ? "Requesting..." : "Request Return"}</button>}
             {canReview && <button onClick={() => setIsReviewOpen(true)} className="px-4 py-2.5 rounded-md bg-[#C17817] hover:bg-[#A66314] text-[#211E1B] text-xs font-extrabold transition flex items-center gap-2"><Star className="w-4 h-4" />Leave a Review</button>}
           </div>
         </div>
-        {booking.status === "pending" && isCustomer && <div className="bg-white rounded-md border border-[#DDD5C7] p-5"><div className="flex items-start gap-3"><LockKeyhole className="w-5 h-5 text-[#4B5D3A] mt-0.5" /><div><p className="text-sm font-bold text-[#211E1B]">Secure payment</p><p className="text-xs text-[#8B8377] mt-1">Choose eSewa or Debit / Credit Card. RentHub never asks you to enter or store your full card number or CVV.</p></div></div></div>}
+        {booking.status === "pending" && isCustomer && !holdExpired && <div className="bg-white rounded-md border border-[#DDD5C7] p-5"><div className="flex items-start gap-3"><LockKeyhole className="w-5 h-5 text-[#4B5D3A] mt-0.5" /><div><p className="text-sm font-bold text-[#211E1B]">Complete payment within {remainingHoldMs !== null ? formatHoldTime(remainingHoldMs) : "—"}</p><p className="text-xs text-[#8B8377] mt-1">Your selected dates are temporarily held while you complete payment. RentHub never asks you to enter or store your full card number or CVV.</p></div></div></div>}
+        {holdExpired && isCustomer && <div className="bg-white rounded-md border border-[#A23B2E]/30 p-5"><div className="flex items-start gap-3"><AlertTriangle className="w-5 h-5 text-[#A23B2E] mt-0.5" /><div><p className="text-sm font-bold text-[#211E1B]">This booking hold expired</p><p className="text-xs text-[#8B8377] mt-1">The payment window ended and these dates were released. Please rebook if you still need this equipment.</p>{firstItem?.productId && <Link to={`/products/${firstItem.productId}`} className="inline-block mt-3 text-xs font-bold text-[#C17817] hover:text-[#A66314]">Rebook these dates</Link>}</div></div></div>}
         <div className="bg-white rounded-md border border-[#DDD5C7] p-6"><div className="flex items-center justify-between gap-3 mb-6"><div><h3 className="text-sm font-bold text-[#211E1B]">Rental Lifecycle</h3><p className="text-[11px] text-[#8B8377] mt-1">Track every stage of your rental</p></div><Clock className="w-5 h-5 text-[#C17817]" /></div><div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">{["Booked", "Confirmed", "Active", "Return Requested", "Returned", "Completed"].map((label, index) => { const complete = currentIndex >= index && currentIndex !== -1 && !["cancelled", "rejected"].includes(booking.status); return <div key={label} className="space-y-2"><div className={`h-1.5 rounded-full ${complete ? "bg-[#C17817]" : "bg-[#E8E1D5]"}`} /><p className={`text-[11px] font-bold ${complete ? "text-[#211E1B]" : "text-[#8B8377]"}`}>{label}</p></div>; })}</div></div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-7 bg-white rounded-md border border-[#DDD5C7] p-6  space-y-6">

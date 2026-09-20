@@ -62,6 +62,7 @@ const bookingSchema = new mongoose.Schema(
         "returned",
         "completed",
         "disputed",
+        "expired",
       ],
       default: "pending",
     },
@@ -73,6 +74,7 @@ const bookingSchema = new mongoose.Schema(
     specialRequests: { type: String },
     bookingItems: [bookingItemSchema],
     timeline: [bookingTimelineSchema],
+    expiresAt: { type: Date },
     confirmedAt: { type: Date },
     activatedAt: { type: Date },
     returnRequestedAt: { type: Date },
@@ -101,6 +103,8 @@ const bookingSchema = new mongoose.Schema(
     },
   }
 );
+
+bookingSchema.index({ status: 1, expiresAt: 1 });
 
 bookingSchema.virtual("id").get(function () {
   return this._id;
