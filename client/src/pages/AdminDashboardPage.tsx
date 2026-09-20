@@ -204,7 +204,7 @@ export function AdminDashboardPage() {
           { id: "categories", label: "Categories" },
           { id: "disputes", label: "Reports & Disputes" },
         ].map((tab) => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`px-4 py-2 text-xs font-bold rounded-md transition ${activeTab === tab.id ? "bg-slate-900 text-white shadow-sm" : "text-[#6F685F] hover:bg-[#E8E1D5]"}`}>
+          <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`px-4 py-2 text-xs font-bold rounded-md transition ${activeTab === tab.id ? "bg-[#211E1B] text-white shadow-sm" : "text-[#6F685F] hover:bg-[#E8E1D5]"}`}>
             {tab.label}
           </button>
         ))}
@@ -230,7 +230,7 @@ export function AdminDashboardPage() {
           <div className="bg-white rounded-md border border-[#C8C0B3] p-6 shadow-sm space-y-4">
             <h3 className="text-base font-bold text-[#211E1B]">Recent Platform Activity</h3>
             {dashboardData?.recentActivity?.length ? (
-              <div className="divide-y divide-slate-100 text-xs">
+              <div className="divide-y divide-[#E6DED1] text-xs">
                 {dashboardData.recentActivity.map((act: any, index: number) => {
                   const action = act?.action ?? act?.actionType;
                   const key = getEntityId(act) || `activity-${index}`;
@@ -258,7 +258,7 @@ export function AdminDashboardPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="border-b border-[#E6DED1] text-[#A39A8D] font-bold uppercase"><tr><th className="pb-3">Name</th><th className="pb-3">Email</th><th className="pb-3">Role</th><th className="pb-3">Status</th><th className="pb-3 text-right">Actions</th></tr></thead>
-              <tbody className="divide-y divide-slate-100 text-[#514B44]">
+              <tbody className="divide-y divide-[#E6DED1] text-[#514B44]">
                 {(usersList || []).map((u: any, index: number) => {
                   const userId = getEntityId(u);
                   const rowKey = userId || `${u.email || "user"}-${index}`;
@@ -284,7 +284,7 @@ export function AdminDashboardPage() {
               <thead className="border-b border-[#E6DED1] text-[#A39A8D] font-bold uppercase">
                 <tr><th className="pb-3">Business Name</th><th className="pb-3">City</th><th className="pb-3">PAN</th><th className="pb-3">Status</th><th className="pb-3 text-right">Actions</th></tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-[#514B44]">
+              <tbody className="divide-y divide-[#E6DED1] text-[#514B44]">
                 {(sellersList || []).map((s: any, index: number) => {
                   const sellerId = getEntityId(s);
                   const rowKey = sellerId || `${s.email || "seller"}-${index}`;
@@ -324,7 +324,7 @@ export function AdminDashboardPage() {
                 </select>
               </div>
             </div>
-            <button onClick={() => createCategoryMutation.mutate()} disabled={createCategoryMutation.isPending || !newCategoryName.trim()} className="px-4 py-2.5 rounded-md bg-slate-900 text-white text-xs font-bold disabled:opacity-50">Create Category</button>
+            <button onClick={() => createCategoryMutation.mutate()} disabled={createCategoryMutation.isPending || !newCategoryName.trim()} className="px-4 py-2.5 rounded-md bg-[#211E1B] text-white text-xs font-bold disabled:opacity-50">Create Category</button>
           </div>
           <div className="bg-white rounded-md border border-[#C8C0B3] p-6 shadow-sm space-y-4">
             <h3 className="text-base font-bold text-[#211E1B]">Categories</h3>
@@ -377,7 +377,7 @@ export function AdminDashboardPage() {
             rows={4}
             maxLength={1000}
             disabled={moderateSellerMutation.isPending}
-            className="w-full px-3 py-2.5 rounded-md border border-slate-700 bg-slate-950 text-sm text-slate-100 placeholder:text-[#8B8377] outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-400/20 disabled:opacity-50"
+            className="w-full px-3 py-2.5 rounded-md border border-[#6B6359] bg-[#F1ECE1] text-sm text-[#211E1B] placeholder:text-[#8B8377] outline-none focus:border-[#A23B2E] focus:ring-1 focus:ring-[#A23B2E]/20 disabled:opacity-50"
           />
           <div className="flex items-center justify-between text-[10px] text-[#8B8377]">
             <span>Minimum 5 characters.</span>
