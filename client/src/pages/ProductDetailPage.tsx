@@ -5,7 +5,7 @@ import { api } from "../lib/axios";
 import { Product, Review, RentalPriceCalculation } from "../types";
 import { RentalCalendar } from "../components/shared/RentalCalendar";
 import { PriceSummary } from "../components/shared/PriceSummary";
-import { formatCurrency, formatDate, getErrorMessage } from "../lib/utils";
+import { formatCurrency, getEntityId, formatDate, getErrorMessage } from "../lib/utils";
 import { useAuth } from "../hooks/useAuth";
 import {
   Star,
@@ -517,7 +517,7 @@ export function ProductDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {reviews.map((rev) => (
               <div
-                key={rev.id || rev._id}
+                key={getEntityId(rev)}
                 className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3"
               >
                 <div className="flex items-center justify-between">
