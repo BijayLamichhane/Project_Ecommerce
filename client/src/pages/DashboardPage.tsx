@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../lib/axios";
 import { useAuth } from "../hooks/useAuth";
 import { ProductCard } from "../components/shared/ProductCard";
+import type { Booking, Product } from "../types";
 import { formatCurrency, getEntityId, formatDate } from "../lib/utils";
 import { Calendar, Clock, CheckCircle2, ArrowRight, Sparkles, Package, History, ChevronRight } from "lucide-react";
 
@@ -19,7 +20,12 @@ const statusStyles: Record<string, string> = {
 export function DashboardPage() {
   const { user } = useAuth();
 
-  const { data: statsData, isLoading: loadingStats } = useQuery({
+  const { data: statsData, isLoading: loadingStats } = useQuery<{
+    activeRentalsCount: number;
+    upcomingBookingsCount: number;
+    completedRentalsCount: number;
+    currentRentals: Booking[];
+  }>({
     queryKey: ["customer-stats"],
     queryFn: async () => {
       const { data } = await api.get("/users/customer/stats");
@@ -27,23 +33,23 @@ export function DashboardPage() {
     },
   });
 
-  const { data: allBookings = [], isLoading: loadingBookings } = useQuery({
+  const { data: allBookings = [], isLoading: loadingBookings } = useQuery<Booking[]>({
     queryKey: ["customer-bookings", "dashboard"],
     queryFn: async () => {
       const { data } = await api.get("/bookings/my-bookings");
-      return data.data || [];
+      return (data.data || []) as Booking[];
     },
   });
 
-  const { data: featuredProducts } = useQuery({
+  const { data: featuredProducts = [] } = useQuery<Product[]>({
     queryKey: ["featured-products"],
     queryFn: async () => {
       const { data } = await api.get("/products/featured");
-      return data.data || [];
+      return (data.data || []) as Product[];
     },
   });
 
-  const previousBookings = allBookings.filter((booking: any) => previousStatuses.has(booking.status)).slice(0, 5);
+  const previousBookings = allBookings.filter((booking) => previousStatuses.has(booking.status)).slice(0, 5);
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
@@ -71,7 +77,7 @@ export function DashboardPage() {
           <div className="space-y-4">
             <h3 className="text-lg font-bold text-[#211E1B]">Ongoing Rentals</h3>
             <div className="space-y-3">
-              {statsData.currentRentals.map((rental: any) => {
+              {statsData.currentRentals.map((rental) => {
                 const rentalId = getEntityId(rental);
                 return <div key={rentalId} className="bg-[#F7F3EA] rounded-md border border-[#C17817]/40 p-5 flex items-center justify-between gap-4"><div className="space-y-1"><div className="text-xs font-bold text-[#C17817]">ACTIVE RENTAL</div><h4 className="text-sm font-bold text-[#211E1B]">Booking #{String(rentalId || "").substring(0, 8)}</h4><div className="text-xs text-[#8B8377]">Rental Fee: {formatCurrency(rental.totalAmount)}</div></div><Link to={`/bookings/${rentalId}`} className="px-4 py-2 rounded-md bg-[#C17817] text-[#211E1B] text-xs font-bold hover:bg-[#A66314] transition whitespace-nowrap">View / Return Item</Link></div>;
               })}
@@ -85,7 +91,7 @@ export function DashboardPage() {
             <Link to="/bookings" className="text-xs font-bold text-[#C17817] hover:text-[#A66314] flex items-center gap-1">View booking history <ArrowRight className="w-3.5 h-3.5" /></Link>
           </div>
           <div className="p-4 sm:p-6">
-            {loadingBookings ? <div className="space-y-3">{[1,2,3].map((item) => <div key={item} className="h-20 rounded-md bg-[#E8E1D5] animate-pulse" />)}</div> : previousBookings.length === 0 ? <div className="py-10 text-center"><History className="w-9 h-9 mx-auto text-[#8B8377]" /><p className="text-sm font-semibold text-[#514B44] mt-3">No previous bookings yet</p><p className="text-xs text-[#8B8377] mt-1">Your completed rentals will appear here.</p></div> : <div className="space-y-3">{previousBookings.map((booking: any) => { const bookingId = booking.id || booking._id; const item = booking.bookingItems?.[0]; const product = item?.product; return <Link key={bookingId} to={`/bookings/${bookingId}`} className="group flex items-center gap-4 rounded-md border border-[#DDD5C7] bg-[#F7F3EA] hover:bg-[#EFE8DB] hover:border-[#C17817]/50 p-4 transition"><div className="w-14 h-14 rounded-md bg-[#E8E1D5] overflow-hidden flex-shrink-0">{product?.images?.[0]?.url ? <img src={product.images[0].url} alt={product.name || "Rental"} className="w-full h-full object-cover" /> : <Package className="w-6 h-6 m-4 text-[#8B8377]" />}</div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><span className="text-[11px] font-bold text-[#8B8377]">BOOKING #{String(bookingId || "").substring(0, 8)}</span><span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold capitalize ${statusStyles[booking.status] || "bg-[#E8E1D5] text-[#8B8377] border-[#B8B0A3]"}`}>{booking.status}</span></div><h4 className="text-sm font-bold text-[#211E1B] truncate mt-1">{product?.name || "Rental booking"}</h4><p className="text-[11px] text-[#8B8377] mt-1">{booking.createdAt ? formatDate(booking.createdAt, "MMM d, yyyy") : ""} · {formatCurrency(booking.totalAmount)}</p></div><ChevronRight className="w-5 h-5 text-[#8B8377] group-hover:text-[#C17817] transition" /></Link>; })}</div>}
+            {loadingBookings ? <div className="space-y-3">{[1,2,3].map((item) => <div key={item} className="h-20 rounded-md bg-[#E8E1D5] animate-pulse" />)}</div> : previousBookings.length === 0 ? <div className="py-10 text-center"><History className="w-9 h-9 mx-auto text-[#8B8377]" /><p className="text-sm font-semibold text-[#514B44] mt-3">No previous bookings yet</p><p className="text-xs text-[#8B8377] mt-1">Your completed rentals will appear here.</p></div> : <div className="space-y-3">{previousBookings.map((booking) => { const bookingId = booking.id || booking._id; const item = booking.bookingItems?.[0]; const product = item?.product; return <Link key={bookingId} to={`/bookings/${bookingId}`} className="group flex items-center gap-4 rounded-md border border-[#DDD5C7] bg-[#F7F3EA] hover:bg-[#EFE8DB] hover:border-[#C17817]/50 p-4 transition"><div className="w-14 h-14 rounded-md bg-[#E8E1D5] overflow-hidden flex-shrink-0">{product?.images?.[0]?.url ? <img src={product.images[0].url} alt={product.name || "Rental"} className="w-full h-full object-cover" /> : <Package className="w-6 h-6 m-4 text-[#8B8377]" />}</div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><span className="text-[11px] font-bold text-[#8B8377]">BOOKING #{String(bookingId || "").substring(0, 8)}</span><span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold capitalize ${statusStyles[booking.status] || "bg-[#E8E1D5] text-[#8B8377] border-[#B8B0A3]"}`}>{booking.status}</span></div><h4 className="text-sm font-bold text-[#211E1B] truncate mt-1">{product?.name || "Rental booking"}</h4><p className="text-[11px] text-[#8B8377] mt-1">{booking.createdAt ? formatDate(booking.createdAt, "MMM d, yyyy") : ""} · {formatCurrency(booking.totalAmount)}</p></div><ChevronRight className="w-5 h-5 text-[#8B8377] group-hover:text-[#C17817] transition" /></Link>; })}</div>}
           </div>
         </section>
 
