@@ -11,6 +11,7 @@ import {
 } from "../../middleware/errorHandler.js";
 import { env } from "../../config/env.js";
 import { v4 as uuidv4 } from "uuid";
+import { logger } from "../../utils/logger.js";
 
 function signFields(fields, signedFieldNames) {
   const message = signedFieldNames
@@ -282,24 +283,29 @@ export class PaymentService {
     const actionUrl = `/bookings/${encodeURIComponent(bookingId)}`;
     const productName = booking.bookingItems?.[0]?.product?.name || "your rental";
 
-    const customerNotification = await notificationService.createNotification({
-      userId: booking.customerId,
-      type: "booking_payment_success",
-      title: "Payment successful",
-      message: `Payment received. Your dates for ${productName} are now confirmed.`,
-      actionUrl,
-    });
+    try {
+      const customerNotification = await notificationService.createNotification({
+        userId: booking.customerId,
+        type: "booking_payment_success",
+        title: "Payment successful",
+        message: `Payment received. Your dates for ${productName} are now confirmed.`,
+        actionUrl,
+      });
 
-    const sellerNotification = await notificationService.createNotification({
-      userId: booking.sellerId,
-      type: "booking_payment_received",
-      title: "Booking paid",
-      message: `Payment received for ${productName}. The rental dates are confirmed.`,
-      actionUrl,
-    });
+      emitToUser(booking.customerId, "booking_notification", customerNotification);
 
-    emitToUser(booking.customerId, "booking_notification", customerNotification);
-    emitToUser(booking.sellerId, "booking_notification", sellerNotification);
+      const sellerNotification = await notificationService.createNotification({
+        userId: booking.sellerId,
+        type: "booking_payment_received",
+        title: "Booking paid",
+        message: `Payment received for ${productName}. The rental dates are confirmed.`,
+        actionUrl,
+      });
+
+      emitToUser(booking.sellerId, "booking_notification", sellerNotification);
+    } catch (error) {
+      logger.warn({ error, bookingId }, "Failed to create booking payment notification");
+    }
   }
 
   async emitAvailabilityChanges(booking) {
@@ -408,7 +414,7 @@ export class PaymentService {
           booking.status === "expired" &&
           String(error?.message || "").includes("payment must be refunded")
         ) {
-          const refunded = await this.markPaymentForManualRefund(
+          await this.markPaymentForManualRefund(
             payment,
             error.message,
             { response }
