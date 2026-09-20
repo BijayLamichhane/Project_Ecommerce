@@ -2,7 +2,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/axios";
-import { formatCurrency, formatDate } from "../lib/utils";
+import { getEntityId, formatCurrency, formatDate } from "../lib/utils";
 import {
   Trash2,
   Calendar,
@@ -138,7 +138,7 @@ export function CartPage() {
 
             return (
               <div
-                key={item.id || item._id}
+                key={getEntityId(item)}
                 className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col sm:flex-row gap-5 items-start sm:items-center justify-between"
               >
                 <div className="flex items-center gap-4">
@@ -178,7 +178,7 @@ export function CartPage() {
                   </div>
 
                   <button
-                    onClick={() => removeItemMutation.mutate(item.id || item._id)}
+                    onClick={() => removeItemMutation.mutate(getEntityId(item))}
                     className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
                   >
                     <Trash2 className="w-4 h-4" />
