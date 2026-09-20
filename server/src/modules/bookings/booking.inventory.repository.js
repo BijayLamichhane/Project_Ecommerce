@@ -137,10 +137,7 @@ export class BookingInventoryRepository {
     }
   }
 
-  async backfillFromBookings(now = new Date()) {
-    const ledgerCount = await BookingInventory.countDocuments();
-    if (ledgerCount > 0) return 0;
-
+  async reconcileFromBookings(now = new Date()) {
     const bookings = await Booking.find({
       status: { $in: ["pending", "confirmed", "active", "return_requested"] },
       $or: [
@@ -152,6 +149,15 @@ export class BookingInventoryRepository {
       .sort({ createdAt: 1 })
       .lean();
 
+    const liveBookingIds = new Set(bookings.map((booking) => String(booking._id)));
+    const ledgerBookingIds = await BookingInventory.distinct("reservations.bookingId");
+
+    for (const bookingId of ledgerBookingIds) {
+      if (!liveBookingIds.has(String(bookingId))) {
+        await this.releaseBooking(bookingId);
+      }
+    }
+
     for (const booking of bookings) {
       await this.reserveItems(
         booking._id,
@@ -159,6 +165,10 @@ export class BookingInventoryRepository {
         booking.status === "pending" ? "pending" : "confirmed",
         booking.status === "pending" ? booking.expiresAt : null
       );
+
+      if (booking.status !== "pending") {
+        await this.confirmBooking(booking._id);
+      }
     }
 
     return bookings.length;
