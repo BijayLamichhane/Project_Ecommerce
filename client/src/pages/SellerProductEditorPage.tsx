@@ -107,7 +107,7 @@ export function SellerProductEditorPage() {
       setSelectedFiles([]);
       queryClient.invalidateQueries({ queryKey: ["product", id] });
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       setUploadError(getErrorMessage(err, "Failed to upload photos"));
     },
   });
@@ -119,7 +119,7 @@ export function SellerProductEditorPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["product", id] });
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       setUploadError(getErrorMessage(err, "Failed to delete photo"));
     },
   });
@@ -166,7 +166,7 @@ export function SellerProductEditorPage() {
         navigate(`/seller/products/${productId}/edit`, { replace: true });
       }
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       setErrorMsg(
         getErrorMessage(err, isEditing ? "Failed to update equipment listing" : "Failed to create equipment listing")
       );
