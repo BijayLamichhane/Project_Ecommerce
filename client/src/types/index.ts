@@ -8,7 +8,8 @@ export type BookingStatus =
   | "return_requested"
   | "returned"
   | "completed"
-  | "disputed";
+  | "disputed"
+  | "expired";
 
 export interface User {
   _id: string;
@@ -162,6 +163,7 @@ export interface Booking {
   deliveryFee: string;
   totalAmount: string;
   specialRequests?: string;
+  expiresAt?: string;
   confirmedAt?: string;
   activatedAt?: string;
   returnRequestedAt?: string;
