@@ -171,6 +171,32 @@ export class BookingInventoryRepository {
     }
   }
 
+  async releasePendingBooking(bookingId) {
+    const ledgers = await BookingInventory.find({
+      reservations: { $elemMatch: { bookingId, status: "pending" } },
+    }).lean();
+
+    for (const ledger of ledgers) {
+      const reservation = ledger.reservations.find(
+        (entry) => entry.bookingId === bookingId && entry.status === "pending"
+      );
+      if (!reservation) continue;
+
+      await BookingInventory.updateOne(
+        {
+          _id: ledger._id,
+          reservations: {
+            $elemMatch: { bookingId, status: "pending" },
+          },
+        },
+        {
+          $inc: { reservedCount: -Number(reservation.quantity || 0) },
+          $pull: { reservations: { bookingId, status: "pending" } },
+        }
+      );
+    }
+  }
+
   async releaseReservations(bookingId, keys) {
     for (const key of keys) {
       const ledger = await BookingInventory.findOne({
