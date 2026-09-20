@@ -5,10 +5,14 @@ import { logger } from "../utils/logger.js";
 import { messagingService } from "../modules/messaging/messaging.service.js";
 import { getAccountStatus } from "../middleware/accountStatus.js";
 
+let ioInstance = null;
+
 const socketOrigins =
   env.NODE_ENV === "production"
     ? [env.CLIENT_URL]
-    : Array.from(new Set([env.CLIENT_URL, "http://localhost:3000", "http://localhost:5173"]));
+    : Array.from(
+        new Set([env.CLIENT_URL, "http://localhost:3000", "http://localhost:5173"])
+      );
 
 const assertSocketAccountActive = async (userId) => {
   const status = await getAccountStatus(userId);
@@ -16,8 +20,19 @@ const assertSocketAccountActive = async (userId) => {
   if (status === "suspended") throw new Error("Account is suspended");
 };
 
+export function emitToUser(userId, event, payload) {
+  ioInstance?.to(`user:${userId}`).emit(event, payload);
+}
+
+export function emitProductAvailabilityChanged(productId) {
+  if (!productId) return;
+  ioInstance?.to(`product:${productId}`).emit("availability_changed", {
+    productId: String(productId),
+  });
+}
+
 export function initSocketIO(httpServer) {
-  const io = new Server(httpServer, {
+  ioInstance = new Server(httpServer, {
     cors: {
       origin: socketOrigins,
       methods: ["GET", "POST"],
@@ -25,26 +40,49 @@ export function initSocketIO(httpServer) {
     },
   });
 
-  io.use(async (socket, next) => {
+  ioInstance.use(async (socket, next) => {
     try {
       const session = await auth.api.getSession({ headers: socket.handshake.headers });
       if (!session?.user?.id) {
         next(new Error("Authentication required"));
         return;
       }
+
       const userId = String(session.user.id);
       await assertSocketAccountActive(userId);
       socket.userId = userId;
       next();
     } catch (error) {
       logger.warn({ error }, "Rejected unauthenticated or suspended WebSocket connection");
-      next(new Error(error?.message === "Account is suspended" ? "Account suspended" : "Authentication failed"));
+      next(
+        new Error(
+          error?.message === "Account is suspended"
+            ? "Account suspended"
+            : "Authentication failed"
+        )
+      );
     }
   });
 
-  io.on("connection", (socket) => {
+  ioInstance.on("connection", (socket) => {
     socket.join(`user:${socket.userId}`);
     logger.info({ userId: socket.userId }, "User connected to WebSocket");
+
+    socket.on("join_product", async (productId, callback) => {
+      if (!productId) return;
+      try {
+        await assertSocketAccountActive(socket.userId);
+        await socket.join(`product:${String(productId)}`);
+        if (typeof callback === "function") callback({ ok: true });
+      } catch (err) {
+        logger.warn({ err, userId: socket.userId, productId }, "Rejected product room join");
+        if (typeof callback === "function") callback({ ok: false, message: "Access denied" });
+      }
+    });
+
+    socket.on("leave_product", (productId) => {
+      if (productId) socket.leave(`product:${String(productId)}`);
+    });
 
     socket.on("join_conversation", async (conversationId, callback) => {
       try {
@@ -53,7 +91,10 @@ export function initSocketIO(httpServer) {
         await socket.join(`conversation:${conversationId}`);
         if (typeof callback === "function") callback({ ok: true });
       } catch (err) {
-        logger.warn({ err, userId: socket.userId, conversationId }, "Rejected conversation room join");
+        logger.warn(
+          { err, userId: socket.userId, conversationId },
+          "Rejected conversation room join"
+        );
         if (typeof callback === "function") callback({ ok: false, message: "Access denied" });
       }
     });
@@ -66,19 +107,25 @@ export function initSocketIO(httpServer) {
       try {
         await assertSocketAccountActive(socket.userId);
         const result = await messagingService.sendMessage(socket.userId, data);
-        io.to(`conversation:${result.conversationId}`).emit("new_message", result.message);
+        ioInstance
+          .to(`conversation:${result.conversationId}`)
+          .emit("new_message", result.message);
 
         if (data?.recipientId) {
-          io.to(`user:${data.recipientId}`).emit("message_notification", {
+          ioInstance.to(`user:${data.recipientId}`).emit("message_notification", {
             conversationId: result.conversationId,
             message: result.message,
           });
         }
 
-        if (typeof callback === "function") callback({ ok: true, conversationId: result.conversationId });
+        if (typeof callback === "function") {
+          callback({ ok: true, conversationId: result.conversationId });
+        }
       } catch (err) {
         logger.error({ err, userId: socket.userId }, "Error delivering real-time message");
-        if (typeof callback === "function") callback({ ok: false, message: "Unable to send message" });
+        if (typeof callback === "function") {
+          callback({ ok: false, message: "Unable to send message" });
+        }
       }
     });
 
@@ -86,13 +133,15 @@ export function initSocketIO(httpServer) {
       if (!data?.conversationId) return;
       try {
         await assertSocketAccountActive(socket.userId);
-        await messagingService.assertConversationParticipant(socket.userId, data.conversationId);
+        await messagingService.assertConversationParticipant(
+          socket.userId,
+          data.conversationId
+        );
         socket.to(`conversation:${data.conversationId}`).emit("user_typing", {
           userId: socket.userId,
           isTyping: Boolean(data.isTyping),
         });
       } catch {
-        // Ignore unauthorized typing events.
       }
     });
 
@@ -101,5 +150,5 @@ export function initSocketIO(httpServer) {
     });
   });
 
-  return io;
+  return ioInstance;
 }
