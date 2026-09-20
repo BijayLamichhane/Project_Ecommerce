@@ -209,7 +209,7 @@ export class BookingService {
       const expired = await bookingRepository.markExpired(booking.id || booking._id);
       if (!expired) continue;
 
-      await bookingInventoryRepository.releaseBooking(booking.id || booking._id);
+      await bookingInventoryRepository.releasePendingBooking(booking.id || booking._id);
       await this.notifyBookingReleased(expired, "expired");
       await this.emitAvailabilityChanges(expired);
     }
