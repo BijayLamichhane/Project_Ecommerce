@@ -221,7 +221,7 @@ export function CartPage() {
           </div>
 
           {/* Refundable Deposit Notice */}
-          <div className="p-3.5 rounded-md bg-[#E7EFE2] border border-[#4B5D3A]/30/80 text-xs space-y-1">
+          <div className="p-3.5 rounded-md bg-[#E7EFE2] border border-[#4B5D3A]/30 text-xs space-y-1">
             <div className="flex justify-between font-bold text-[#4B5D3A]">
               <span className="flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-[#4B5D3A]" />
