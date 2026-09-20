@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/axios";
 import { formatCurrency, formatDate, getEntityId, getErrorMessage } from "../lib/utils";
+import type { Booking, Category, User } from "../types";
 import {
   Users,
   Building,
@@ -13,6 +14,36 @@ import {
 import { ConfirmModal } from "../components/shared/ConfirmModal";
 import { CATEGORY_ICON_NAMES, getCategoryIcon } from "../lib/categoryIcons";
 
+type ActiveTab = "overview" | "users" | "sellers" | "products" | "disputes" | "categories";
+
+type AdminActivity = {
+  id?: string;
+  _id?: string;
+  action?: string;
+  actionType?: string;
+  createdAt?: string;
+  admin?: { name?: string };
+  userId?: string | { name?: string };
+};
+
+type AdminDashboardData = {
+  metrics: {
+    totalRevenue: number;
+    totalUsers: number;
+    totalProducts: number;
+    activeRentals: number;
+  };
+  recentActivity: AdminActivity[];
+};
+
+const adminTabs: { id: ActiveTab; label: string }[] = [
+  { id: "overview", label: "Overview & Analytics" },
+  { id: "users", label: "Users Management" },
+  { id: "sellers", label: "Seller Moderation" },
+  { id: "categories", label: "Categories" },
+  { id: "disputes", label: "Reports & Disputes" },
+];
+
 const getActionLabel = (action: unknown): string => {
   const value = typeof action === "string" && action.trim() ? action : "admin action";
   return value.replace(/_/g, " ");
@@ -20,15 +51,15 @@ const getActionLabel = (action: unknown): string => {
 
 export function AdminDashboardPage() {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"overview" | "users" | "sellers" | "products" | "disputes" | "categories">("overview");
+  const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryDescription, setNewCategoryDescription] = useState("");
   const [newCategoryIcon, setNewCategoryIcon] = useState("Package");
-  const [sellerRejectionModal, setSellerRejectionModal] = useState<{ seller: any } | null>(null);
+  const [sellerRejectionModal, setSellerRejectionModal] = useState<{ seller: User } | null>(null);
   const [sellerRejectionReason, setSellerRejectionReason] = useState("");
 
-  const { data: dashboardData } = useQuery({
+  const { data: dashboardData } = useQuery<AdminDashboardData>({
     queryKey: ["admin-dashboard"],
     queryFn: async () => {
       const { data } = await api.get("/admin/dashboard");
@@ -36,25 +67,25 @@ export function AdminDashboardPage() {
     },
   });
 
-  const { data: usersList } = useQuery({
+  const { data: usersList } = useQuery<User[]>({
     queryKey: ["admin-users"],
     queryFn: async () => {
       const { data } = await api.get("/admin/users");
-      return (data.data || []).map((user: any) => ({ ...user, id: getEntityId(user) }));
+      return (data.data || []).map((user) => ({ ...user, id: getEntityId(user) }));
     },
     enabled: activeTab === "users",
   });
 
-  const { data: sellersList } = useQuery({
+  const { data: sellersList } = useQuery<User[]>({
     queryKey: ["admin-sellers"],
     queryFn: async () => {
       const { data } = await api.get("/admin/sellers");
-      return (data.data || []).map((seller: any) => ({ ...seller, id: getEntityId(seller) }));
+      return (data.data || []).map((seller) => ({ ...seller, id: getEntityId(seller) }));
     },
     enabled: activeTab === "sellers",
   });
 
-  const { data: disputesList } = useQuery({
+  const { data: disputesList } = useQuery<Booking[]>({
     queryKey: ["admin-disputes"],
     queryFn: async () => {
       const { data } = await api.get("/admin/disputes");
@@ -63,7 +94,7 @@ export function AdminDashboardPage() {
     enabled: activeTab === "disputes",
   });
 
-  const { data: categoriesList } = useQuery({
+  const { data: categoriesList } = useQuery<Category[]>({
     queryKey: ["categories"],
     queryFn: async () => {
       const { data } = await api.get("/categories");
@@ -107,7 +138,7 @@ export function AdminDashboardPage() {
     onError: (err: unknown) => setErrorMsg(getErrorMessage(err, "Failed to update seller status")),
   });
 
-  const handleSellerModeration = (seller: any, status: "approved" | "rejected") => {
+  const handleSellerModeration = (seller: User, status: "approved" | "rejected") => {
     const sellerId = getEntityId(seller);
     if (!sellerId) {
       setErrorMsg("Seller ID is missing from the admin seller record.");
@@ -204,7 +235,7 @@ export function AdminDashboardPage() {
           { id: "categories", label: "Categories" },
           { id: "disputes", label: "Reports & Disputes" },
         ].map((tab) => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`px-4 py-2 text-xs font-bold rounded-md transition ${activeTab === tab.id ? "bg-[#211E1B] text-white shadow-sm" : "text-[#6F685F] hover:bg-[#E8E1D5]"}`}>
+          <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 py-2 text-xs font-bold rounded-md transition ${activeTab === tab.id ? "bg-[#211E1B] text-white shadow-sm" : "text-[#6F685F] hover:bg-[#E8E1D5]"}`}>
             {tab.label}
           </button>
         ))}
@@ -231,7 +262,7 @@ export function AdminDashboardPage() {
             <h3 className="text-base font-bold text-[#211E1B]">Recent Platform Activity</h3>
             {dashboardData?.recentActivity?.length ? (
               <div className="divide-y divide-[#E6DED1] text-xs">
-                {dashboardData.recentActivity.map((act: any, index: number) => {
+                {dashboardData.recentActivity.map((act, index) => {
                   const action = act?.action ?? act?.actionType;
                   const key = getEntityId(act) || `activity-${index}`;
                   return (
@@ -259,7 +290,7 @@ export function AdminDashboardPage() {
             <table className="w-full text-left text-xs">
               <thead className="border-b border-[#E6DED1] text-[#A39A8D] font-bold uppercase"><tr><th className="pb-3">Name</th><th className="pb-3">Email</th><th className="pb-3">Role</th><th className="pb-3">Status</th><th className="pb-3 text-right">Actions</th></tr></thead>
               <tbody className="divide-y divide-[#E6DED1] text-[#514B44]">
-                {(usersList || []).map((u: any, index: number) => {
+                {(usersList || []).map((u, index) => {
                   const userId = getEntityId(u);
                   const rowKey = userId || `${u.email || "user"}-${index}`;
                   return <tr key={rowKey}><td className="py-3 font-semibold text-[#211E1B]">{u.name}</td><td className="py-3">{u.email}</td><td className="py-3 capitalize font-medium">{u.role}</td><td className="py-3"><span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${u.status === "active" ? "bg-[#E7EFE2] text-[#4B5D3A]" : "bg-[#FBE9E5] text-[#A23B2E]"}`}>{u.status}</span></td><td className="py-3 text-right">{u.role !== "admin" && <button onClick={() => toggleUserSuspendMutation.mutate({ userId, isSuspended: u.status === "suspended" })} disabled={!userId || toggleUserSuspendMutation.isPending} className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition disabled:opacity-50 ${u.status === "suspended" ? "bg-[#E7EFE2] text-[#4B5D3A] hover:bg-[#DCE7D4]" : "bg-[#FBE9E5] text-[#A23B2E] hover:bg-[#F3D8D2]"}`}>{u.status === "suspended" ? "Unsuspend" : "Suspend"}</button>}</td></tr>;
@@ -285,7 +316,7 @@ export function AdminDashboardPage() {
                 <tr><th className="pb-3">Business Name</th><th className="pb-3">City</th><th className="pb-3">PAN</th><th className="pb-3">Status</th><th className="pb-3 text-right">Actions</th></tr>
               </thead>
               <tbody className="divide-y divide-[#E6DED1] text-[#514B44]">
-                {(sellersList || []).map((s: any, index: number) => {
+                {(sellersList || []).map((s, index) => {
                   const sellerId = getEntityId(s);
                   const rowKey = sellerId || `${s.email || "seller"}-${index}`;
                   const isPendingApplication = s.role === "customer" && s.sellerProfile?.status === "pending";
@@ -329,7 +360,7 @@ export function AdminDashboardPage() {
           <div className="bg-white rounded-md border border-[#C8C0B3] p-6 shadow-sm space-y-4">
             <h3 className="text-base font-bold text-[#211E1B]">Categories</h3>
             <div className="space-y-2">
-              {(categoriesList || []).map((category: any, index: number) => {
+              {(categoriesList || []).map((category, index) => {
                 const categoryId = getEntityId(category);
                 return <div key={categoryId || `${category.slug || category.name || "category"}-${index}`} className="flex flex-wrap items-center justify-between gap-3 border border-[#E6DED1] rounded-md p-3"><div><p className="text-sm font-bold text-[#211E1B]">{category.name}</p><p className="text-[11px] text-[#8B8377]">{category.slug}</p></div><div className="flex items-center gap-2">
                         {React.createElement(getCategoryIcon(category.iconName), { className: "w-4 h-4 text-[#6F685F] shrink-0" })}
@@ -347,7 +378,7 @@ export function AdminDashboardPage() {
       {activeTab === "disputes" && (
         <div className="bg-white rounded-md border border-[#C8C0B3] p-6 shadow-sm space-y-4">
           <h3 className="text-base font-bold text-[#211E1B]">Reports & Disputes</h3>
-          {(disputesList || []).length === 0 ? <p className="text-sm text-[#8B8377]">No disputes found.</p> : <div className="space-y-3">{(disputesList || []).map((dispute: any, index: number) => <div key={getEntityId(dispute) || `dispute-${index}`} className="rounded-md border border-[#E6DED1] p-4"><p className="text-sm font-bold text-[#211E1B]">Booking {getEntityId(dispute)}</p><p className="text-xs text-[#8B8377] mt-1">{dispute.customer?.name || "Customer"} · {dispute.status}</p></div>)}</div>}
+          {(disputesList || []).length === 0 ? <p className="text-sm text-[#8B8377]">No disputes found.</p> : <div className="space-y-3">{(disputesList || []).map((dispute, index) => <div key={getEntityId(dispute) || `dispute-${index}`} className="rounded-md border border-[#E6DED1] p-4"><p className="text-sm font-bold text-[#211E1B]">Booking {getEntityId(dispute)}</p><p className="text-xs text-[#8B8377] mt-1">{dispute.customer?.name || "Customer"} · {dispute.status}</p></div>)}</div>}
         </div>
       )}
 
