@@ -2,23 +2,10 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/axios";
-import { formatCurrency, formatDate, getErrorMessage } from "../lib/utils";
+import { formatCurrency, formatDate, getEntityId, getErrorMessage } from "../lib/utils";
 import { useAuth } from "../hooks/useAuth";
 import { Package, Plus, RotateCcw, Trash2, AlertTriangle, ShieldAlert } from "lucide-react";
 import { ConfirmModal } from "../components/shared/ConfirmModal";
-
-const getEntityId = (entity: any): string => {
-  const rawId = entity?.id ?? entity?._id;
-  if (typeof rawId === "string" || typeof rawId === "number") return String(rawId);
-  if (rawId && typeof rawId === "object") {
-    if (typeof rawId.$oid === "string") return rawId.$oid;
-    if (typeof rawId.toString === "function") {
-      const value = rawId.toString();
-      if (value !== "[object Object]") return value;
-    }
-  }
-  return "";
-};
 
 export function SellerDashboardPage() {
   const navigate = useNavigate();
