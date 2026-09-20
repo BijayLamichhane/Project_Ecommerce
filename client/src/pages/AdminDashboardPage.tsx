@@ -85,7 +85,7 @@ export function AdminDashboardPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
     },
-    onError: (err: any) => setErrorMsg(getErrorMessage(err, "Failed to update user status")),
+    onError: (err: unknown) => setErrorMsg(getErrorMessage(err, "Failed to update user status")),
   });
 
   const moderateSellerMutation = useMutation({
@@ -104,7 +104,7 @@ export function AdminDashboardPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
     },
-    onError: (err: any) => setErrorMsg(getErrorMessage(err, "Failed to update seller status")),
+    onError: (err: unknown) => setErrorMsg(getErrorMessage(err, "Failed to update seller status")),
   });
 
   const handleSellerModeration = (seller: any, status: "approved" | "rejected") => {
@@ -157,7 +157,7 @@ export function AdminDashboardPage() {
       setNewCategoryIcon("Package");
       queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
-    onError: (err: any) => setErrorMsg(getErrorMessage(err, "Failed to create category")),
+    onError: (err: unknown) => setErrorMsg(getErrorMessage(err, "Failed to create category")),
   });
 
   const deleteCategoryMutation = useMutation({
@@ -166,7 +166,7 @@ export function AdminDashboardPage() {
       await api.delete(`/categories/${encodeURIComponent(categoryId)}`);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["categories"] }),
-    onError: (err: any) => setErrorMsg(getErrorMessage(err, "Failed to delete category")),
+    onError: (err: unknown) => setErrorMsg(getErrorMessage(err, "Failed to delete category")),
   });
 
   const updateCategoryIconMutation = useMutation({
@@ -175,7 +175,7 @@ export function AdminDashboardPage() {
       await api.patch(`/categories/${encodeURIComponent(categoryId)}`, { iconName: iconName.trim() || "Package" });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["categories"] }),
-    onError: (err: any) => setErrorMsg(getErrorMessage(err, "Failed to update category icon")),
+    onError: (err: unknown) => setErrorMsg(getErrorMessage(err, "Failed to update category icon")),
   });
 
   const metrics = dashboardData?.metrics;
