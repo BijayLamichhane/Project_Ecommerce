@@ -7,6 +7,7 @@ import { authClient } from "./config/auth.js";
 import { migrateLegacyCredentials } from "./config/authMigration.js";
 import { initSocketIO } from "./sockets/index.js";
 import { bookingService } from "./modules/bookings/booking.service.js";
+import { bookingInventoryRepository } from "./modules/bookings/booking.inventory.repository.js";
 import { logger } from "./utils/logger.js";
 
 async function startServer() {
@@ -20,6 +21,10 @@ async function startServer() {
       logger.info({ count: backfilled }, "Backfilled expiry times for legacy pending bookings");
     }
     await bookingService.expirePendingBookings();
+    const ledgerBackfilled = await bookingInventoryRepository.backfillFromBookings();
+    if (ledgerBackfilled > 0) {
+      logger.info({ count: ledgerBackfilled }, "Backfilled booking inventory ledger from existing live bookings");
+    }
     await connectRedis();
 
     const app = createApp();
