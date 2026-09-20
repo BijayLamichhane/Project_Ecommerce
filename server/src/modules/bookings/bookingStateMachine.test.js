@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isValidTransition } from "./booking.schema.js";
+import { isValidTransition, returnRequestSchema } from "./booking.schema.js";
 
 describe("Booking State Machine Transitions", () => {
   it("allows valid transitions", () => {
@@ -12,6 +12,11 @@ describe("Booking State Machine Transitions", () => {
     expect(isValidTransition("active", "return_requested")).toBe(true);
     expect(isValidTransition("return_requested", "returned")).toBe(true);
     expect(isValidTransition("returned", "completed")).toBe(true);
+  });
+
+  it("accepts the return conditions used by the booking UI", () => {
+    expect(returnRequestSchema.safeParse({ condition: "damaged" }).success).toBe(true);
+    expect(returnRequestSchema.safeParse({ condition: "like_new" }).success).toBe(true);
   });
 
   it("blocks invalid transitions", () => {
