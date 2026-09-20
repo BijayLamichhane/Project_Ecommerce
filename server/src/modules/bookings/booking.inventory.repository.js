@@ -56,8 +56,8 @@ async function removeExpiredPendingReservations(productId, date, now) {
               as: "reservation",
               cond: {
                 $or: [
-                  { $ne: ["$$reservation.status", "pending"] },
-                  { $gt: ["$$reservation.expiresAt", now] },
+                  { $ne: ["$reservation.status", "pending"] },
+                  { $gt: ["$reservation.expiresAt", now] },
                 ],
               },
             },
@@ -69,7 +69,8 @@ async function removeExpiredPendingReservations(productId, date, now) {
           reservedCount: { $sum: "$reservations.quantity" },
         },
       },
-    ]
+    ],
+    { updatePipeline: true }
   );
 }
 
