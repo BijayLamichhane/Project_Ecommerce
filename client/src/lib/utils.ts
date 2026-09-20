@@ -97,3 +97,16 @@ export function getErrorMessage(err: unknown, fallback = "Something went wrong")
 
   return apiError.message || fallback;
 }
+
+
+export function getEntityId(value: unknown): string {
+  if (!value || typeof value !== "object") return "";
+  const record = value as Record<string, unknown>;
+  const rawId = record.id ?? record._id;
+  if (typeof rawId === "string" || typeof rawId === "number") return String(rawId);
+  if (rawId && typeof rawId === "object") {
+    const oid = (rawId as Record<string, unknown>).$oid;
+    if (typeof oid === "string") return oid;
+  }
+  return "";
+}
