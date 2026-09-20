@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/axios";
@@ -7,6 +7,7 @@ import { RentalCalendar } from "../components/shared/RentalCalendar";
 import { PriceSummary } from "../components/shared/PriceSummary";
 import { formatCurrency, getEntityId, formatDate, getErrorMessage } from "../lib/utils";
 import { useAuth } from "../hooks/useAuth";
+import { useSocket } from "../hooks/useSocket";
 import {
   Star,
   ShieldCheck,
@@ -27,6 +28,7 @@ export function ProductDetailPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
+  const socket = useSocket();
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -61,6 +63,23 @@ export function ProductDetailPage() {
     },
     enabled: !!id,
   });
+
+  useEffect(() => {
+    if (!socket || !id) return;
+
+    socket.emit("join_product", id);
+    const onAvailabilityChanged = (payload: { productId?: string }) => {
+      if (!payload?.productId || String(payload.productId) === String(id)) {
+        queryClient.invalidateQueries({ queryKey: ["product-availability", id] });
+      }
+    };
+
+    socket.on("availability_changed", onAvailabilityChanged);
+    return () => {
+      socket.off("availability_changed", onAvailabilityChanged);
+      socket.emit("leave_product", id);
+    };
+  }, [socket, id, queryClient]);
 
   // 3. Fetch Product Reviews
   const { data: reviews } = useQuery({
