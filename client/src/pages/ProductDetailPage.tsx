@@ -161,7 +161,7 @@ export function ProductDetailPage() {
       return data.data;
     },
     onSuccess: (booking) => {
-      const bookingId = booking?.id || booking?._id;
+      const bookingId = getEntityId(booking);
       if (bookingId) {
         navigate(`/bookings/${bookingId}`);
       }
