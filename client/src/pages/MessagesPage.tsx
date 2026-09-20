@@ -280,7 +280,7 @@ export function MessagesPage() {
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {messages.length ? (
                   messages.map((msg) => {
-                    const msgId = msg.id || msg._id;
+                    const msgId = getEntityId(msg);
                     const isMine = String(msg.senderId) === String(currentUserId);
                     return (
                       <div key={msgId} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
