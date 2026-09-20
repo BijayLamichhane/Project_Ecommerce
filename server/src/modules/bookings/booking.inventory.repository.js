@@ -69,7 +69,8 @@ async function removeExpiredPendingReservations(productId, date, now) {
           reservedCount: { $sum: "$reservations.quantity" },
         },
       },
-    ]
+    ],
+    { updatePipeline: true }
   );
 }
 
