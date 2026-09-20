@@ -11,7 +11,7 @@ RentHub is a full-stack web application for renting physical products such as ca
 - **Availability & Conflict Engine**: Payment-driven booking holds with expiry-aware availability and an atomic per-product/day MongoDB inventory ledger that prevents concurrent overbooking without requiring Redis locks.
 - **Security Deposit Architecture**: Refundable security deposits tracked separately from rental revenue and released upon verified return.
 - **Dynamic Tiered Pricing**: Hourly, daily, weekly, and monthly pricing calculated on the backend.
-- **Real-Time Communication**: Socket.IO integration for customer-seller messaging, typing indicators, and instant notifications.
+- **Real-Time Communication**: Socket.IO integration for customer-seller messaging, typing indicators, and instant notifications. New conversations resolve seller ownership from the referenced product or booking, and booking references are persisted on conversations.
 - **Role-Based Access Control**: RBAC for `customer`, `seller`, and `admin` roles.
 - **Redis Caching & Rate Limiting**: Optional Redis support for product/category caching and rate limiting; booking concurrency is enforced by the MongoDB inventory ledger.
 - **Server-Verified Payments**: eSewa checkout is verified server-side before a booking is confirmed.
