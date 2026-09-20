@@ -149,7 +149,7 @@ export function ProductsPage() {
               </button>
               {(categories || []).map((cat) => (
                 <button
-                  key={cat._id}
+                  key={cat.id}
                   type="button"
                   onClick={() => updateParam("category", cat.slug)}
                   className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium transition ${
