@@ -53,10 +53,10 @@ export function BookingDetailPage() {
       if (!payment?.payment_url) throw new Error("Debit/credit card gateway could not be initialized.");
       window.location.assign(payment.payment_url);
     },
-    onError: (err: any) => setErrorMsg(getErrorMessage(err, "Unable to start payment. Please try again.")),
+    onError: (err: unknown) => setErrorMsg(getErrorMessage(err, "Unable to start payment. Please try again.")),
   });
 
-  const returnMutation = useMutation({ mutationFn: async () => { setErrorMsg(null); await api.post(`/bookings/${id}/return`, { condition: returnCondition, notes: returnNotes }); }, onSuccess: () => { setReturnNotes(""); queryClient.invalidateQueries({ queryKey: ["booking", id] }); queryClient.invalidateQueries({ queryKey: ["customer-stats"] }); }, onError: (err: any) => setErrorMsg(getErrorMessage(err, "Failed to submit the return request.")) });
+  const returnMutation = useMutation({ mutationFn: async () => { setErrorMsg(null); await api.post(`/bookings/${id}/return`, { condition: returnCondition, notes: returnNotes }); }, onSuccess: () => { setReturnNotes(""); queryClient.invalidateQueries({ queryKey: ["booking", id] }); queryClient.invalidateQueries({ queryKey: ["customer-stats"] }); }, onError: (err: unknown) => setErrorMsg(getErrorMessage(err, "Failed to submit the return request.")) });
 
   const reviewMutation = useMutation({
     mutationFn: async () => {
@@ -68,7 +68,7 @@ export function BookingDetailPage() {
       await api.post("/reviews", { productId, bookingId: id, rating: reviewRating, title: reviewTitle.trim() || undefined, comment: reviewComment.trim() });
     },
     onSuccess: () => { setIsReviewOpen(false); setReviewTitle(""); setReviewComment(""); setReviewRating(5); setErrorMsg(null); queryClient.invalidateQueries({ queryKey: ["booking", id] }); queryClient.invalidateQueries({ queryKey: ["customer-stats"] }); },
-    onError: (err: any) => setErrorMsg(getErrorMessage(err, "Failed to submit your review.")),
+    onError: (err: unknown) => setErrorMsg(getErrorMessage(err, "Failed to submit your review.")),
   });
 
   const questionMutation = useMutation({
@@ -83,7 +83,7 @@ export function BookingDetailPage() {
       return data.data;
     },
     onSuccess: () => { setQuestion(""); setIsQuestionOpen(false); navigate("/messages"); },
-    onError: (err: any) => setErrorMsg(getErrorMessage(err, "Failed to send your question.")),
+    onError: (err: unknown) => setErrorMsg(getErrorMessage(err, "Failed to send your question.")),
   });
 
   if (isLoading) return <div className="min-h-screen bg-[var(--background)] px-4 py-16"><div className="max-w-5xl mx-auto h-96 rounded-md bg-[#E8E1D5] border border-[#DDD5C7] animate-pulse" /></div>;
