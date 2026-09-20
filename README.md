@@ -67,7 +67,7 @@ This is a demo payout profile only; it is not a real card-processing integration
 
 | Layer | Technologies |
 |---|---|
-| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, TanStack Query, Lucide Icons, Recharts |
+| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, TanStack Query, Lucide Icons |
 | **Backend** | Node.js, Express.js, Better Auth, Socket.IO, Zod validation |
 | **Database** | MongoDB, Mongoose |
 | **Cache & Realtime** | Redis (`ioredis`), Socket.IO |
