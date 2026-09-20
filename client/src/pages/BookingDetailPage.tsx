@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/axios";
 import { Booking } from "../types";
-import { formatCurrency, formatDate, getErrorMessage } from "../lib/utils";
+import { formatCurrency, getEntityId, formatDate, getErrorMessage } from "../lib/utils";
 import { useAuth } from "../hooks/useAuth";
 import { Calendar, Clock, ShieldCheck, CreditCard, RotateCcw, AlertTriangle, Star, MessageSquare, Send, X, LockKeyhole } from "lucide-react";
 
@@ -93,7 +93,7 @@ export function BookingDetailPage() {
   const isCustomer = String(userId) === String(booking.customerId);
   const firstItem = booking.bookingItems?.[0];
   const product = firstItem?.product;
-  const bookingId = booking.id || booking._id || "";
+  const bookingId = getEntityId(booking);
   const currentIndex = lifecycleStatuses.indexOf(booking.status);
   const canReview = isCustomer && ["returned", "completed"].includes(booking.status);
   const sellerName = booking.seller?.name || "Seller";
