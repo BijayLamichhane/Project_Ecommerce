@@ -39,7 +39,7 @@ const envSchema = z.object({
   CARD_GATEWAY_CHECKOUT_URL: z.string().url().optional(),
   CARD_GATEWAY_MERCHANT_ID: z.string().optional().default(""),
   CARD_GATEWAY_SECRET: z.string().optional().default(""),
-  BOOKING_LOCK_TTL_SECONDS: z.coerce.number().int().positive().default(60),
+  PENDING_BOOKING_TTL_MINUTES: z.coerce.number().int().positive().default(20),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900000),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100),
 });
