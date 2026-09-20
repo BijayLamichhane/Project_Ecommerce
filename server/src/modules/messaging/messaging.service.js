@@ -1,6 +1,7 @@
 import { messagingRepository } from "./messaging.repository.js";
 import { User } from "../../models/User.js";
 import { Product } from "../../models/Product.js";
+import { Booking } from "../../models/Booking.js";
 import { NotFoundError, ForbiddenError } from "../../middleware/errorHandler.js";
 import { v4 as uuidv4 } from "uuid";
 
@@ -36,10 +37,11 @@ export class MessagingService {
   }
 
   async createConversation(senderId, recipientId, productId, bookingId) {
-    const [sender, recipient, product] = await Promise.all([
+    const [sender, recipient, product, booking] = await Promise.all([
       User.findById(senderId).select("_id role status sellerProfile").lean(),
       User.findById(recipientId).select("_id role status sellerProfile").lean(),
       productId ? Product.findById(productId).select("_id sellerId status").lean() : null,
+      bookingId ? Booking.findById(bookingId).select("_id sellerId").lean() : null,
     ]);
 
     if (!sender || !recipient) throw new NotFoundError("User");
@@ -51,7 +53,22 @@ export class MessagingService {
     }
 
     const senderRole = normalizeRole(sender);
-    const recipientRole = normalizeRole(recipient);
+    let recipientRole = normalizeRole(recipient);
+
+    const recipientOwnsProduct = !!(
+      productId &&
+      product &&
+      String(product.sellerId) === String(recipient._id)
+    );
+    const recipientOwnsBooking = !!(
+      bookingId &&
+      booking &&
+      String(booking.sellerId) === String(recipient._id)
+    );
+
+    if (recipientOwnsProduct || recipientOwnsBooking) {
+      recipientRole = "seller";
+    }
 
     if (senderRole === "admin" || recipientRole === "admin") {
       throw new ForbiddenError("Messaging is available only between customers and sellers");
@@ -68,6 +85,10 @@ export class MessagingService {
       if (String(product.sellerId) !== String(recipient._id)) {
         throw new ForbiddenError("The selected recipient is not the seller of this product");
       }
+    }
+
+    if (bookingId && (!booking || String(booking.sellerId) !== String(recipient._id))) {
+      throw new ForbiddenError("The selected recipient is not the seller for this booking");
     }
 
     const customerId = String(sender._id);
