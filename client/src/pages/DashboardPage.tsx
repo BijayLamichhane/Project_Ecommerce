@@ -97,7 +97,7 @@ export function DashboardPage() {
 
         <div className="space-y-6">
           <div className="flex items-center justify-between"><div><h3 className="text-lg font-bold text-[#211E1B]">Recommended Gear For You</h3><p className="text-xs text-[#8B8377]">Top rated cameras, drones, and instruments</p></div><Link to="/products" className="text-xs font-semibold text-[#C17817] hover:underline flex items-center gap-1">Explore all <ArrowRight className="w-3.5 h-3.5" /></Link></div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">{(featuredProducts || []).slice(0, 4).map((product: any) => <ProductCard key={getEntityId(product)} product={product} />)}</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">{(featuredProducts || []).slice(0, 4).map((product) => <ProductCard key={getEntityId(product)} product={product} />)}</div>
         </div>
       </div>
     </div>
