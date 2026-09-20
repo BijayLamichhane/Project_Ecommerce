@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../lib/axios";
 import { useAuth } from "../hooks/useAuth";
 import { ProductCard } from "../components/shared/ProductCard";
-import { formatCurrency, formatDate } from "../lib/utils";
+import { formatCurrency, getEntityId, formatDate } from "../lib/utils";
 import { Calendar, Clock, CheckCircle2, ArrowRight, Sparkles, Package, History, ChevronRight } from "lucide-react";
 
 const previousStatuses = new Set(["completed", "returned", "cancelled", "rejected"]);
@@ -72,7 +72,7 @@ export function DashboardPage() {
             <h3 className="text-lg font-bold text-[#211E1B]">Ongoing Rentals</h3>
             <div className="space-y-3">
               {statsData.currentRentals.map((rental: any) => {
-                const rentalId = rental.id || rental._id;
+                const rentalId = getEntityId(rental);
                 return <div key={rentalId} className="bg-[#F7F3EA] rounded-md border border-[#C17817]/40 p-5 flex items-center justify-between gap-4"><div className="space-y-1"><div className="text-xs font-bold text-[#C17817]">ACTIVE RENTAL</div><h4 className="text-sm font-bold text-[#211E1B]">Booking #{String(rentalId || "").substring(0, 8)}</h4><div className="text-xs text-[#8B8377]">Rental Fee: {formatCurrency(rental.totalAmount)}</div></div><Link to={`/bookings/${rentalId}`} className="px-4 py-2 rounded-md bg-[#C17817] text-[#211E1B] text-xs font-bold hover:bg-[#A66314] transition whitespace-nowrap">View / Return Item</Link></div>;
               })}
             </div>
