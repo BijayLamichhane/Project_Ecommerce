@@ -70,7 +70,7 @@ export function BecomeSellerPage() {
       setUser(me.data);
       navigate("/dashboard", { replace: true });
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       setErrorMsg(getErrorMessage(err, "Failed to submit seller application"));
     },
   });
