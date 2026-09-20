@@ -123,7 +123,7 @@ export function SellerDashboardPage() {
   if (isLoading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="h-72 rounded-md bg-slate-900 border border-slate-800 animate-pulse" />
+        <div className="h-72 rounded-md bg-[#211E1B] border border-[#6B6359] animate-pulse" />
       </div>
     );
   }
@@ -131,7 +131,7 @@ export function SellerDashboardPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
       {errorMsg && (
-        <div className="flex items-start gap-3 rounded-md border border-rose-800 bg-rose-950/60 p-4 text-sm text-rose-200">
+        <div className="flex items-start gap-3 rounded-md border border-[#A23B2E]/30 bg-[#FBE9E5] p-4 text-sm text-[#A23B2E]">
           <AlertTriangle className="h-5 w-5 shrink-0 text-[#A23B2E]" />
           <span>{errorMsg}</span>
         </div>
@@ -162,7 +162,7 @@ export function SellerDashboardPage() {
         </div>
       </div>
 
-      <div className="rounded-md border border-amber-800 bg-amber-950/50 p-4 text-xs text-amber-200">
+      <div className="rounded-md border border-[#C17817]/30 bg-[#F1ECE1] p-4 text-xs text-[#C17817]">
         Disbanding changes your account back to customer status immediately. Any active or draft listings will be taken offline. You must settle all pending, confirmed, active, or return-requested rentals first.
       </div>
 
@@ -211,7 +211,7 @@ export function SellerDashboardPage() {
               <thead className="border-b border-[#E6DED1] text-[#A39A8D] font-bold uppercase tracking-wider">
                 <tr><th className="pb-3">Equipment</th><th className="pb-3">Category</th><th className="pb-3">Daily Rate</th><th className="pb-3">Status</th><th className="pb-3 text-right">Actions</th></tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-[#514B44]">
+              <tbody className="divide-y divide-[#E6DED1] text-[#514B44]">
                 {myProducts.map((product: any, index: number) => {
                   const productId = getEntityId(product);
                   const rowKey = productId || `${product.slug || product.name || "product"}-${index}`;
@@ -250,7 +250,7 @@ export function SellerDashboardPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="border-b border-[#E6DED1] text-[#A39A8D] font-bold uppercase tracking-wider"><tr><th className="pb-3">Customer</th><th className="pb-3">Rental Dates</th><th className="pb-3">Status</th><th className="pb-3">Earnings</th><th className="pb-3">Deposit</th><th className="pb-3 text-right">Actions</th></tr></thead>
-              <tbody className="divide-y divide-slate-100 text-[#514B44]">
+              <tbody className="divide-y divide-[#E6DED1] text-[#514B44]">
                 {sellerBookings.map((booking: any, index: number) => {
                   const bookingId = getEntityId(booking);
                   const rowKey = bookingId || `booking-${index}`;
@@ -269,8 +269,8 @@ export function SellerDashboardPage() {
                           </>
                         )}
                         {bookingId && booking.status === "confirmed" && <button onClick={() => updateStatusMutation.mutate({ bookingId, status: "active" })} disabled={updateStatusMutation.isPending} className="px-2.5 py-1 rounded-lg bg-[#F1ECE1] text-[#C17817] hover:bg-[#E8E1D5] disabled:opacity-50 font-bold text-[11px]">Handover Gear (Activate)</button>}
-                        {bookingId && booking.status === "return_requested" && <button onClick={() => updateStatusMutation.mutate({ bookingId, status: "returned" })} disabled={updateStatusMutation.isPending} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 font-bold text-[11px]"><RotateCcw className="w-3.5 h-3.5" />Inspect & Mark Returned</button>}
-                        {bookingId && booking.status === "returned" && <button onClick={() => updateStatusMutation.mutate({ bookingId, status: "completed" })} disabled={updateStatusMutation.isPending} className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 font-bold text-[11px]">Complete Booking</button>}
+                        {bookingId && booking.status === "return_requested" && <button onClick={() => updateStatusMutation.mutate({ bookingId, status: "returned" })} disabled={updateStatusMutation.isPending} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#4B5D3A] text-white hover:bg-[#211E1B] disabled:opacity-50 font-bold text-[11px]"><RotateCcw className="w-3.5 h-3.5" />Inspect & Mark Returned</button>}
+                        {bookingId && booking.status === "returned" && <button onClick={() => updateStatusMutation.mutate({ bookingId, status: "completed" })} disabled={updateStatusMutation.isPending} className="px-2.5 py-1 rounded-lg bg-[#4B5D3A] text-white hover:bg-[#211E1B] disabled:opacity-50 font-bold text-[11px]">Complete Booking</button>}
                         {bookingId && <Link to={`/bookings/${bookingId}`} className="text-[#8B8377] hover:underline text-[11px]">Details</Link>}
                       </td>
                     </tr>
