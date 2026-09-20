@@ -48,6 +48,7 @@ const conversationSchema = new mongoose.Schema(
     customerId: { type: String, required: true, ref: "User" },
     sellerId: { type: String, required: true, ref: "User" },
     productId: { type: String, ref: "Product" },
+    bookingId: { type: String, ref: "Booking" },
     lastMessageAt: { type: Date, default: Date.now },
   },
   {
