@@ -18,11 +18,11 @@ export const api = axios.create({
 // Better Auth mounts its own routes at the server root ("/api/auth/*"),
 // not under the versioned "/api/v1" prefix, so route those requests there.
 api.interceptors.request.use((config) => {
-  if (config.data instanceof FormData) {
-    if (config.headers && typeof (config.headers as any).delete === "function") {
-      (config.headers as any).delete("Content-Type");
-    } else if (config.headers) {
-      delete (config.headers as any)["Content-Type"];
+  if (config.data instanceof FormData && config.headers) {
+    if (typeof config.headers.delete === "function") {
+      config.headers.delete("Content-Type");
+    } else {
+      delete config.headers["Content-Type"];
     }
   }
   if (config.url?.startsWith("/api/auth")) {
