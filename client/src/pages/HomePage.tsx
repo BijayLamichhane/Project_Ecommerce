@@ -33,8 +33,6 @@ export function HomePage() {
     },
   });
 
-  const defaultCategoryIcon = getCategoryIcon();
-
   return (
     <div className="space-y-20 pb-16">
       {/* ─── Hero Section ────────────────────────────────────────── */}
