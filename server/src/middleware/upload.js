@@ -52,7 +52,9 @@ export function detectImageMime(buffer) {
 
 function validateImageSignatures(req, _res, next) {
   try {
-    for (const file of req.files || []) {
+    const files = req.files || (req.file ? [req.file] : []);
+
+    for (const file of files) {
       const detectedMime = detectImageMime(file.buffer);
       if (!detectedMime || !ALLOWED_MIME_TYPES.has(detectedMime)) {
         throw new ValidationError(
