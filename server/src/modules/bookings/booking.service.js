@@ -17,6 +17,7 @@ import { isValidTransition } from "./booking.schema.js";
 import { differenceInDays } from "date-fns";
 import { emitProductAvailabilityChanged, emitToUser } from "../../sockets/index.js";
 import { v4 as uuidv4 } from "uuid";
+import { logger } from "../../utils/logger.js";
 
 export class BookingService {
   async getById(id, userId, userRole) {
@@ -227,15 +228,19 @@ export class BookingService {
       ? "Your payment window expired, so the selected dates are available again. Please create a new booking if you still need them."
       : "The seller declined this booking request, so the selected dates are available again.";
 
-    const notification = await notificationService.createNotification({
-      userId: booking.customerId,
-      type: isExpired ? "booking_expired" : "booking_rejected",
-      title,
-      message,
-      actionUrl,
-    });
+    try {
+      const notification = await notificationService.createNotification({
+        userId: booking.customerId,
+        type: isExpired ? "booking_expired" : "booking_rejected",
+        title,
+        message,
+        actionUrl,
+      });
 
-    emitToUser(booking.customerId, "booking_notification", notification);
+      emitToUser(booking.customerId, "booking_notification", notification);
+    } catch (error) {
+      logger.warn({ error, bookingId: booking.id || booking._id }, "Failed to create booking release notification");
+    }
   }
 
   async emitAvailabilityChanges(booking) {
