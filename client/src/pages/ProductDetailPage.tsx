@@ -232,7 +232,7 @@ export function ProductDetailPage() {
                   onClick={() => setSelectedImageIndex(idx)}
                   className={`relative w-20 h-20 rounded-md overflow-hidden border-2 flex-shrink-0 transition ${
                     selectedImageIndex === idx
-                      ? "border-indigo-600 shadow-sm"
+                      ? "border-[#C17817] shadow-sm"
                       : "border-[#C8C0B3] hover:border-[#B8B0A3] opacity-70 hover:opacity-100"
                   }`}
                 >
@@ -278,7 +278,7 @@ export function ProductDetailPage() {
                   {product.category?.name || "Rental"}
                 </span>
                 <div className="flex items-center gap-1 font-bold text-[#211E1B]">
-                  <Star className="w-4 h-4 fill-amber-400 text-[#C17817]" />
+                  <Star className="w-4 h-4 fill-[#C17817] text-[#C17817]" />
                   <span>{parseFloat(product.averageRating || "0").toFixed(1)}</span>
                   <span className="text-[#A39A8D] font-normal">
                     ({product.totalRatings} reviews)
@@ -301,7 +301,7 @@ export function ProductDetailPage() {
             {/* Rates Banner */}
             <div className="p-4 rounded-md bg-[#F1ECE1]/70 border border-[#C17817]/30 flex items-baseline justify-between">
               <div>
-                <span className="text-2xl font-extrabold text-indigo-900">
+                <span className="text-2xl font-extrabold text-[#211E1B]">
                   {formatCurrency(product.pricing?.dailyRate)}
                 </span>
                 <span className="text-xs text-[#C17817] font-medium"> / day</span>
@@ -309,7 +309,7 @@ export function ProductDetailPage() {
 
               {product.pricing?.weeklyRate && (
                 <div className="text-right">
-                  <div className="text-xs font-bold text-indigo-900">
+                  <div className="text-xs font-bold text-[#211E1B]">
                     {formatCurrency(product.pricing.weeklyRate)}
                   </div>
                   <div className="text-[10px] text-[#C17817]">weekly special rate</div>
@@ -420,8 +420,8 @@ export function ProductDetailPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#F1ECE1] border border-[#C17817]/30 text-amber-900 font-bold text-sm">
-              <Star className="w-4 h-4 fill-amber-400 text-[#C17817]" />
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#F1ECE1] border border-[#C17817]/30 text-[#211E1B] font-bold text-sm">
+              <Star className="w-4 h-4 fill-[#C17817] text-[#C17817]" />
               <span>{parseFloat(product.averageRating || "0").toFixed(1)} / 5.0</span>
             </div>
             {isAuthenticated && user?.role !== "seller" && user?.role !== "admin" && (
@@ -458,8 +458,8 @@ export function ProductDetailPage() {
                     <Star
                       className={`w-6 h-6 ${
                         star <= reviewRating
-                          ? "fill-amber-400 text-[#C17817]"
-                          : "text-slate-200"
+                          ? "fill-[#C17817] text-[#C17817]"
+                          : "text-[#DDD5C7]"
                       }`}
                     />
                   </button>
@@ -474,7 +474,7 @@ export function ProductDetailPage() {
                 placeholder="e.g. Excellent condition, smooth pickup!"
                 value={reviewTitle}
                 onChange={(e) => setReviewTitle(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-[#F1ECE1] border border-[#C8C0B3] rounded-md outline-none focus:ring-2 focus:ring-indigo-300"
+                className="w-full px-3 py-2 text-xs bg-[#F1ECE1] border border-[#C8C0B3] rounded-md outline-none focus:ring-2 focus:ring-[#C17817]/30"
               />
             </div>
 
@@ -485,7 +485,7 @@ export function ProductDetailPage() {
                 placeholder="Describe gear performance, lender communication, handover ease..."
                 value={reviewComment}
                 onChange={(e) => setReviewComment(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-[#F1ECE1] border border-[#C8C0B3] rounded-md outline-none focus:ring-2 focus:ring-indigo-300"
+                className="w-full px-3 py-2 text-xs bg-[#F1ECE1] border border-[#C8C0B3] rounded-md outline-none focus:ring-2 focus:ring-[#C17817]/30"
               />
             </div>
 
@@ -540,8 +540,8 @@ export function ProductDetailPage() {
                         key={i}
                         className={`w-3.5 h-3.5 ${
                           i < rev.rating
-                            ? "fill-amber-400 text-[#C17817]"
-                            : "text-slate-200"
+                            ? "fill-[#C17817] text-[#C17817]"
+                            : "text-[#DDD5C7]"
                         }`}
                       />
                     ))}
