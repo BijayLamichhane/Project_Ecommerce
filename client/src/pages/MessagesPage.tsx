@@ -5,15 +5,8 @@ import { api } from "../lib/axios";
 import { Conversation, Message } from "../types";
 import { useAuth } from "../hooks/useAuth";
 import { useSocket } from "../hooks/useSocket";
-import { formatDate, getErrorMessage } from "../lib/utils";
+import { formatDate, getEntityId, getErrorMessage } from "../lib/utils";
 import { MessageSquare, Send, User, AlertCircle } from "lucide-react";
-
-const getEntityId = (value: any): string | undefined => {
-  if (!value) return undefined;
-  if (typeof value === "string") return value;
-  if (typeof value === "object") return value.id || value._id || value.$oid;
-  return undefined;
-};
 
 const getConversationProduct = (conversation: any) => {
   if (conversation?.product) return conversation.product;
@@ -157,7 +150,7 @@ export function MessagesPage() {
       return data.data;
     },
     onSuccess: (result) => {
-      const newConversationId = result?.conversationId || result?.conversation?._id || result?.conversation?.id;
+      const newConversationId = getEntityId(result?.conversationId || result?.conversation);
       setMessageContent("");
       setMessageError(null);
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
