@@ -10,6 +10,11 @@ function getReservationDates(startDate, endDate) {
   current.setUTCHours(0, 0, 0, 0);
   end.setUTCHours(0, 0, 0, 0);
 
+  if (current >= end) {
+    dates.push(new Date(current));
+    return dates;
+  }
+
   while (current < end) {
     dates.push(new Date(current));
     current.setUTCDate(current.getUTCDate() + 1);
