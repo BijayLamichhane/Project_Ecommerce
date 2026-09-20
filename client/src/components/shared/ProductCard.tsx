@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Product } from "../../types";
-import { formatCurrency } from "../../lib/utils";
+import { getEntityId, formatCurrency } from "../../lib/utils";
 import { Star, Heart, MapPin, ShieldCheck, Sparkles } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../lib/axios";
@@ -16,7 +16,7 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const productId = product.id || product._id;
+  const productId = getEntityId(product);
 
   const toggleWishlistMutation = useMutation({
     mutationFn: async () => {
