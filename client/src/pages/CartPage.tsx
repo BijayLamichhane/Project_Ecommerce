@@ -69,12 +69,8 @@ export function CartPage() {
         navigate(`/bookings/${bookingId}`);
       }
     },
-    onError: (err: any) => {
-      const msg =
-        err?.response?.data?.error?.message ||
-        err?.message ||
-        "Checkout failed. Please try again.";
-      alert(msg);
+    onError: (err: unknown) => {
+      alert(getErrorMessage(err, "Checkout failed. Please try again."));
     },
   });
 
