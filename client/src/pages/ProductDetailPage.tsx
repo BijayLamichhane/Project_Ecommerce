@@ -175,11 +175,11 @@ export function ProductDetailPage() {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 animate-pulse">
-          <div className="h-[450px] bg-slate-200 rounded-3xl" />
+          <div className="h-[450px] bg-[#DDD5C7] rounded-md" />
           <div className="space-y-4">
-            <div className="h-8 bg-slate-200 rounded-lg w-3/4" />
-            <div className="h-4 bg-slate-200 rounded-lg w-1/2" />
-            <div className="h-48 bg-slate-200 rounded-2xl" />
+            <div className="h-8 bg-[#DDD5C7] rounded-lg w-3/4" />
+            <div className="h-4 bg-[#DDD5C7] rounded-lg w-1/2" />
+            <div className="h-48 bg-[#DDD5C7] rounded-md" />
           </div>
         </div>
       </div>
@@ -189,8 +189,8 @@ export function ProductDetailPage() {
   if (!product) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center space-y-4">
-        <h2 className="text-2xl font-bold text-slate-900">Product not found</h2>
-        <Link to="/products" className="text-sm font-semibold text-indigo-600">
+        <h2 className="text-2xl font-bold text-[#211E1B]">Product not found</h2>
+        <Link to="/products" className="text-sm font-semibold text-[#C17817]">
           Return to catalog
         </Link>
       </div>
@@ -208,14 +208,14 @@ export function ProductDetailPage() {
         {/* Left Column: Image Gallery & Details (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
           {/* Main Large Image Display */}
-          <div className="relative aspect-[4/3] rounded-3xl overflow-hidden bg-slate-100 border border-slate-200/80 shadow-sm">
+          <div className="relative aspect-[4/3] rounded-md overflow-hidden bg-[#E8E1D5] border border-[#C8C0B3]/80 shadow-sm">
             <img
               src={currentImage}
               alt={product.name}
               className="w-full h-full object-cover"
             />
             {product.isFeatured && (
-              <span className="absolute top-4 left-4 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-500 text-white shadow-md">
+              <span className="absolute top-4 left-4 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-[#F1ECE1]0 text-white shadow-md">
                 <Sparkles className="w-3.5 h-3.5" />
                 Featured Equipment
               </span>
@@ -230,10 +230,10 @@ export function ProductDetailPage() {
                   key={img.id}
                   type="button"
                   onClick={() => setSelectedImageIndex(idx)}
-                  className={`relative w-20 h-20 rounded-xl overflow-hidden border-2 flex-shrink-0 transition ${
+                  className={`relative w-20 h-20 rounded-md overflow-hidden border-2 flex-shrink-0 transition ${
                     selectedImageIndex === idx
                       ? "border-indigo-600 shadow-sm"
-                      : "border-slate-200 hover:border-slate-300 opacity-70 hover:opacity-100"
+                      : "border-[#C8C0B3] hover:border-[#B8B0A3] opacity-70 hover:opacity-100"
                   }`}
                 >
                   <img src={img.url} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
@@ -243,24 +243,24 @@ export function ProductDetailPage() {
           )}
 
           {/* Product Description */}
-          <div className="pt-6 border-t border-slate-200 space-y-4">
-            <h3 className="text-lg font-bold text-slate-900">About this gear</h3>
-            <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+          <div className="pt-6 border-t border-[#C8C0B3] space-y-4">
+            <h3 className="text-lg font-bold text-[#211E1B]">About this gear</h3>
+            <p className="text-sm text-[#6F685F] leading-relaxed whitespace-pre-line">
               {product.description}
             </p>
           </div>
 
           {/* Rental Rules & Cancellation Policy */}
-          <div className="pt-6 border-t border-slate-200 space-y-3">
-            <h3 className="text-lg font-bold text-slate-900">Rental Rules</h3>
-            <ul className="space-y-2 text-sm text-slate-600">
+          <div className="pt-6 border-t border-[#C8C0B3] space-y-3">
+            <h3 className="text-lg font-bold text-[#211E1B]">Rental Rules</h3>
+            <ul className="space-y-2 text-sm text-[#6F685F]">
               {(product.rules?.rules || [
                 "Valid ID proof required upon handover",
                 "Handle with care and return in original protective case",
                 "Late returns subject to daily extension charges",
               ]).map((rule, idx) => (
                 <li key={idx} className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+                  <CheckCircle className="w-4 h-4 text-[#4B5D3A] mt-0.5 flex-shrink-0" />
                   <span>{rule}</span>
                 </li>
               ))}
@@ -270,41 +270,41 @@ export function ProductDetailPage() {
 
         {/* Right Column: Booking Widget & Dynamic Pricing (5 cols) */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="sticky top-24 bg-white rounded-3xl border border-slate-200 p-6 shadow-lg shadow-slate-100 space-y-6">
+          <div className="sticky top-24 bg-white rounded-md border border-[#C8C0B3] p-6 shadow-sm space-y-6">
             {/* Header: Title, Rating, City */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs text-slate-500">
-                <span className="font-semibold uppercase tracking-wider text-indigo-600">
+              <div className="flex items-center justify-between text-xs text-[#8B8377]">
+                <span className="font-semibold uppercase tracking-wider text-[#C17817]">
                   {product.category?.name || "Rental"}
                 </span>
-                <div className="flex items-center gap-1 font-bold text-slate-900">
-                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                <div className="flex items-center gap-1 font-bold text-[#211E1B]">
+                  <Star className="w-4 h-4 fill-amber-400 text-[#C17817]" />
                   <span>{parseFloat(product.averageRating || "0").toFixed(1)}</span>
-                  <span className="text-slate-400 font-normal">
+                  <span className="text-[#A39A8D] font-normal">
                     ({product.totalRatings} reviews)
                   </span>
                 </div>
               </div>
 
-              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-snug">
+              <h1 className="text-xl sm:text-2xl font-extrabold text-[#211E1B] leading-snug">
                 {product.name}
               </h1>
 
               {product.city && (
-                <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                <div className="flex items-center gap-1.5 text-xs text-[#8B8377]">
+                  <MapPin className="w-3.5 h-3.5 text-[#A39A8D]" />
                   <span>Available in {product.city}, Nepal</span>
                 </div>
               )}
             </div>
 
             {/* Rates Banner */}
-            <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-100 flex items-baseline justify-between">
+            <div className="p-4 rounded-md bg-[#F1ECE1]/70 border border-[#C17817]/30 flex items-baseline justify-between">
               <div>
                 <span className="text-2xl font-extrabold text-indigo-900">
                   {formatCurrency(product.pricing?.dailyRate)}
                 </span>
-                <span className="text-xs text-indigo-700 font-medium"> / day</span>
+                <span className="text-xs text-[#C17817] font-medium"> / day</span>
               </div>
 
               {product.pricing?.weeklyRate && (
@@ -312,14 +312,14 @@ export function ProductDetailPage() {
                   <div className="text-xs font-bold text-indigo-900">
                     {formatCurrency(product.pricing.weeklyRate)}
                   </div>
-                  <div className="text-[10px] text-indigo-600">weekly special rate</div>
+                  <div className="text-[10px] text-[#C17817]">weekly special rate</div>
                 </div>
               )}
             </div>
 
             {/* Rental Calendar */}
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-600">
+              <label className="text-xs font-bold uppercase tracking-wider text-[#6F685F]">
                 Select Rental Dates
               </label>
               <RentalCalendar
@@ -335,8 +335,8 @@ export function ProductDetailPage() {
 
             {/* Error prompt */}
             {bookingError && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+              <div className="p-3 rounded-md bg-[#FBE9E5] border border-[#A23B2E]/30 text-xs text-[#A23B2E] flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-[#A23B2E] flex-shrink-0 mt-0.5" />
                 <span>{bookingError}</span>
               </div>
             )}
@@ -355,7 +355,7 @@ export function ProductDetailPage() {
                 type="button"
                 disabled={!startDate || !endDate || bookNowMutation.isPending}
                 onClick={() => (isAuthenticated ? bookNowMutation.mutate() : redirectToLogin())}
-                className="w-full py-3.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm shadow-md shadow-indigo-200 transition flex items-center justify-center gap-2"
+                className="w-full py-3.5 px-4 rounded-md bg-[#C17817] hover:bg-[#211E1B] disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm shadow-md shadow-none transition flex items-center justify-center gap-2"
               >
                 <Zap className="w-4 h-4 fill-white" />
                 {bookNowMutation.isPending ? "Securing Booking..." : "Book Now"}
@@ -365,7 +365,7 @@ export function ProductDetailPage() {
                 type="button"
                 disabled={!startDate || !endDate || addToCartMutation.isPending || cartAdded}
                 onClick={() => (isAuthenticated ? addToCartMutation.mutate() : redirectToLogin())}
-                className={`w-full py-3 px-4 rounded-xl bg-[#F1E0C8] hover:bg-[#E8D2B0] disabled:opacity-50 disabled:cursor-not-allowed text-[#211E1B] font-semibold text-xs transition-all duration-200 flex items-center justify-center gap-2 ${cartAdded ? "ring-2 ring-[#C17817]/30" : ""}`}
+                className={`w-full py-3 px-4 rounded-md bg-[#F1E0C8] hover:bg-[#E8D2B0] disabled:opacity-50 disabled:cursor-not-allowed text-[#211E1B] font-semibold text-xs transition-all duration-200 flex items-center justify-center gap-2 ${cartAdded ? "ring-2 ring-[#C17817]/30" : ""}`}
               >
                 {cartAdded ? (
                   <CheckCircle className="w-4 h-4 animate-bounce text-[#4B5D3A]" />
@@ -378,9 +378,9 @@ export function ProductDetailPage() {
 
             {/* Lender Contact */}
             {product.sellerId && (
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+              <div className="pt-4 border-t border-[#E6DED1] flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-full bg-[#DDD5C7] overflow-hidden flex items-center justify-center">
                     {product.seller?.avatarUrl ? (
                       <img
                         src={product.seller.avatarUrl}
@@ -388,18 +388,18 @@ export function ProductDetailPage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <span className="font-bold text-slate-600">
+                      <span className="font-bold text-[#6F685F]">
                         {product.seller?.name?.charAt(0)?.toUpperCase() || "L"}
                       </span>
                     )}
                   </div>
-                  <span className="font-semibold text-slate-700">
+                  <span className="font-semibold text-[#514B44]">
                     {product.seller?.name || "Lender"}
                   </span>
                 </div>
                 <Link
                   to={`/messages?recipient=${product.sellerId}&product=${product.id}`}
-                  className="text-indigo-600 font-bold hover:underline flex items-center gap-1"
+                  className="text-[#C17817] font-bold hover:underline flex items-center gap-1"
                 >
                   <MessageSquare className="w-3.5 h-3.5" />
                   Ask Question
@@ -411,23 +411,23 @@ export function ProductDetailPage() {
       </div>
 
       {/* ─── Customer Reviews Section ──────────────────────────── */}
-      <section className="pt-10 border-t border-slate-200 space-y-6">
+      <section className="pt-10 border-t border-[#C8C0B3] space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h3 className="text-xl font-bold text-slate-900">Customer Reviews</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h3 className="text-xl font-bold text-[#211E1B]">Customer Reviews</h3>
+            <p className="text-xs text-[#8B8377] mt-0.5">
               Share your rental experience with this listing
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 font-bold text-sm">
-              <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#F1ECE1] border border-[#C17817]/30 text-amber-900 font-bold text-sm">
+              <Star className="w-4 h-4 fill-amber-400 text-[#C17817]" />
               <span>{parseFloat(product.averageRating || "0").toFixed(1)} / 5.0</span>
             </div>
             {isAuthenticated && user?.role !== "seller" && user?.role !== "admin" && (
               <button
                 onClick={() => setShowReviewForm(!showReviewForm)}
-                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition"
+                className="px-4 py-2 rounded-md bg-[#C17817] hover:bg-[#211E1B] text-white text-xs font-bold transition"
               >
                 {showReviewForm ? "Cancel" : "Write a Review"}
               </button>
@@ -436,17 +436,17 @@ export function ProductDetailPage() {
         </div>
 
         {reviewSuccess && (
-          <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-700 font-medium">
+          <div className="p-3 rounded-md bg-[#E7EFE2] border border-[#4B5D3A]/30 text-xs text-[#4B5D3A] font-medium">
             ✓ Your review has been submitted successfully. Thank you!
           </div>
         )}
 
         {showReviewForm && (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
-            <h4 className="text-sm font-bold text-slate-900">Write Your Review</h4>
+          <div className="bg-white rounded-md border border-[#C8C0B3] shadow-sm p-6 space-y-4">
+            <h4 className="text-sm font-bold text-[#211E1B]">Write Your Review</h4>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-600">Rating *</label>
+              <label className="text-xs font-semibold text-[#6F685F]">Rating *</label>
               <div className="flex gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
@@ -458,7 +458,7 @@ export function ProductDetailPage() {
                     <Star
                       className={`w-6 h-6 ${
                         star <= reviewRating
-                          ? "fill-amber-400 text-amber-400"
+                          ? "fill-amber-400 text-[#C17817]"
                           : "text-slate-200"
                       }`}
                     />
@@ -468,36 +468,36 @@ export function ProductDetailPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-600">Review Headline (optional)</label>
+              <label className="text-xs font-semibold text-[#6F685F]">Review Headline (optional)</label>
               <input
                 type="text"
                 placeholder="e.g. Excellent condition, smooth pickup!"
                 value={reviewTitle}
                 onChange={(e) => setReviewTitle(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-300"
+                className="w-full px-3 py-2 text-xs bg-[#F1ECE1] border border-[#C8C0B3] rounded-md outline-none focus:ring-2 focus:ring-indigo-300"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-600">Your Experience *</label>
+              <label className="text-xs font-semibold text-[#6F685F]">Your Experience *</label>
               <textarea
                 rows={3}
                 placeholder="Describe gear performance, lender communication, handover ease..."
                 value={reviewComment}
                 onChange={(e) => setReviewComment(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-300"
+                className="w-full px-3 py-2 text-xs bg-[#F1ECE1] border border-[#C8C0B3] rounded-md outline-none focus:ring-2 focus:ring-indigo-300"
               />
             </div>
 
             {reviewError && (
-              <p className="text-xs text-rose-600 font-medium">{reviewError}</p>
+              <p className="text-xs text-[#A23B2E] font-medium">{reviewError}</p>
             )}
 
             <div className="flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => { setShowReviewForm(false); setReviewError(null); }}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
+                className="px-4 py-2 text-xs font-semibold text-[#6F685F] hover:bg-[#E8E1D5] rounded-md"
               >
                 Cancel
               </button>
@@ -505,7 +505,7 @@ export function ProductDetailPage() {
                 type="button"
                 onClick={() => submitReviewMutation.mutate()}
                 disabled={submitReviewMutation.isPending || reviewComment.trim().length < 5}
-                className="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md disabled:opacity-50"
+                className="px-4 py-2 text-xs font-bold text-white bg-[#C17817] hover:bg-[#211E1B] rounded-md shadow-md disabled:opacity-50"
               >
                 {submitReviewMutation.isPending ? "Submitting..." : "Submit Review"}
               </button>
@@ -518,18 +518,18 @@ export function ProductDetailPage() {
             {reviews.map((rev) => (
               <div
                 key={getEntityId(rev)}
-                className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3"
+                className="bg-white p-5 rounded-md border border-[#C8C0B3] shadow-sm space-y-3"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-indigo-700 text-xs">
+                    <div className="w-8 h-8 rounded-full bg-[#E8E1D5] flex items-center justify-center font-bold text-[#C17817] text-xs">
                       {rev.reviewer?.name?.charAt(0) || "U"}
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-slate-900">
+                      <h4 className="text-xs font-bold text-[#211E1B]">
                         {rev.reviewer?.name || "Verified Renter"}
                       </h4>
-                      <span className="text-[10px] text-slate-400">
+                      <span className="text-[10px] text-[#A39A8D]">
                         {formatDate(rev.createdAt)}
                       </span>
                     </div>
@@ -540,7 +540,7 @@ export function ProductDetailPage() {
                         key={i}
                         className={`w-3.5 h-3.5 ${
                           i < rev.rating
-                            ? "fill-amber-400 text-amber-400"
+                            ? "fill-amber-400 text-[#C17817]"
                             : "text-slate-200"
                         }`}
                       />
@@ -549,22 +549,22 @@ export function ProductDetailPage() {
                 </div>
 
                 {rev.title && (
-                  <h5 className="text-xs font-bold text-slate-900">{rev.title}</h5>
+                  <h5 className="text-xs font-bold text-[#211E1B]">{rev.title}</h5>
                 )}
 
-                <p className="text-xs text-slate-600 leading-relaxed">{rev.comment}</p>
+                <p className="text-xs text-[#6F685F] leading-relaxed">{rev.comment}</p>
 
                 {rev.sellerResponse && (
-                  <div className="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] space-y-1">
-                    <span className="font-bold text-slate-800">Lender response:</span>
-                    <p className="text-slate-600">{rev.sellerResponse}</p>
+                  <div className="mt-3 p-3 rounded-md bg-[#F1ECE1] border border-[#C8C0B3]/80 text-[11px] space-y-1">
+                    <span className="font-bold text-[#211E1B]">Lender response:</span>
+                    <p className="text-[#6F685F]">{rev.sellerResponse}</p>
                   </div>
                 )}
               </div>
             ))}
           </div>
         ) : (
-          <div className="bg-slate-50 p-8 rounded-2xl border border-slate-200 text-center text-xs text-slate-500">
+          <div className="bg-[#F1ECE1] p-8 rounded-md border border-[#C8C0B3] text-center text-xs text-[#8B8377]">
             No reviews yet for this listing. Be the first to review!
           </div>
         )}
