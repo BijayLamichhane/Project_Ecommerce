@@ -19,7 +19,7 @@ function fileFilter(_req, file, callback) {
   }
 }
 
-function detectImageMime(buffer) {
+export function detectImageMime(buffer) {
   if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
     return "image/jpeg";
   }
@@ -33,8 +33,8 @@ function detectImageMime(buffer) {
 
   if (
     buffer.length >= 6 &&
-    buffer.subarray(0, 6).equals(Buffer.from("GIF87a")) ||
-    buffer.subarray(0, 6).equals(Buffer.from("GIF89a"))
+    (buffer.subarray(0, 6).equals(Buffer.from("GIF87a")) ||
+      buffer.subarray(0, 6).equals(Buffer.from("GIF89a")))
   ) {
     return "image/gif";
   }
