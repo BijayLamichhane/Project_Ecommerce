@@ -63,7 +63,7 @@ export function CartPage() {
       return data.data;
     },
     onSuccess: (booking) => {
-      const bookingId = booking?.id || booking?._id;
+      const bookingId = getEntityId(booking);
       if (bookingId) {
         queryClient.invalidateQueries({ queryKey: ["cart"] });
         navigate(`/bookings/${bookingId}`);
