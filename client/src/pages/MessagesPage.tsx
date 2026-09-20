@@ -188,27 +188,27 @@ export function MessagesPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden grid grid-cols-1 md:grid-cols-12 h-[750px]">
-        <div className="md:col-span-4 border-r border-slate-200 flex flex-col">
-          <div className="p-4 border-b border-slate-100">
-            <h2 className="text-base font-bold text-slate-900">Messages</h2>
+      <div className="bg-white rounded-md border border-[#C8C0B3] shadow-sm overflow-hidden grid grid-cols-1 md:grid-cols-12 h-[750px]">
+        <div className="md:col-span-4 border-r border-[#C8C0B3] flex flex-col">
+          <div className="p-4 border-b border-[#E6DED1]">
+            <h2 className="text-base font-bold text-[#211E1B]">Messages</h2>
           </div>
 
-          <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
+          <div className="flex-1 overflow-y-auto divide-y divide-[#E6DED1]">
             {loadingConversations ? (
               <div className="p-4 space-y-3">
                 {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="h-16 bg-slate-100 rounded-xl animate-pulse" />
+                  <div key={i} className="h-16 bg-[#E8E1D5] rounded-md animate-pulse" />
                 ))}
               </div>
             ) : conversationsError ? (
-              <div className="p-6 text-center text-xs text-rose-500">
+              <div className="p-6 text-center text-xs text-[#A23B2E]">
                 <AlertCircle className="w-7 h-7 mx-auto mb-2" />
                 Unable to load conversations.
               </div>
             ) : !conversations?.length ? (
-              <div className="p-8 text-center text-xs text-slate-400">
-                <MessageSquare className="w-8 h-8 mx-auto text-slate-300" />
+              <div className="p-8 text-center text-xs text-[#A39A8D]">
+                <MessageSquare className="w-8 h-8 mx-auto text-[#B8B0A3]" />
                 <p>No conversations yet</p>
               </div>
             ) : (
@@ -225,23 +225,23 @@ export function MessagesPage() {
                       setMessageError(null);
                       setActiveConversationId(convId || null);
                     }}
-                    className={`w-full text-left p-4 hover:bg-slate-50 transition flex items-start gap-3 ${
-                      convId === activeConversationId ? "bg-indigo-50/70 border-l-4 border-indigo-600" : ""
+                    className={`w-full text-left p-4 hover:bg-[#F1ECE1] transition flex items-start gap-3 ${
+                      convId === activeConversationId ? "bg-[#F1ECE1]/70 border-l-4 border-indigo-600" : ""
                     }`}
                   >
-                    <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-[#DDD5C7] overflow-hidden flex-shrink-0">
                       {partner?.avatarUrl ? (
                         <img src={partner.avatarUrl} alt={partner.name} className="w-full h-full object-cover" />
                       ) : (
-                        <User className="w-5 h-5 m-2.5 text-slate-500" />
+                        <User className="w-5 h-5 m-2.5 text-[#8B8377]" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-xs font-bold text-slate-900 truncate">
+                      <h4 className="text-xs font-bold text-[#211E1B] truncate">
                         {partner?.name || "Lender / Renter"}
                       </h4>
                       {product && (
-                        <div className="text-[11px] font-medium text-indigo-600 truncate">
+                        <div className="text-[11px] font-medium text-[#C17817] truncate">
                           {product.name}
                         </div>
                       )}
@@ -253,23 +253,23 @@ export function MessagesPage() {
           </div>
         </div>
 
-        <div className="md:col-span-8 flex flex-col h-full bg-slate-50/50">
+        <div className="md:col-span-8 flex flex-col h-full bg-[#F1ECE1]/50">
           {activeConversationId && currentConv ? (
             <>
-              <div className="p-4 bg-white border-b border-slate-200 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-slate-200 overflow-hidden">
+              <div className="p-4 bg-white border-b border-[#C8C0B3] flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-[#DDD5C7] overflow-hidden">
                   {otherParty?.avatarUrl ? (
                     <img src={otherParty.avatarUrl} alt={otherParty.name} className="w-full h-full object-cover" />
                   ) : (
-                    <User className="w-5 h-5 m-2 text-slate-500" />
+                    <User className="w-5 h-5 m-2 text-[#8B8377]" />
                   )}
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-slate-900">{otherParty?.name || "Conversation"}</h3>
+                  <h3 className="text-xs font-bold text-[#211E1B]">{otherParty?.name || "Conversation"}</h3>
                   {currentProduct && (
                     <Link
                       to={`/products/${getEntityId(currentProduct)}`}
-                      className="text-[11px] text-indigo-600 hover:underline"
+                      className="text-[11px] text-[#C17817] hover:underline"
                     >
                       Listing: {currentProduct.name}
                     </Link>
@@ -285,24 +285,24 @@ export function MessagesPage() {
                     return (
                       <div key={msgId} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
                         <div
-                          className={`max-w-md px-4 py-2.5 rounded-2xl text-xs leading-relaxed shadow-sm ${
+                          className={`max-w-md px-4 py-2.5 rounded-md text-xs leading-relaxed shadow-sm ${
                             isMine
-                              ? "bg-indigo-600 text-white rounded-br-none"
-                              : "bg-white text-slate-900 border border-slate-200 rounded-bl-none"
+                              ? "bg-[#C17817] text-white rounded-br-none"
+                              : "bg-white text-[#211E1B] border border-[#C8C0B3] rounded-bl-none"
                           }`}
                         >
                           {msg.content}
                         </div>
-                        <span className="text-[10px] text-slate-400 mt-1 px-1">
+                        <span className="text-[10px] text-[#A39A8D] mt-1 px-1">
                           {formatDate(msg.createdAt, "h:mm a")}
                         </span>
                       </div>
                     );
                   })
                 ) : (
-                  <div className="h-full flex items-center justify-center text-center p-8 text-slate-400">
+                  <div className="h-full flex items-center justify-center text-center p-8 text-[#A39A8D]">
                     <div>
-                      <MessageSquare className="w-10 h-10 mx-auto text-slate-300 mb-2" />
+                      <MessageSquare className="w-10 h-10 mx-auto text-[#B8B0A3] mb-2" />
                       <p className="text-xs">No messages yet. Start the conversation below.</p>
                     </div>
                   </div>
@@ -311,25 +311,25 @@ export function MessagesPage() {
               </div>
 
               {messageError && (
-                <div className="mx-4 mb-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-start gap-2">
+                <div className="mx-4 mb-2 p-3 rounded-md bg-[#FBE9E5] border border-[#A23B2E]/30 text-xs text-[#A23B2E] flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
                   <span>{messageError}</span>
                 </div>
               )}
 
-              <form onSubmit={handleSend} className="p-4 bg-white border-t border-slate-200 flex gap-2">
+              <form onSubmit={handleSend} className="p-4 bg-white border-t border-[#C8C0B3] flex gap-2">
                 <input
                   type="text"
                   placeholder="Type your message..."
                   value={messageContent}
                   onChange={(e) => setMessageContent(e.target.value)}
                   maxLength={3000}
-                  className="flex-1 px-4 py-2.5 text-xs bg-slate-100 border border-transparent rounded-xl outline-none focus:bg-white focus:border-indigo-500"
+                  className="flex-1 px-4 py-2.5 text-xs bg-[#E8E1D5] border border-transparent rounded-md outline-none focus:bg-white focus:border-[#C17817]"
                 />
                 <button
                   type="submit"
                   disabled={!messageContent.trim() || sendMessageMutation.isPending}
-                  className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white transition flex items-center justify-center"
+                  className="px-4 py-2.5 rounded-md bg-[#C17817] hover:bg-[#211E1B] disabled:opacity-40 text-white transition flex items-center justify-center"
                 >
                   <Send className="w-4 h-4" />
                 </button>
@@ -337,32 +337,32 @@ export function MessagesPage() {
             </>
           ) : isStartingConversation ? (
             <>
-              <div className="p-4 bg-white border-b border-slate-200 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center">
-                  <MessageSquare className="w-5 h-5 text-indigo-600" />
+              <div className="p-4 bg-white border-b border-[#C8C0B3] flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-[#E8E1D5] flex items-center justify-center">
+                  <MessageSquare className="w-5 h-5 text-[#C17817]" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-slate-900">Ask the seller a question</h3>
-                  <p className="text-[11px] text-slate-500">Your message will create a new conversation.</p>
+                  <h3 className="text-xs font-bold text-[#211E1B]">Ask the seller a question</h3>
+                  <p className="text-[11px] text-[#8B8377]">Your message will create a new conversation.</p>
                 </div>
               </div>
 
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-slate-400">
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-[#A39A8D]">
                 <MessageSquare className="w-12 h-12 text-indigo-200 mb-3" />
-                <h4 className="text-sm font-bold text-slate-700">Start a conversation</h4>
+                <h4 className="text-sm font-bold text-[#514B44]">Start a conversation</h4>
                 <p className="text-xs mt-1 max-w-sm">
                   Ask about availability, pickup, condition, pricing, or any other rental detail.
                 </p>
               </div>
 
               {messageError && (
-                <div className="mx-4 mb-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-start gap-2">
+                <div className="mx-4 mb-2 p-3 rounded-md bg-[#FBE9E5] border border-[#A23B2E]/30 text-xs text-[#A23B2E] flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
                   <span>{messageError}</span>
                 </div>
               )}
 
-              <form onSubmit={handleSend} className="p-4 bg-white border-t border-slate-200 flex gap-2">
+              <form onSubmit={handleSend} className="p-4 bg-white border-t border-[#C8C0B3] flex gap-2">
                 <input
                   type="text"
                   placeholder="Type your question..."
@@ -370,21 +370,21 @@ export function MessagesPage() {
                   onChange={(e) => setMessageContent(e.target.value)}
                   maxLength={3000}
                   autoFocus
-                  className="flex-1 px-4 py-2.5 text-xs bg-slate-100 border border-transparent rounded-xl outline-none focus:bg-white focus:border-indigo-500"
+                  className="flex-1 px-4 py-2.5 text-xs bg-[#E8E1D5] border border-transparent rounded-md outline-none focus:bg-white focus:border-[#C17817]"
                 />
                 <button
                   type="submit"
                   disabled={!messageContent.trim() || sendMessageMutation.isPending}
-                  className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white transition flex items-center justify-center"
+                  className="px-4 py-2.5 rounded-md bg-[#C17817] hover:bg-[#211E1B] disabled:opacity-40 text-white transition flex items-center justify-center"
                 >
                   <Send className="w-4 h-4" />
                 </button>
               </form>
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-slate-400 space-y-2">
-              <MessageSquare className="w-12 h-12 text-slate-300" />
-              <h4 className="text-sm font-bold text-slate-700">Select a conversation</h4>
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-[#A39A8D] space-y-2">
+              <MessageSquare className="w-12 h-12 text-[#B8B0A3]" />
+              <h4 className="text-sm font-bold text-[#514B44]">Select a conversation</h4>
               <p className="text-xs">Chat directly with equipment lenders about availability and pickup details</p>
             </div>
           )}
