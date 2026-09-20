@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../lib/axios";
 import { ProductCard } from "../components/shared/ProductCard";
 import { Heart, ArrowRight } from "lucide-react";
+import { getEntityId } from "../lib/utils";
 
 export function WishlistPage() {
   const { data: wishlistItemsData, isLoading } = useQuery({ queryKey: ["wishlist"], queryFn: async () => { const { data } = await api.get("/wishlist"); return data.data || []; } });
