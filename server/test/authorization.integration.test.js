@@ -192,6 +192,19 @@ describe("HTTP authorization boundaries", () => {
     expect(json?.error?.code).toBe("FORBIDDEN");
   });
 
+
+  it("blocks suspended users before protected API handlers", async () => {
+    getAccountStatus.mockResolvedValue("suspended");
+
+    const { response, json } = await request("/api/v1/admin/users", {
+      userId: "suspended-user",
+      role: "admin",
+    });
+
+    expect(response.status).toBe(403);
+    expect(json?.error?.code).toBe("ACCOUNT_SUSPENDED");
+  });
+
   it("allows the seller to activate a confirmed booking", async () => {
     bookingFindById.mockResolvedValue({
       id: "booking-1",
