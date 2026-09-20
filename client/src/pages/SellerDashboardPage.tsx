@@ -5,7 +5,18 @@ import { api } from "../lib/axios";
 import { formatCurrency, formatDate, getEntityId, getErrorMessage } from "../lib/utils";
 import { useAuth } from "../hooks/useAuth";
 import { Package, Plus, RotateCcw, Trash2, AlertTriangle, ShieldAlert } from "lucide-react";
+import type { Booking, Product } from "../types";
 import { ConfirmModal } from "../components/shared/ConfirmModal";
+
+type SellerEarningsData = {
+  metrics?: {
+    totalEarnings: number | string;
+    activeRentalsCount: number;
+    pendingRequestsCount: number;
+    totalProducts: number;
+    completedRentalsCount: number;
+  };
+};
 
 export function SellerDashboardPage() {
   const navigate = useNavigate();
@@ -13,12 +24,12 @@ export function SellerDashboardPage() {
   const { setUser } = useAuth();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [confirmModal, setConfirmModal] = useState<
-    | { type: "delete"; product: any }
+    | { type: "delete"; product: Product }
     | { type: "disband" }
     | null
   >(null);
 
-  const { data: earningsData, isLoading } = useQuery({
+  const { data: earningsData, isLoading } = useQuery<SellerEarningsData>({
     queryKey: ["seller-earnings"],
     queryFn: async () => {
       const { data } = await api.get("/users/seller/earnings");
@@ -26,7 +37,7 @@ export function SellerDashboardPage() {
     },
   });
 
-  const { data: sellerBookingsData } = useQuery({
+  const { data: sellerBookingsData } = useQuery<Booking[]>({
     queryKey: ["seller-bookings"],
     queryFn: async () => {
       const { data } = await api.get("/bookings/seller-bookings");
@@ -35,7 +46,7 @@ export function SellerDashboardPage() {
   });
   const sellerBookings = sellerBookingsData || [];
 
-  const { data: myProductsData, isLoading: productsLoading } = useQuery({
+  const { data: myProductsData, isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ["seller-products"],
     queryFn: async () => {
       const { data } = await api.get("/products/mine");
@@ -86,7 +97,7 @@ export function SellerDashboardPage() {
     onError: (err: unknown) => setErrorMsg(getErrorMessage(err, "Failed to disband the seller account.")),
   });
 
-  const handleDeleteProduct = (product: any) => {
+  const handleDeleteProduct = (product: Product) => {
     const productId = getEntityId(product);
     if (!productId) {
       setErrorMsg("This product has no valid ID and cannot be deleted.");
@@ -212,7 +223,7 @@ export function SellerDashboardPage() {
                 <tr><th className="pb-3">Equipment</th><th className="pb-3">Category</th><th className="pb-3">Daily Rate</th><th className="pb-3">Status</th><th className="pb-3 text-right">Actions</th></tr>
               </thead>
               <tbody className="divide-y divide-[#E6DED1] text-[#514B44]">
-                {myProducts.map((product: any, index: number) => {
+                {myProducts.map((product, index) => {
                   const productId = getEntityId(product);
                   const rowKey = productId || `${product.slug || product.name || "product"}-${index}`;
                   return (
@@ -251,7 +262,7 @@ export function SellerDashboardPage() {
             <table className="w-full text-left text-xs">
               <thead className="border-b border-[#E6DED1] text-[#A39A8D] font-bold uppercase tracking-wider"><tr><th className="pb-3">Customer</th><th className="pb-3">Rental Dates</th><th className="pb-3">Status</th><th className="pb-3">Earnings</th><th className="pb-3">Deposit</th><th className="pb-3 text-right">Actions</th></tr></thead>
               <tbody className="divide-y divide-[#E6DED1] text-[#514B44]">
-                {sellerBookings.map((booking: any, index: number) => {
+                {sellerBookings.map((booking, index) => {
                   const bookingId = getEntityId(booking);
                   const rowKey = bookingId || `booking-${index}`;
                   return (
