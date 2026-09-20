@@ -42,14 +42,15 @@ export class BookingRepository {
       { new: true }
     ).lean({ virtuals: true });
 
-    if (updated) return updated;
     return {
       ...booking,
       status: "expired",
-      timeline: [
-        ...(booking.timeline || []),
-        { status: "expired", timestamp: now, note: "Payment hold expired" },
-      ],
+      timeline:
+        updated?.timeline ||
+        [
+          ...(booking.timeline || []),
+          { status: "expired", timestamp: now, note: "Payment hold expired" },
+        ],
     };
   }
 
