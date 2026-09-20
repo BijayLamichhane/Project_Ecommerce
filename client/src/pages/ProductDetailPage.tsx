@@ -380,14 +380,22 @@ export function ProductDetailPage() {
             {product.sellerId && (
               <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-slate-200 overflow-hidden">
-                    <img
-                      src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100"
-                      alt="Lender"
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="w-7 h-7 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center">
+                    {product.seller?.avatarUrl ? (
+                      <img
+                        src={product.seller.avatarUrl}
+                        alt={product.seller.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="font-bold text-slate-600">
+                        {product.seller?.name?.charAt(0)?.toUpperCase() || "L"}
+                      </span>
+                    )}
                   </div>
-                  <span className="font-semibold text-slate-700">Verified Lender</span>
+                  <span className="font-semibold text-slate-700">
+                    {product.seller?.name || "Lender"}
+                  </span>
                 </div>
                 <Link
                   to={`/messages?recipient=${product.sellerId}&product=${product.id}`}
