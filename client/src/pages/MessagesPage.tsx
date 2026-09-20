@@ -99,9 +99,11 @@ export function MessagesPage() {
   }, [activeConversationId, conversations, initialConversationId, initialProductId, initialRecipient, loadingConversations]);
 
   useEffect(() => {
-    if (!socket || !activeConversationId) return;
+    if (!socket) return;
 
-    socket.emit("join_conversation", activeConversationId);
+    if (activeConversationId) {
+      socket.emit("join_conversation", activeConversationId);
+    }
 
     const appendMessage = (conversationId: string, newMsg: Message) => {
       queryClient.setQueryData<ActiveThread | undefined>(
@@ -118,6 +120,7 @@ export function MessagesPage() {
     };
 
     const handleNewMessage = (newMsg: Message) => {
+      if (!activeConversationId) return;
       appendMessage(activeConversationId, newMsg);
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     };
@@ -131,7 +134,6 @@ export function MessagesPage() {
       appendMessage(payload.conversationId, payload.message);
       queryClient.invalidateQueries({
         queryKey: ["conversations"],
-        refetchType: "active",
       });
 
       if (payload.conversationId === activeConversationId) {
@@ -145,12 +147,13 @@ export function MessagesPage() {
     socket.on("message_notification", handleMessageNotification);
 
     return () => {
-      socket.emit("leave_conversation", activeConversationId);
+      if (activeConversationId) {
+        socket.emit("leave_conversation", activeConversationId);
+      }
       socket.off("new_message", handleNewMessage);
       socket.off("message_notification", handleMessageNotification);
     };
   }, [socket, activeConversationId, queryClient]);
-
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [activeThread?.messages]);
