@@ -1,18 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../../src/models/User.js", () => ({
+vi.mock("../../models/User.js", () => ({
   User: {
     findById: vi.fn(),
   },
 }));
 
-vi.mock("../../src/models/Product.js", () => ({
+vi.mock("../../models/Product.js", () => ({
   Product: {
     findById: vi.fn(),
   },
 }));
 
-vi.mock("../../src/models/Booking.js", () => ({
+vi.mock("../../models/Booking.js", () => ({
   Booking: {
     findById: vi.fn(),
   },
@@ -24,12 +24,12 @@ vi.mock("../../src/modules/messaging/messaging.repository.js", () => ({
   },
 }));
 
-import { User } from "../../src/models/User.js";
-import { Product } from "../../src/models/Product.js";
-import { Booking } from "../../src/models/Booking.js";
+import { User } from "../../models/User.js";
+import { Product } from "../../models/Product.js";
+import { Booking } from "../../models/Booking.js";
 import { messagingRepository } from "../../src/modules/messaging/messaging.repository.js";
 import { MessagingService } from "./messaging.service.js";
-import { Conversation } from "../../src/models/Messaging.js";
+import { Conversation } from "../../models/Messaging.js";
 
 const service = new MessagingService();
 
