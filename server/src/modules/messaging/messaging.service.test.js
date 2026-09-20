@@ -18,7 +18,7 @@ vi.mock("../../models/Booking.js", () => ({
   },
 }));
 
-vi.mock("../../src/modules/messaging/messaging.repository.js", () => ({
+vi.mock("./messaging.repository.js", () => ({
   messagingRepository: {
     createConversation: vi.fn(),
   },
@@ -27,7 +27,7 @@ vi.mock("../../src/modules/messaging/messaging.repository.js", () => ({
 import { User } from "../../models/User.js";
 import { Product } from "../../models/Product.js";
 import { Booking } from "../../models/Booking.js";
-import { messagingRepository } from "../../src/modules/messaging/messaging.repository.js";
+import { messagingRepository } from "./messaging.repository.js";
 import { MessagingService } from "./messaging.service.js";
 import { Conversation } from "../../models/Messaging.js";
 
