@@ -189,9 +189,9 @@ export function SellerDashboardPage() {
           <p className="text-[11px] text-[#C17817] font-medium mt-1">Currently with renters</p>
         </div>
         <div className="bg-white rounded-md border border-[#C8C0B3] p-6 shadow-sm">
-          <div className="text-xs font-bold uppercase tracking-wider text-[#A39A8D]">Pending Requests</div>
+          <div className="text-xs font-bold uppercase tracking-wider text-[#A39A8D]">Awaiting Customer Payment</div>
           <div className="text-2xl sm:text-3xl font-extrabold text-[#211E1B] mt-1">{metrics?.pendingRequestsCount ?? 0}</div>
-          <p className="text-[11px] text-[#C17817] font-medium mt-1">Awaiting your approval</p>
+          <p className="text-[11px] text-[#C17817] font-medium mt-1">Payment window is active</p>
         </div>
         <div className="bg-white rounded-md border border-[#C8C0B3] p-6 shadow-sm">
           <div className="text-xs font-bold uppercase tracking-wider text-[#A39A8D]">Equipment Listed</div>
@@ -251,7 +251,7 @@ export function SellerDashboardPage() {
           <Package className="w-5 h-5 text-[#C17817]" />
           <div>
             <h3 className="text-lg font-bold text-[#211E1B]">Rental Bookings Management</h3>
-            <p className="text-xs text-[#8B8377] mt-1">Manage bookings for your equipment.</p>
+            <p className="text-xs text-[#8B8377] mt-1">Payment confirms bookings; you can decline unpaid requests during the hold.</p>
           </div>
         </div>
 
@@ -269,15 +269,12 @@ export function SellerDashboardPage() {
                     <tr key={rowKey} className="hover:bg-[#F1ECE1]/60">
                       <td className="py-3 font-semibold text-[#211E1B]">{booking.customer?.name || "Customer"}</td>
                       <td className="py-3">{booking.bookingItems?.[0] ? `${formatDate(booking.bookingItems[0].startDate)} → ${formatDate(booking.bookingItems[0].endDate)}` : "—"}</td>
-                      <td className="py-3"><span className="capitalize px-2 py-0.5 rounded-md font-bold text-[11px] bg-[#E8E1D5] text-[#211E1B]">{booking.status}</span></td>
+                      <td className="py-3"><span className="capitalize px-2 py-0.5 rounded-md font-bold text-[11px] bg-[#E8E1D5] text-[#211E1B]">{booking.status === "pending" ? "Awaiting payment" : booking.status}</span></td>
                       <td className="py-3 font-bold text-[#211E1B]">{formatCurrency(booking.totalRentalPrice)}</td>
                       <td className="py-3 text-[#4B5D3A] font-medium">{formatCurrency(booking.totalDeposit)}</td>
                       <td className="py-3 text-right space-x-2 whitespace-nowrap">
                         {bookingId && booking.status === "pending" && (
-                          <>
-                            <button onClick={() => updateStatusMutation.mutate({ bookingId, status: "confirmed" })} disabled={updateStatusMutation.isPending} className="px-2.5 py-1 rounded-lg bg-[#E7EFE2] text-[#4B5D3A] hover:bg-[#DCE7D4] disabled:opacity-50 font-bold text-[11px]">Accept</button>
-                            <button onClick={() => updateStatusMutation.mutate({ bookingId, status: "rejected" })} disabled={updateStatusMutation.isPending} className="px-2.5 py-1 rounded-lg bg-[#FBE9E5] text-[#A23B2E] hover:bg-[#F3D8D2] disabled:opacity-50 font-bold text-[11px]">Decline</button>
-                          </>
+                          <button onClick={() => updateStatusMutation.mutate({ bookingId, status: "rejected" })} disabled={updateStatusMutation.isPending} className="px-2.5 py-1 rounded-lg bg-[#FBE9E5] text-[#A23B2E] hover:bg-[#F3D8D2] disabled:opacity-50 font-bold text-[11px]">Decline</button>
                         )}
                         {bookingId && booking.status === "confirmed" && <button onClick={() => updateStatusMutation.mutate({ bookingId, status: "active" })} disabled={updateStatusMutation.isPending} className="px-2.5 py-1 rounded-lg bg-[#F1ECE1] text-[#C17817] hover:bg-[#E8E1D5] disabled:opacity-50 font-bold text-[11px]">Handover Gear (Activate)</button>}
                         {bookingId && booking.status === "return_requested" && <button onClick={() => updateStatusMutation.mutate({ bookingId, status: "returned" })} disabled={updateStatusMutation.isPending} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#4B5D3A] text-white hover:bg-[#211E1B] disabled:opacity-50 font-bold text-[11px]"><RotateCcw className="w-3.5 h-3.5" />Inspect & Mark Returned</button>}
