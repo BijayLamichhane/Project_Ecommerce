@@ -1,4 +1,5 @@
 import { BookingInventory } from "../../models/BookingInventory.js";
+import { Booking } from "../../models/Booking.js";
 import { Product } from "../../models/Product.js";
 
 function getReservationDates(startDate, endDate) {
@@ -134,6 +135,33 @@ export class BookingInventoryRepository {
       await this.releaseReservations(bookingId, reservedKeys);
       throw error;
     }
+  }
+
+  async backfillFromBookings(now = new Date()) {
+    const ledgerCount = await BookingInventory.countDocuments();
+    if (ledgerCount > 0) return 0;
+
+    const bookings = await Booking.find({
+      status: { $in: ["pending", "confirmed", "active", "return_requested"] },
+      $or: [
+        { status: { $ne: "pending" } },
+        { status: "pending", expiresAt: { $gt: now } },
+      ],
+    })
+      .select("_id status expiresAt bookingItems")
+      .sort({ createdAt: 1 })
+      .lean();
+
+    for (const booking of bookings) {
+      await this.reserveItems(
+        booking._id,
+        booking.bookingItems || [],
+        booking.status === "pending" ? "pending" : "confirmed",
+        booking.status === "pending" ? booking.expiresAt : null
+      );
+    }
+
+    return bookings.length;
   }
 
   async confirmBooking(bookingId) {
