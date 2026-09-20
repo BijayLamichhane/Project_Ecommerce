@@ -161,7 +161,7 @@ export function MessagesPage() {
         queryClient.invalidateQueries({ queryKey: ["conversation-messages", newConversationId] });
       }
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       setMessageError(getErrorMessage(err, "Failed to send message."));
     },
   });
