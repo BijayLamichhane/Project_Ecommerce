@@ -82,15 +82,19 @@ const upload = multer({
   fileFilter,
 });
 
-export const uploadSingle = upload.single("image");
-export const uploadMultiple = upload.array("images", 10);
-export const uploadProductImages = (req, res, next) => {
-  upload.array("images", 10)(req, res, (error) => {
-    if (error) {
-      next(error);
-      return;
-    }
-    validateImageSignatures(req, res, next);
-  });
-};
-export const uploadProfileImage = upload.single("avatar");
+function withSignatureValidation(middleware) {
+  return (req, res, next) => {
+    middleware(req, res, (error) => {
+      if (error) {
+        next(error);
+        return;
+      }
+      validateImageSignatures(req, res, next);
+    });
+  };
+}
+
+export const uploadSingle = withSignatureValidation(upload.single("image"));
+export const uploadMultiple = withSignatureValidation(upload.array("images", 10));
+export const uploadProductImages = withSignatureValidation(upload.array("images", 10));
+export const uploadProfileImage = withSignatureValidation(upload.single("avatar"));
