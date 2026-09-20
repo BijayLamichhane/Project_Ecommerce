@@ -17,7 +17,7 @@ export function BookingsPage() {
   });
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = { expired: "bg-[#FBE9E5] text-[#A23B2E]", confirmed: "bg-[#F1ECE1] text-[#C17817]", active: "bg-[#E7EFE2] text-[#4B5D3A]", return_requested: "bg-[#F1ECE1] text-[#C17817]", returned: "bg-[#E8E1D5] text-[#514B44]", completed: "bg-[#E8E1D5] text-[#514B44]", pending: "bg-[#F1ECE1] text-[#C17817]", cancelled: "bg-[#FBE9E5] text-[#A23B2E]", rejected: "bg-[#FBE9E5] text-[#A23B2E]" };
-    const labels: Record<string, string> = { expired: "Hold Expired", confirmed: "Confirmed", active: "Currently Active", return_requested: "Return Requested", returned: "Completed", completed: "Completed", pending: "Pending Payment", cancelled: "Cancelled", rejected: "Cancelled" };
+    const labels: Record<string, string> = { expired: "Hold Expired", confirmed: "Confirmed", active: "Currently Active", return_requested: "Return Requested", returned: "Completed", completed: "Completed", pending: "Pending Payment", cancelled: "Cancelled", rejected: "Declined" };
     return <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${styles[status] || "bg-[#E8E1D5] text-[#6F685F]"}`}>{labels[status] || status}</span>;
   };
 
