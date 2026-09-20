@@ -100,6 +100,7 @@ export function getErrorMessage(err: unknown, fallback = "Something went wrong")
 
 
 export function getEntityId(value: unknown): string {
+  if (typeof value === "string" || typeof value === "number") return String(value);
   if (!value || typeof value !== "object") return "";
   const record = value as Record<string, unknown>;
   const rawId = record.id ?? record._id;
