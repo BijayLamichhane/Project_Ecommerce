@@ -235,7 +235,7 @@ export function MessagesPage() {
                       setActiveConversationId(convId || null);
                     }}
                     className={`w-full text-left p-4 hover:bg-[#F1ECE1] transition flex items-start gap-3 ${
-                      convId === activeConversationId ? "bg-[#F1ECE1]/70 border-l-4 border-indigo-600" : ""
+                      convId === activeConversationId ? "bg-[#F1ECE1]/70 border-l-4 border-[#C17817]" : ""
                     }`}
                   >
                     <div className="w-10 h-10 rounded-full bg-[#DDD5C7] overflow-hidden flex-shrink-0">
@@ -357,7 +357,7 @@ export function MessagesPage() {
               </div>
 
               <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-[#A39A8D]">
-                <MessageSquare className="w-12 h-12 text-indigo-200 mb-3" />
+                <MessageSquare className="w-12 h-12 text-[#C8C0B3] mb-3" />
                 <h4 className="text-sm font-bold text-[#514B44]">Start a conversation</h4>
                 <p className="text-xs mt-1 max-w-sm">
                   Ask about availability, pickup, condition, pricing, or any other rental detail.
