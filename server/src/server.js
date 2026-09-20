@@ -21,7 +21,7 @@ async function startServer() {
       logger.info({ count: backfilled }, "Backfilled expiry times for legacy pending bookings");
     }
     await bookingService.expirePendingBookings();
-    const ledgerBackfilled = await bookingInventoryRepository.backfillFromBookings();
+    const ledgerBackfilled = await bookingInventoryRepository.reconcileFromBookings();
     if (ledgerBackfilled > 0) {
       logger.info({ count: ledgerBackfilled }, "Backfilled booking inventory ledger from existing live bookings");
     }
