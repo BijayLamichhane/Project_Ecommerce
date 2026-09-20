@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/axios";
 import { Category, Product } from "../types";
-import { getErrorMessage } from "../lib/utils";
+import { getEntityId, getErrorMessage } from "../lib/utils";
 import {
   Package,
   ShieldCheck,
@@ -153,7 +153,7 @@ export function SellerProductEditorPage() {
       return data.data;
     },
     onSuccess: (savedProduct) => {
-      const productId = savedProduct?.id || savedProduct?._id;
+      const productId = getEntityId(savedProduct);
       if (!productId) {
         navigate("/seller");
         return;
