@@ -20,6 +20,7 @@ import notificationRoutes from "./modules/notifications/notification.routes.js";
 import path from "node:path";
 import userRoutes from "./modules/users/user.routes.js";
 import adminRoutes from "./modules/admin/admin.routes.js";
+import { apiRateLimiter, authRateLimiter } from "./middleware/rateLimit.js";
 
 export function createApp() {
   const app = express();
@@ -65,6 +66,16 @@ export function createApp() {
     } else if (req.url.startsWith("/auth")) {
       req.url = req.url.replace(/^\/auth/, "/api/auth");
     }
+
+    const authPath = req.url.split("?")[0];
+    const isCredentialAuthRequest =
+      authPath === "/api/auth/sign-in/email" ||
+      authPath === "/api/auth/sign-up/email";
+
+    if (isCredentialAuthRequest) {
+      return authRateLimiter(req, res, () => authHandler(req, res, next));
+    }
+
     return authHandler(req, res, next);
   });
 
@@ -85,6 +96,8 @@ export function createApp() {
   apiRouter.use("/users", userRoutes);
   apiRouter.use("/admin", adminRoutes);
 
+  // Apply once before the compatibility mounts so a request is counted only once.
+  app.use(apiRateLimiter);
   app.use(apiRouter);
   app.use("/api", apiRouter);
   app.use("/api/v1", apiRouter);
