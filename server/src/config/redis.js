@@ -7,7 +7,7 @@ let redisClient = null;
 /**
  * Returns the shared Redis client, or null if Redis is disabled
  * (REDIS_ENABLED=false, the default). Every caller in this codebase treats
- * a null return as "no cache/lock available" and falls back to the
+ * a null return as "no cache available" and falls back to the
  * database — see category.service.js, product.service.js,
  * booking.service.js.
  */
@@ -38,7 +38,7 @@ export function getRedisClient() {
 
 export async function connectRedis() {
   if (!env.REDIS_ENABLED) {
-    logger.info("Redis disabled (REDIS_ENABLED=false) — running without cache/locks");
+    logger.info("Redis disabled (REDIS_ENABLED=false) — running without cache");
     return;
   }
   try {
@@ -63,7 +63,6 @@ export const CacheKeys = {
   category: (id) => `category:${id}`,
   categoryList: () => "categories:list",
   sellerProfile: (id) => `seller:${id}`,
-  bookingLock: (productId, startDate, endDate) => `booking_lock:${productId}:${startDate}:${endDate}`,
   rateLimitKey: (ip) => `rate_limit:${ip}`,
 };
 
