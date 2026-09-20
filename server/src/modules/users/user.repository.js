@@ -95,9 +95,13 @@ export class UserRepository {
   }
 
   async countOpenSellerBookings(sellerId) {
+    const now = new Date();
     return Booking.countDocuments({
       sellerId,
-      status: { $in: OPEN_SELLER_BOOKING_STATUSES },
+      $or: [
+        { status: { $in: ["confirmed", "active", "return_requested"] } },
+        { status: "pending", expiresAt: { $gt: now } },
+      ],
     });
   }
 
@@ -174,7 +178,7 @@ export class UserRepository {
     const [completedBookings, activeRentals, pendingRequests, totalProducts] = await Promise.all([
       Booking.find({ sellerId, status: "completed" }).sort({ createdAt: -1 }).lean({ virtuals: true }),
       Booking.find({ sellerId, status: "active" }).lean({ virtuals: true }),
-      Booking.find({ sellerId, status: "pending" }).lean({ virtuals: true }),
+      Booking.find({ sellerId, status: "pending", expiresAt: { $gt: new Date() } }).lean({ virtuals: true }),
       Product.countDocuments({ sellerId, status: "active" }),
     ]);
 
@@ -202,7 +206,7 @@ export class UserRepository {
 
     return {
       activeRentalsCount: activeRentals.length,
-      upcomingBookingsCount: upcomingBookings.length,
+      upcomingBookingsCount: upcomingBookings.filter((b) => b.status === "confirmed" || (b.status === "pending" && b.expiresAt && new Date(b.expiresAt) > new Date())).length,
       completedRentalsCount: completedRentals.length,
       totalSpent: completedRentals.reduce((sum, b) => sum + Number(b.totalAmount || 0), 0),
       currentRentals: activeRentals,
