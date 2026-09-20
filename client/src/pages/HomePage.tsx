@@ -5,17 +5,6 @@ import { api } from "../lib/axios";
 import { ProductCard } from "../components/shared/ProductCard";
 import { Product, Category } from "../types";
 import {
-  Camera,
-  Laptop,
-  Tent,
-  Music,
-  Wrench,
-  Sparkles,
-  Gamepad2,
-  Navigation,
-  Projector,
-  Bike,
-  Package,
   ShieldCheck,
   Zap,
   RotateCcw,
@@ -25,6 +14,7 @@ import {
   Award,
   CheckCircle2,
 } from "lucide-react";
+import { getCategoryIcon } from "../lib/categoryIcons";
 
 export function HomePage() {
   const { data: featuredProducts, isLoading: loadingFeatured } = useQuery({
@@ -43,24 +33,7 @@ export function HomePage() {
     },
   });
 
-  // Keyed by Category.iconName (e.g. "Camera", "Laptop" — see server/src/db/seed.js
-  // and the admin "Add Category" form), not by slug. Slugs are freeform
-  // (generated from whatever name an admin types), so keying by slug meant
-  // almost every category — and definitely any newly-added one — fell
-  // through to the same hardcoded fallback icon.
-  const categoryIcons: Record<string, React.ReactNode> = {
-    Camera: <Camera className="w-6 h-6" />,
-    Laptop: <Laptop className="w-6 h-6" />,
-    Tent: <Tent className="w-6 h-6" />,
-    Music: <Music className="w-6 h-6" />,
-    Wrench: <Wrench className="w-6 h-6" />,
-    Sparkles: <Sparkles className="w-6 h-6" />,
-    Gamepad2: <Gamepad2 className="w-6 h-6" />,
-    Navigation: <Navigation className="w-6 h-6" />,
-    Projector: <Projector className="w-6 h-6" />,
-    Bike: <Bike className="w-6 h-6" />,
-  };
-  const defaultCategoryIcon = <Package className="w-6 h-6" />;
+  const defaultCategoryIcon = getCategoryIcon();
 
   return (
     <div className="space-y-20 pb-16">
@@ -149,7 +122,7 @@ export function HomePage() {
               className="group p-5 rounded-md bg-[#F7F3EA] border border-[#C8C0B3]/80 hover:border-[#C17817]  transition-all flex flex-col items-center text-center gap-3"
             >
               <div className="w-12 h-12 rounded-xl bg-[#F1E0C8] text-[#C17817] group-hover:bg-[#C17817] group-hover:text-[#F7F3EA] transition-colors flex items-center justify-center ">
-                {(category.iconName && categoryIcons[category.iconName]) || defaultCategoryIcon}
+                {React.createElement(getCategoryIcon(category.iconName), { className: "w-6 h-6" })}
               </div>
               <div>
                 <h3 className="text-sm font-bold text-[#211E1B] group-hover:text-[#C17817] transition">
