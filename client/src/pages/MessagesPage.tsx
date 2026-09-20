@@ -2,13 +2,22 @@ import React, { useEffect, useRef, useState } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/axios";
-import { Conversation, Message } from "../types";
+import type { Conversation, Message } from "../types";
 import { useAuth } from "../hooks/useAuth";
 import { useSocket } from "../hooks/useSocket";
 import { formatDate, getEntityId, getErrorMessage } from "../lib/utils";
 import { MessageSquare, Send, User, AlertCircle } from "lucide-react";
 
-const getConversationProduct = (conversation: any) => {
+type ConversationProduct = NonNullable<Conversation["product"]>;
+type ConversationRecord = Omit<Conversation, "productId"> & {
+  productId?: string | ConversationProduct;
+};
+
+type ActiveThread = {
+  messages: Message[];
+};
+
+const getConversationProduct = (conversation?: ConversationRecord): ConversationProduct | undefined => {
   if (conversation?.product) return conversation.product;
   if (conversation?.productId && typeof conversation.productId === "object") {
     return conversation.productId;
@@ -34,15 +43,15 @@ export function MessagesPage() {
     data: conversations,
     isLoading: loadingConversations,
     isError: conversationsError,
-  } = useQuery({
+  } = useQuery<ConversationRecord[]>({
     queryKey: ["conversations"],
     queryFn: async () => {
       const { data } = await api.get("/messages/conversations");
-      return data.data as Conversation[];
+      return data.data as ConversationRecord[];
     },
   });
 
-  const { data: activeThread } = useQuery({
+  const { data: activeThread } = useQuery<ActiveThread>({
     queryKey: ["conversation-messages", activeConversationId],
     queryFn: async () => {
       if (!activeConversationId) return null;
@@ -68,7 +77,7 @@ export function MessagesPage() {
     }
 
     if (initialRecipient) {
-      const matchingConversation = conversations?.find((conversation: any) => {
+      const matchingConversation = conversations?.find((conversation) => {
         const customerId = getEntityId(conversation.customerId);
         const sellerId = getEntityId(conversation.sellerId);
         const participantMatches = customerId === initialRecipient || sellerId === initialRecipient;
@@ -94,7 +103,7 @@ export function MessagesPage() {
 
     socket.emit("join_conversation", activeConversationId);
     const handleNewMessage = (newMsg: Message) => {
-      queryClient.setQueryData(["conversation-messages", activeConversationId], (old: any) =>
+      queryClient.setQueryData<ActiveThread | undefined>(["conversation-messages", activeConversationId], (old) =>
         old ? { ...old, messages: [...(old.messages || []), newMsg] } : old
       );
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
@@ -119,7 +128,7 @@ export function MessagesPage() {
       setMessageError(null);
       const activeConv = conversations?.find(
         (conversation) => getEntityId(conversation) === activeConversationId
-      ) as any;
+      );
 
       let recipientId: string | undefined;
       if (activeConv) {
@@ -174,7 +183,7 @@ export function MessagesPage() {
   const messages: Message[] = activeThread?.messages || [];
   const currentConv = conversations?.find(
     (conversation) => getEntityId(conversation) === activeConversationId
-  ) as any;
+  );
   const currentProduct = getConversationProduct(currentConv);
   const otherParty =
     String(currentConv?.customerId) === String(currentUserId)
@@ -212,7 +221,7 @@ export function MessagesPage() {
                 <p>No conversations yet</p>
               </div>
             ) : (
-              conversations.map((conv: any) => {
+              conversations.map((conv) => {
                 const convId = getEntityId(conv);
                 const partner = String(conv.customerId) === String(currentUserId) ? conv.seller : conv.customer;
                 const product = getConversationProduct(conv);
