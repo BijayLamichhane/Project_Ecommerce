@@ -372,7 +372,7 @@ export function SellerProductEditorPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-emerald-800">
+              <label className="text-xs font-bold text-[#4B5D3A]">
                 Security Deposit (NPR) *
               </label>
               <input
@@ -380,7 +380,7 @@ export function SellerProductEditorPage() {
                 placeholder="e.g. 20000"
                 value={formData.securityDeposit}
                 onChange={(e) => setFormData({ ...formData, securityDeposit: e.target.value })}
-                className="w-full px-3.5 py-2.5 text-xs bg-[#E7EFE2]/50 border border-emerald-300 rounded-md outline-none font-bold text-[#4B5D3A]"
+                className="w-full px-3.5 py-2.5 text-xs bg-[#E7EFE2]/50 border border-[#4B5D3A]/30 rounded-md outline-none font-bold text-[#4B5D3A]"
                 required
               />
             </div>
@@ -442,7 +442,7 @@ export function SellerProductEditorPage() {
               )}
 
               <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-                <label className="px-4 py-2.5 rounded-md border border-dashed border-[#B8B0A3] text-xs font-semibold text-[#6F685F] hover:border-indigo-400 hover:text-[#C17817] cursor-pointer flex items-center gap-2">
+                <label className="px-4 py-2.5 rounded-md border border-dashed border-[#B8B0A3] text-xs font-semibold text-[#6F685F] hover:border-[#C17817] hover:text-[#C17817] cursor-pointer flex items-center gap-2">
                   <Upload className="w-3.5 h-3.5" />
                   Choose Photos
                   <input
