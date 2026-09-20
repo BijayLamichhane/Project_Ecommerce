@@ -53,7 +53,7 @@ export function SellerDashboardPage() {
       queryClient.invalidateQueries({ queryKey: ["seller-earnings"] });
       setErrorMsg(null);
     },
-    onError: (err: any) => setErrorMsg(getErrorMessage(err, "Failed to update booking status.")),
+    onError: (err: unknown) => setErrorMsg(getErrorMessage(err, "Failed to update booking status.")),
   });
 
   const deleteProductMutation = useMutation({
@@ -67,7 +67,7 @@ export function SellerDashboardPage() {
       setConfirmModal(null);
       setErrorMsg(null);
     },
-    onError: (err: any) => setErrorMsg(getErrorMessage(err, "Failed to delete the product.")),
+    onError: (err: unknown) => setErrorMsg(getErrorMessage(err, "Failed to delete the product.")),
   });
 
   const disbandSellerMutation = useMutation({
@@ -83,7 +83,7 @@ export function SellerDashboardPage() {
       setConfirmModal(null);
       navigate("/dashboard", { replace: true });
     },
-    onError: (err: any) => setErrorMsg(getErrorMessage(err, "Failed to disband the seller account.")),
+    onError: (err: unknown) => setErrorMsg(getErrorMessage(err, "Failed to disband the seller account.")),
   });
 
   const handleDeleteProduct = (product: any) => {
