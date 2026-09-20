@@ -62,7 +62,7 @@ export function BookingDetailPage() {
     mutationFn: async () => {
       setErrorMsg(null);
       const item = booking?.bookingItems?.[0];
-      const productId = item?.productId || item?.product?.id || item?.product?._id;
+      const productId = item?.productId || getEntityId(item?.product);
       if (!productId || !id) throw new Error("This booking does not contain a reviewable product.");
       if (!reviewComment.trim() || reviewComment.trim().length < 5) throw new Error("Review must be at least 5 characters.");
       await api.post("/reviews", { productId, bookingId: id, rating: reviewRating, title: reviewTitle.trim() || undefined, comment: reviewComment.trim() });
@@ -75,8 +75,8 @@ export function BookingDetailPage() {
     mutationFn: async () => {
       setErrorMsg(null);
       const item = booking?.bookingItems?.[0];
-      const productId = item?.productId || item?.product?.id || item?.product?._id;
-      const recipientId = booking?.sellerId || booking?.seller?.id || booking?.seller?._id;
+      const productId = item?.productId || getEntityId(item?.product);
+      const recipientId = booking?.sellerId || getEntityId(booking?.seller);
       if (!recipientId) throw new Error("The seller for this booking could not be found.");
       if (!question.trim()) throw new Error("Please enter your question.");
       const { data } = await api.post("/messages/start", { recipientId, productId, bookingId: id, initialMessage: question.trim() });
@@ -89,7 +89,7 @@ export function BookingDetailPage() {
   if (isLoading) return <div className="min-h-screen bg-[var(--background)] px-4 py-16"><div className="max-w-5xl mx-auto h-96 rounded-md bg-[#E8E1D5] border border-[#DDD5C7] animate-pulse" /></div>;
   if (!booking) return <div className="min-h-screen bg-[var(--background)] px-4 py-20 text-center text-[#514B44]"><h2 className="text-xl font-bold text-[#211E1B]">Booking not found</h2><Link to="/bookings" className="inline-block mt-4 text-sm font-semibold text-[#C17817] hover:text-[#A66314]">Back to my bookings</Link></div>;
 
-  const userId = user?.id || user?._id;
+  const userId = getEntityId(user);
   const isCustomer = String(userId) === String(booking.customerId);
   const firstItem = booking.bookingItems?.[0];
   const product = firstItem?.product;
@@ -115,8 +115,8 @@ export function BookingDetailPage() {
         <div className="bg-white rounded-md border border-[#DDD5C7] p-6"><div className="flex items-center justify-between gap-3 mb-6"><div><h3 className="text-sm font-bold text-[#211E1B]">Rental Lifecycle</h3><p className="text-[11px] text-[#8B8377] mt-1">Track every stage of your rental</p></div><Clock className="w-5 h-5 text-[#C17817]" /></div><div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">{["Booked", "Confirmed", "Active", "Return Requested", "Returned", "Completed"].map((label, index) => { const complete = currentIndex >= index && currentIndex !== -1 && !["cancelled", "rejected"].includes(booking.status); return <div key={label} className="space-y-2"><div className={`h-1.5 rounded-full ${complete ? "bg-[#C17817]" : "bg-[#E8E1D5]"}`} /><p className={`text-[11px] font-bold ${complete ? "text-[#211E1B]" : "text-[#8B8377]"}`}>{label}</p></div>; })}</div></div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-7 bg-white rounded-md border border-[#DDD5C7] p-6  space-y-6">
-            <div className="flex items-center justify-between"><h3 className="text-base font-bold text-[#211E1B]">Rented Item</h3>{product && <Link to={`/products/${product.id || product._id}`} className="text-xs font-bold text-[#C17817] hover:text-[#A66314]">View listing</Link>}</div>
-            {product ? <div className="flex items-start gap-4"><img src={product.images?.[0]?.url || "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400"} alt={product.name} className="w-24 h-24 rounded-md object-cover bg-[#E8E1D5] flex-shrink-0" /><div className="space-y-2 min-w-0"><Link to={`/products/${product.id || product._id}`} className="text-base font-bold text-[#211E1B] hover:text-[#A66314]">{product.name}</Link>{firstItem && <div className="flex items-center gap-2 text-xs text-[#8B8377]"><Calendar className="w-4 h-4 text-[#C17817]" /><span>{formatDate(firstItem.startDate)} → {formatDate(firstItem.endDate)}</span><span>({firstItem.durationDays} days)</span></div>}{firstItem?.dailyRate && <p className="text-xs text-[#514B44]">Rate: <span className="font-bold text-[#A66314]">{formatCurrency(firstItem.dailyRate)}</span> / day</p>}</div></div> : <p className="text-sm text-[#8B8377]">Product information is unavailable.</p>}
+            <div className="flex items-center justify-between"><h3 className="text-base font-bold text-[#211E1B]">Rented Item</h3>{product && <Link to={`/products/${getEntityId(product)}`} className="text-xs font-bold text-[#C17817] hover:text-[#A66314]">View listing</Link>}</div>
+            {product ? <div className="flex items-start gap-4"><img src={product.images?.[0]?.url || "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400"} alt={product.name} className="w-24 h-24 rounded-md object-cover bg-[#E8E1D5] flex-shrink-0" /><div className="space-y-2 min-w-0"><Link to={`/products/${getEntityId(product)}`} className="text-base font-bold text-[#211E1B] hover:text-[#A66314]">{product.name}</Link>{firstItem && <div className="flex items-center gap-2 text-xs text-[#8B8377]"><Calendar className="w-4 h-4 text-[#C17817]" /><span>{formatDate(firstItem.startDate)} → {formatDate(firstItem.endDate)}</span><span>({firstItem.durationDays} days)</span></div>}{firstItem?.dailyRate && <p className="text-xs text-[#514B44]">Rate: <span className="font-bold text-[#A66314]">{formatCurrency(firstItem.dailyRate)}</span> / day</p>}</div></div> : <p className="text-sm text-[#8B8377]">Product information is unavailable.</p>}
             {booking.specialRequests && <div className="pt-5 border-t border-[#DDD5C7]"><span className="text-xs font-bold text-[#8B8377]">Special Notes</span><p className="text-sm text-[#514B44] mt-1">{booking.specialRequests}</p></div>}
             {isCustomer && booking.sellerId && <div className="pt-5 border-t border-[#DDD5C7] flex flex-col sm:flex-row sm:items-center justify-between gap-4"><div><p className="text-sm font-bold text-[#211E1B]">Have a question for {sellerName}?</p><p className="text-xs text-[#8B8377] mt-1">Ask about pickup, condition, timing, or your rental.</p></div><button onClick={() => setIsQuestionOpen(true)} className="px-4 py-2.5 rounded-md bg-[#C17817] hover:bg-[#A66314] text-[#211E1B] text-xs font-extrabold transition flex items-center gap-2"><MessageSquare className="w-4 h-4" />Ask a Question</button></div>}
           </div>
