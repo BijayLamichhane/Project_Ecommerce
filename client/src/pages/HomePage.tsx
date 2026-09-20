@@ -5,14 +5,11 @@ import { api } from "../lib/axios";
 import { ProductCard } from "../components/shared/ProductCard";
 import { Product, Category } from "../types";
 import {
-  ShieldCheck,
-  Zap,
-  RotateCcw,
-  Search,
   ArrowRight,
-  TrendingUp,
   Award,
   CheckCircle2,
+  Sparkles,
+  TrendingUp,
 } from "lucide-react";
 import { getCategoryIcon } from "../lib/categoryIcons";
 
