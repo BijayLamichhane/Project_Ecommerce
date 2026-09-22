@@ -358,7 +358,7 @@ export class AdminService {
     try {
       await Promise.all([
         notificationService.notifyUser(customerId, {
-          type: `booking_dispute_${action}d`,
+          type: action === "resolve" ? "booking_dispute_resolved" : "booking_dispute_dismissed",
           title: action === "resolve" ? "Dispute resolved" : "Dispute dismissed",
           message: notes?.trim() ? `${resolutionMessage} Admin note: ${notes.trim()}` : resolutionMessage,
           actionUrl: `/bookings/${encodeURIComponent(bookingId)}`,
