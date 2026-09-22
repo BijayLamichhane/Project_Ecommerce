@@ -3,13 +3,12 @@ import {
   Camera,
   Gamepad2,
   Laptop,
-  Music,
-  Navigation,
   Package,
   Projector,
-  Sparkles,
   Tent,
   Wrench,
+  Car,
+  Tractor
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -18,13 +17,12 @@ export const CATEGORY_ICONS = {
   Camera,
   Gamepad2,
   Laptop,
-  Music,
-  Navigation,
   Package,
   Projector,
-  Sparkles,
   Tent,
   Wrench,
+  Car,
+  Tractor,
 } satisfies Record<string, LucideIcon>;
 
 export const CATEGORY_ICON_NAMES = Object.keys(CATEGORY_ICONS);
