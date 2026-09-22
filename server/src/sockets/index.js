@@ -5,8 +5,9 @@ import { logger } from "../utils/logger.js";
 import { messagingService } from "../modules/messaging/messaging.service.js";
 import { getAccountStatus } from "../middleware/accountStatus.js";
 import { notificationService } from "../modules/notifications/notification.service.js";
+import { setSocketIO, emitToUser, emitProductAvailabilityChanged } from "./emitter.js";
 
-let ioInstance = null;
+export { emitToUser, emitProductAvailabilityChanged } from "./emitter.js";
 
 const socketOrigins =
   env.NODE_ENV === "production"
@@ -21,25 +22,17 @@ const assertSocketAccountActive = async (userId) => {
   if (status === "suspended") throw new Error("Account is suspended");
 };
 
-export function emitToUser(userId, event, payload) {
-  ioInstance?.to(`user:${userId}`).emit(event, payload);
-}
-
-export function emitProductAvailabilityChanged(productId) {
-  if (!productId) return;
-  ioInstance?.to(`product:${productId}`).emit("availability_changed", {
-    productId: String(productId),
-  });
-}
 
 export function initSocketIO(httpServer) {
-  ioInstance = new Server(httpServer, {
+  const ioInstance = new Server(httpServer, {
     cors: {
       origin: socketOrigins,
       methods: ["GET", "POST"],
       credentials: true,
     },
   });
+
+  setSocketIO(ioInstance);
 
   ioInstance.use(async (socket, next) => {
     try {
