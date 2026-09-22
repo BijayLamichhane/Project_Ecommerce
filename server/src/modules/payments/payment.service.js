@@ -320,7 +320,7 @@ export class PaymentService {
         ? payment.paymentGatewayResponse
         : {};
 
-    return paymentRepository.updatePayment(payment.id, {
+    const updatedPayment = await paymentRepository.updatePayment(payment.id, {
       status: "refunded",
       paymentGatewayResponse: {
         ...existingResponse,
@@ -330,6 +330,22 @@ export class PaymentService {
         refundFlaggedAt: new Date(),
       },
     });
+
+    try {
+      const booking = await bookingRepository.findById(payment.bookingId);
+      if (booking?.customerId) {
+        await notificationService.notifyUser(booking.customerId, {
+          type: "payment_refund_required",
+          title: "Payment flagged for refund",
+          message: reason || "Your payment was received but could not be applied to the booking. It has been flagged for refund.",
+          actionUrl: `/bookings/${encodeURIComponent(payment.bookingId)}`,
+        });
+      }
+    } catch (error) {
+      logger.warn({ error, paymentId: payment.id }, "Failed to notify customer about refund status");
+    }
+
+    return updatedPayment;
   }
 
   async handleEsewaSuccess(encodedData) {
