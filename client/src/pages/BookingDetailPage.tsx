@@ -209,7 +209,11 @@ export function BookingDetailPage() {
   const firstItem = booking.bookingItems?.[0];
   const product = firstItem?.product;
   const bookingId = getEntityId(booking);
-  const currentIndex = lifecycleStatuses.indexOf(booking.status);
+  const lifecycleStatus =
+    booking.status === "disputed"
+      ? booking.disputePreviousStatus || booking.status
+      : booking.status;
+  const currentIndex = lifecycleStatuses.indexOf(lifecycleStatus);
   const holdExpired = booking.status === "expired" || (booking.status === "pending" && remainingHoldMs === 0);
   const canReview = isCustomer && ["returned", "completed"].includes(booking.status);
   const existingReview = productReviews?.find((review: { reviewerId?: string }) => String(review.reviewerId) === String(userId));
