@@ -60,6 +60,14 @@ vi.mock("../src/modules/admin/admin.repository.js", () => ({
   },
 }));
 
+vi.mock("../src/modules/reports/report.repository.js", () => ({
+  reportRepository: {
+    getTarget: reportGetTarget,
+    findPendingDuplicate: reportFindPendingDuplicate,
+    create: reportCreate,
+  },
+}));
+
 vi.mock("../src/modules/bookings/booking.inventory.repository.js", () => ({
   bookingInventoryRepository: {
     releaseBooking: inventoryReleaseBooking,
