@@ -296,6 +296,32 @@ export function AdminDashboardPage() {
     onError: (err: unknown) => setErrorMsg(getErrorMessage(err, "Failed to update category icon")),
   });
 
+  const filteredReports = (reportsList || []).filter((report) => {
+    const reporter = typeof report.reporterId === "object" ? report.reporterId?.name || report.reporterId?.email : "";
+    const product = report.reportedProductId?.name || "";
+    const user = report.reportedUserId?.name || report.reportedUserId?.email || "";
+    const review = report.reportedReviewId?.comment || report.reportedReviewId?.title || "";
+    const haystack = `${report.reason} ${report.details || ""} ${reporter} ${product} ${user} ${review}`.toLowerCase();
+
+    return (
+      (reportStatusFilter === "all" || report.status === reportStatusFilter) &&
+      haystack.includes(reportSearch.trim().toLowerCase())
+    );
+  });
+
+  const filteredDisputes = (disputesList || []).filter((dispute) => {
+    const productName = dispute.bookingItems?.[0]?.product?.name || "";
+    const customer = dispute.customer?.name || dispute.customer?.email || "";
+    const seller = dispute.seller?.name || dispute.seller?.email || "";
+    const haystack = `${getEntityId(dispute)} ${productName} ${customer} ${seller} ${dispute.disputeReason || ""}`.toLowerCase();
+    return haystack.includes(disputeSearch.trim().toLowerCase());
+  });
+
+  const openReportsCount = (reportsList || []).filter((report) =>
+    ["pending", "reviewed"].includes(report.status)
+  ).length;
+  const openDisputesCount = disputesList?.length || 0;
+
   const metrics = dashboardData?.metrics;
 
   return (
