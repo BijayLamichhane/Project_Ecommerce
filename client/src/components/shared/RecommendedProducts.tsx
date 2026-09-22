@@ -23,7 +23,7 @@ export function RecommendedProducts({
 }: RecommendedProductsProps) {
   const enabled = mode === "personalized" || Boolean(productId);
 
-  const { data: products = [], isLoading } = useQuery<Product[]>({
+  const { data: products = [], isLoading, isError } = useQuery<Product[]>({
     queryKey: ["recommendations", mode, productId, limit],
     queryFn: async () => {
       const url =
@@ -59,7 +59,34 @@ export function RecommendedProducts({
     );
   }
 
-  if (products.length === 0) return null;
+  if (isError) {
+    return (
+      <section className="space-y-5">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-[#C17817]" />
+          <h3 className="text-lg font-bold text-[#211E1B]">{title}</h3>
+        </div>
+        <div className="rounded-md border border-[#C8C0B3] bg-[#F7F3EA] p-5">
+          <p className="text-xs font-semibold text-[#514B44]">Recommendations are temporarily unavailable.</p>
+          <p className="text-[11px] text-[#8B8377] mt-1">Please refresh the page and try again.</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (products.length === 0) {
+    return (
+      <section className="space-y-5">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-[#C17817]" />
+          <h3 className="text-lg font-bold text-[#211E1B]">{title}</h3>
+        </div>
+        <div className="rounded-md border border-[#C8C0B3] bg-[#F7F3EA] p-5">
+          <p className="text-xs text-[#6F685F]">No recommendations are available right now.</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-5">
