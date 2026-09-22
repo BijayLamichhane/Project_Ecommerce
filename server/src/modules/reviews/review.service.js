@@ -69,6 +69,30 @@ export class ReviewService {
     return review;
   }
 
+  async updateReview(reviewerId, reviewId, input) {
+    const review = await reviewRepository.findById(reviewId);
+    if (!review) throw new NotFoundError("Review");
+    if (String(review.reviewerId) !== String(reviewerId)) {
+      throw new ForbiddenError("You can only update your own review");
+    }
+
+    const updated = await reviewRepository.update(reviewId, {
+      rating: input.rating,
+      title: input.title,
+      comment: input.comment,
+    });
+    if (!updated) throw new NotFoundError("Review");
+
+    await Promise.all([
+      reviewRepository.updateProductRatingStats(review.productId),
+      review.sellerId
+        ? reviewRepository.updateSellerRatingStats(review.sellerId)
+        : Promise.resolve(),
+    ]);
+
+    return updated;
+  }
+
   async replyToReview(sellerId, reviewId, input) {
     const review = await reviewRepository.findById(reviewId);
     if (!review) throw new NotFoundError("Review");
