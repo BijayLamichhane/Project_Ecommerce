@@ -54,9 +54,29 @@ export function ProductCard({ product, isInWishlist = false }: ProductCardProps)
               Featured
             </span>
           )}
-          {product.condition === "like_new" && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#E4E8DE] text-[#4B5D3A] border border-[#AEB9A1]">
-              Like New
+          {product.condition && (
+            <span
+              className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
+                product.condition === "new"
+                  ? "bg-[#E8F0E4] text-[#3F5A36] border-[#AFC2A8]"
+                  : product.condition === "like_new"
+                    ? "bg-[#E4E8DE] text-[#4B5D3A] border-[#AEB9A1]"
+                    : product.condition === "good"
+                      ? "bg-[#EEF0E8] text-[#58604C] border-[#C5CBB9]"
+                      : product.condition === "fair"
+                        ? "bg-[#F4EBDD] text-[#756044] border-[#D8C6A7]"
+                        : "bg-[#F2E3E0] text-[#7A4A43] border-[#D8B5AF]"
+              }`}
+            >
+              {product.condition === "like_new"
+                ? "Like New"
+                : product.condition === "new"
+                  ? "New"
+                  : product.condition === "good"
+                    ? "Good"
+                    : product.condition === "fair"
+                      ? "Fair"
+                      : "Poor"}
             </span>
           )}
         </div>
