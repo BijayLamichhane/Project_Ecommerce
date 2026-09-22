@@ -29,6 +29,32 @@ export class AdminController {
     }
   }
 
+  async getProducts(req, res, next) {
+    try {
+      const products = await adminService.getProducts(req.query);
+      sendSuccess(res, products);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async setProductFeatured(req, res, next) {
+    try {
+      const result = await adminService.setProductFeatured(
+        req.user.id,
+        req.params.productId,
+        req.body.isFeatured
+      );
+      sendSuccess(
+        res,
+        result,
+        result.isFeatured ? "Product featured successfully" : "Product removed from featured products"
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async suspendUser(req, res, next) {
     try {
       const result = await adminService.suspendUser(
