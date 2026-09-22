@@ -51,6 +51,7 @@ export function ProductDetailPage() {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState("Inaccurate or misleading listing");
   const [reportDetails, setReportDetails] = useState("");
+  const [reportError, setReportError] = useState<string | null>(null);
   const [reportSuccess, setReportSuccess] = useState(false);
 
   // 1. Fetch Product
