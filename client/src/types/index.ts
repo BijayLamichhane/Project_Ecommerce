@@ -206,6 +206,7 @@ export type NotificationType =
   | "booking_created"
   | "booking_payment_success"
   | "booking_payment_received"
+  | "payment_refund_required"
   | "booking_expired"
   | "booking_rejected"
   | "booking_cancelled"
