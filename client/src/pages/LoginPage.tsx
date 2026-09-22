@@ -90,24 +90,6 @@ export function LoginPage() {
             </div>
           )}
 
-          <div className="p-3.5 rounded-md bg-[#F1ECE1]/70 border border-[#C17817]/30 text-xs space-y-2">
-            <span className="font-bold text-[#211E1B] flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-[#C17817]" />
-              Quick Demo Accounts
-            </span>
-            <div className="flex flex-wrap gap-1.5">
-              <button type="button" onClick={() => handleDemoFill("prashant@example.com")} className="px-2.5 py-1 rounded-lg bg-white text-[#C17817] font-semibold text-[11px] shadow-2xs hover:bg-[#F1ECE1] border border-[#C17817]/30">
-                Customer
-              </button>
-              <button type="button" onClick={() => handleDemoFill("apex.rentals@renthub.app")} className="px-2.5 py-1 rounded-lg bg-white text-[#C17817] font-semibold text-[11px] shadow-2xs hover:bg-[#F1ECE1] border border-[#C17817]/30">
-                Seller (Apex Cine)
-              </button>
-              <button type="button" onClick={() => handleDemoFill("admin@renthub.app")} className="px-2.5 py-1 rounded-lg bg-white text-[#C17817] font-semibold text-[11px] shadow-2xs hover:bg-[#F1ECE1] border border-[#C17817]/30">
-                Admin
-              </button>
-            </div>
-          </div>
-
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-1">
               <label className="text-xs font-bold text-[#514B44]">Email Address</label>
