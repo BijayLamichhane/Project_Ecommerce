@@ -168,10 +168,12 @@ export function SellerDashboardPage() {
 
   const totalViews = myProducts.reduce((sum, product) => sum + Number(product.viewCount || 0), 0);
   const totalRentals = myProducts.reduce((sum, product) => sum + Number(product.totalRentals || 0), 0);
-  const ratedProducts = myProducts.filter((product) => Number(product.totalRatings || 0) > 0);
-  const averageRating = ratedProducts.length
-    ? ratedProducts.reduce((sum, product) => sum + Number(product.averageRating || 0), 0) / ratedProducts.length
-    : 0;
+  const totalRatings = myProducts.reduce((sum, product) => sum + Number(product.totalRatings || 0), 0);
+  const weightedRatingTotal = myProducts.reduce(
+    (sum, product) => sum + Number(product.averageRating || 0) * Number(product.totalRatings || 0),
+    0
+  );
+  const averageRating = totalRatings > 0 ? weightedRatingTotal / totalRatings : 0;
 
   const modalLoading =
     deleteProductMutation.isPending ||
