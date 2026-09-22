@@ -11,6 +11,17 @@ type NotificationResponse = {
   unreadCount: number;
 };
 
+const getNotificationActionLabel = (type: Notification["type"]) => {
+  if (type === "new_message") return "Open message";
+  if (type.startsWith("report_")) return "View report activity";
+  if (type.startsWith("review_")) return "View review";
+  if (type.startsWith("product_") || type.startsWith("wishlisted_product_")) return "View listing";
+  if (type.startsWith("seller_application_")) return "View seller application";
+  if (type.startsWith("seller_status_")) return "Open seller dashboard";
+  if (type.startsWith("account_")) return "View account";
+  return "Open booking";
+};
+
 export function NotificationsPage() {
   const queryClient = useQueryClient();
 
@@ -43,7 +54,7 @@ export function NotificationsPage() {
           <div className="text-xs font-bold uppercase tracking-wider text-[#C17817]">Account Updates</div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#211E1B] mt-1">Notifications</h1>
           <p className="text-xs text-[#8B8377] mt-2">
-            Booking, moderation, payment, and account updates are kept here for your records.
+            Booking, payment, messaging, review, marketplace, moderation, and account updates are kept here for your records.
           </p>
         </div>
 
@@ -124,7 +135,7 @@ export function NotificationsPage() {
                           }}
                           className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md bg-[#C17817] text-white text-[11px] font-bold hover:bg-[#211E1B]"
                         >
-                          {notification.type.startsWith("report_") ? "View report activity" : "Open update"}
+                          {getNotificationActionLabel(notification.type)}
                         </Link>
                       )}
                       {!notification.isRead && notificationId && (
@@ -147,7 +158,7 @@ export function NotificationsPage() {
         <div className="bg-white border border-[#C8C0B3] rounded-md p-12 text-center">
           <Bell className="w-10 h-10 mx-auto text-[#B8B0A3]" />
           <h2 className="text-sm font-bold text-[#514B44] mt-3">No notifications yet</h2>
-          <p className="text-xs text-[#8B8377] mt-1">Updates from your rentals and reports will appear here.</p>
+          <p className="text-xs text-[#8B8377] mt-1">Updates from your rentals, messages, reviews, listings, reports, and account activity will appear here.</p>
         </div>
       )}
     </div>
