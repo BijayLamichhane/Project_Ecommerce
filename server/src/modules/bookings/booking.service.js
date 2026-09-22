@@ -191,10 +191,17 @@ export class BookingService {
 
     const currentStatus = booking.status;
 
-    if (userRole !== "admin") {
-      const isCustomer = String(booking.customerId) === String(userId);
-      const isSeller = String(booking.sellerId) === String(userId);
+    const isCustomer = String(booking.customerId) === String(userId);
+    const isSeller = String(booking.sellerId) === String(userId);
 
+    if (newStatus === "disputed" && userRole !== "admin") {
+      if (!isCustomer && !isSeller) throw new ForbiddenError();
+      if (!reason?.trim()) {
+        throw new ValidationError("A dispute reason is required");
+      }
+    }
+
+    if (userRole !== "admin") {
       if (newStatus === "rejected" || newStatus === "active") {
         if (!isSeller) throw new ForbiddenError();
       } else if (newStatus === "cancelled") {
@@ -213,6 +220,13 @@ export class BookingService {
     const extra = {};
     if (newStatus === "cancelled") extra.cancellationReason = reason;
     if (newStatus === "rejected") extra.rejectionReason = reason;
+    if (newStatus === "disputed") {
+      extra.disputeReason = reason.trim();
+      extra.disputeRaisedBy = userId;
+      extra.disputePreviousStatus = currentStatus;
+      extra.disputedAt = new Date();
+    }
+    extra.actorId = userId;
 
     const updated = await bookingRepository.updateStatus(bookingId, newStatus, extra);
 
