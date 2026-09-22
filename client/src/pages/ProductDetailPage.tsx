@@ -692,6 +692,74 @@ export function ProductDetailPage() {
           </div>
         )}
       </section>
+      {isReportOpen && (
+        <div className="fixed inset-0 z-50 bg-[#211E1B]/75 flex items-center justify-center p-4">
+          <div className="bg-white border border-[#DDD5C7] rounded-md p-6 max-w-lg w-full shadow-sm space-y-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-bold text-[#211E1B]">Report Listing</h3>
+                <p className="text-xs text-[#8B8377] mt-1">Tell the RentHub team what needs review.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsReportOpen(false)}
+                disabled={reportMutation.isPending}
+                className="p-2 rounded-lg hover:bg-[#E8E1D5] text-[#8B8377]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <select
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              disabled={reportMutation.isPending}
+              className="w-full px-4 py-3 text-sm bg-[#F7F3EA] border border-[#B8B0A3] rounded-md text-[#211E1B] outline-none focus:border-[#C17817]"
+            >
+              <option>Inaccurate or misleading listing</option>
+              <option>Prohibited or unsafe item</option>
+              <option>Fraud or suspicious activity</option>
+              <option>Incorrect pricing or availability</option>
+              <option>Other policy concern</option>
+            </select>
+            <textarea
+              rows={5}
+              maxLength={2000}
+              value={reportDetails}
+              onChange={(e) => setReportDetails(e.target.value)}
+              disabled={reportMutation.isPending}
+              placeholder="Add details that will help the admin review this listing..."
+              className="w-full px-4 py-3 text-sm bg-[#F7F3EA] border border-[#B8B0A3] rounded-md text-[#211E1B] placeholder:text-[#8B8377] outline-none focus:border-[#C17817] resize-none"
+            />
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-[#8B8377]">{reportDetails.length}/2000</span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsReportOpen(false)}
+                  disabled={reportMutation.isPending}
+                  className="px-4 py-2.5 rounded-md text-xs font-bold text-[#8B8377] hover:bg-[#E8E1D5]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => reportMutation.mutate()}
+                  disabled={reportMutation.isPending}
+                  className="px-4 py-2.5 rounded-md bg-[#211E1B] hover:bg-[#C17817] disabled:opacity-50 text-white text-xs font-extrabold"
+                >
+                  {reportMutation.isPending ? "Submitting..." : "Submit Report"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {reportSuccess && (
+        <div className="fixed bottom-6 right-6 z-50 bg-[#4B5D3A] text-white px-4 py-3 rounded-md shadow-sm text-xs font-bold">
+          Report submitted for admin review.
+        </div>
+      )}
+
       <RecommendedProducts
         mode="similar"
         productId={id}
