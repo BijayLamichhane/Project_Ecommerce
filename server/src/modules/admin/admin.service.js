@@ -174,7 +174,7 @@ export class AdminService {
         type: "seller_status_approved",
         title: "Seller status approved",
         message: "Your seller account has been approved.",
-        actionUrl: "/seller/dashboard",
+        actionUrl: "/seller",
       });
       return updatedSeller;
     }
@@ -191,7 +191,7 @@ export class AdminService {
       type: "seller_status_rejected",
       title: "Seller status changed",
       message: `Your seller status was rejected. Reason: ${reason.trim()}`,
-      actionUrl: "/seller/dashboard",
+      actionUrl: "/seller",
     });
     return updatedSeller;
   }
