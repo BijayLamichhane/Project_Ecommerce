@@ -17,7 +17,8 @@ RentHub is a full-stack web application for renting physical products such as ca
 - **Redis Caching & Rate Limiting**: Optional Redis support for product/category caching and rate limiting; booking concurrency is enforced by the MongoDB inventory ledger.
 - **Server-Verified Payments**: eSewa checkout is verified server-side before a booking is confirmed.
 - **Recommendation Architecture**: Recommendations are implemented as a dedicated module without adding an ML dependency or storing a separate tracking profile. Existing marketplace behavior is used as the signal source.
-- **One Review Per Product**: Each customer can review a product only once. The service checks for an existing review and the database also enforces a unique `(productId, reviewerId)` index for concurrent requests.
+- **One Review Per Product**: Each customer can have only one review for a product. The existing review can be edited, while the database still enforces a unique `(productId, reviewerId)` index for concurrent requests.
+- **Easy Payment Access**: Unpaid pending bookings are surfaced directly from the customer dashboard and navbar with Pay Now links, so customers do not need to return to the product page or search through booking history to continue payment.
 
 ---
 
