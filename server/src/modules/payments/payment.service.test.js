@@ -2,7 +2,10 @@ import crypto from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const paymentFindByTransactionId = vi.fn();
+const paymentFindByBookingId = vi.fn();
 const paymentUpdate = vi.fn();
+const paymentCancelPending = vi.fn();
+const bookingServiceCancelPending = vi.fn();
 const bookingFindById = vi.fn();
 const confirmExpired = vi.fn();
 const reserveItems = vi.fn();
@@ -14,7 +17,9 @@ const emitAvailability = vi.fn();
 vi.mock("./payment.repository.js", () => ({
   paymentRepository: {
     findByTransactionId: paymentFindByTransactionId,
+    findByBookingId: paymentFindByBookingId,
     updatePayment: paymentUpdate,
+    cancelPendingPayment: paymentCancelPending,
   },
 }));
 
@@ -22,6 +27,12 @@ vi.mock("../bookings/booking.repository.js", () => ({
   bookingRepository: {
     findById: bookingFindById,
     confirmExpiredAfterPayment: confirmExpired,
+  },
+}));
+
+vi.mock("../bookings/booking.service.js", () => ({
+  bookingService: {
+    cancelPendingForCustomer: bookingServiceCancelPending,
   },
 }));
 
@@ -79,7 +90,7 @@ function signedResponse(fields) {
   ).toString("base64");
 }
 
-describe("PaymentService late payment handling", () => {
+describe("PaymentService", () => {
   const payment = {
     id: "payment-1",
     bookingId: "booking-1",
@@ -106,7 +117,16 @@ describe("PaymentService late payment handling", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     paymentFindByTransactionId.mockResolvedValue(payment);
+    paymentFindByBookingId.mockResolvedValue(payment);
     bookingFindById.mockResolvedValue(booking);
+    bookingServiceCancelPending.mockResolvedValue({
+      ...booking,
+      status: "cancelled",
+    });
+    paymentCancelPending.mockResolvedValue({
+      ...payment,
+      status: "cancelled",
+    });
     confirmExpired.mockResolvedValue({
       ...booking,
       status: "confirmed",
@@ -124,6 +144,32 @@ describe("PaymentService late payment handling", () => {
         json: async () => ({ status: "COMPLETE" }),
       })
     );
+  });
+
+  it("cancels a pending customer payment and booking", async () => {
+    bookingFindById.mockResolvedValue({
+      ...booking,
+      status: "pending",
+    });
+
+    const service = new PaymentService();
+    const result = await service.cancelPayment(
+      "customer-1",
+      "booking-1",
+      "Changed plans"
+    );
+
+    expect(bookingServiceCancelPending).toHaveBeenCalledWith(
+      "booking-1",
+      "customer-1",
+      "Changed plans"
+    );
+    expect(paymentCancelPending).toHaveBeenCalledWith(
+      "payment-1",
+      "Changed plans"
+    );
+    expect(result.booking.status).toBe("cancelled");
+    expect(result.payment.status).toBe("cancelled");
   });
 
   it("resurrects an expired booking when the dates can still be reserved", async () => {
@@ -149,6 +195,35 @@ describe("PaymentService late payment handling", () => {
     );
     expect(createNotification).toHaveBeenCalledTimes(2);
     expect(result.bookingId).toBe("booking-1");
+  });
+
+  it("flags a late payment for refund when the booking was cancelled", async () => {
+    bookingFindById.mockResolvedValue({
+      ...booking,
+      status: "cancelled",
+    });
+
+    const service = new PaymentService();
+    const encoded = signedResponse({
+      total_amount: "100",
+      transaction_uuid: "transaction-cancelled",
+      product_code: "EPAYTEST",
+    });
+
+    await expect(service.handleEsewaSuccess(encoded)).rejects.toThrow(
+      "flagged for refund"
+    );
+
+    expect(paymentUpdate).toHaveBeenCalledWith(
+      "payment-1",
+      expect.objectContaining({
+        status: "refunded",
+        paymentGatewayResponse: expect.objectContaining({
+          refundRequired: true,
+        }),
+      })
+    );
+    expect(confirmExpired).not.toHaveBeenCalled();
   });
 
   it("flags the payment for refund when the expired dates were taken", async () => {
