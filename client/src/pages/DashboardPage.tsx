@@ -111,6 +111,13 @@ export function DashboardPage() {
           </div>
         )}
 
+        <RecommendedProducts
+          mode="personalized"
+          title="Recommended Gear For You"
+          subtitle="Suggestions based on your rental history and wishlist"
+          limit={4}
+        />
+
         <section className="bg-white rounded-md border border-[#DDD5C7] overflow-hidden">
           <div className="p-6 border-b border-[#DDD5C7] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div><div className="flex items-center gap-2"><History className="w-5 h-5 text-[#C17817]" /><h3 className="text-lg font-bold text-[#211E1B]">Previous Bookings</h3></div><p className="text-xs text-[#8B8377] mt-1">Open any completed, returned, cancelled, or rejected rental to view its full details.</p></div>
@@ -121,12 +128,6 @@ export function DashboardPage() {
           </div>
         </section>
 
-        <RecommendedProducts
-          mode="personalized"
-          title="Recommended Gear For You"
-          subtitle="Suggestions based on your rental history and wishlist"
-          limit={4}
-        />
       </div>
     </div>
   );
