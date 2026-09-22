@@ -2,13 +2,18 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/axios";
 import { formatCurrency, formatDate, getEntityId, getErrorMessage } from "../lib/utils";
-import type { Booking, Category, User } from "../types";
+import type { Booking, Category, Report, User } from "../types";
 import { AdminProductManagement } from "../components/admin/AdminProductManagement";
 import {
   ShieldAlert,
   AlertTriangle,
   Plus,
   Trash2,
+  Flag,
+  CheckCircle2,
+  Search,
+  Gavel,
+  XCircle,
 } from "lucide-react";
 import { ConfirmModal } from "../components/shared/ConfirmModal";
 import { CATEGORY_ICON_NAMES, getCategoryIcon } from "../lib/categoryIcons";
@@ -32,9 +37,23 @@ type AdminDashboardData = {
     totalProducts: number;
     featuredProducts: number;
     activeRentals: number;
+    pendingDisputes?: number;
   };
   recentActivity: AdminActivity[];
 };
+
+type ModerationModal =
+  | {
+      kind: "report";
+      item: Report;
+      status: "reviewed" | "resolved" | "dismissed";
+    }
+  | {
+      kind: "dispute";
+      item: Booking;
+      action: "resolve" | "dismiss";
+    }
+  | null;
 
 const adminTabs: { id: ActiveTab; label: string }[] = [
   { id: "overview", label: "Overview & Analytics" },
@@ -59,6 +78,12 @@ export function AdminDashboardPage() {
   const [newCategoryIcon, setNewCategoryIcon] = useState("Package");
   const [sellerRejectionModal, setSellerRejectionModal] = useState<{ seller: User } | null>(null);
   const [sellerRejectionReason, setSellerRejectionReason] = useState("");
+  const [moderationMode, setModerationMode] = useState<"reports" | "disputes">("reports");
+  const [reportStatusFilter, setReportStatusFilter] = useState<"all" | Report["status"]>("all");
+  const [reportSearch, setReportSearch] = useState("");
+  const [disputeSearch, setDisputeSearch] = useState("");
+  const [moderationModal, setModerationModal] = useState<ModerationModal>(null);
+  const [moderationNotes, setModerationNotes] = useState("");
 
   const { data: dashboardData } = useQuery<AdminDashboardData>({
     queryKey: ["admin-dashboard"],
@@ -84,6 +109,15 @@ export function AdminDashboardPage() {
       return (data.data as User[] || []).map((seller: User) => ({ ...seller, id: getEntityId(seller) }));
     },
     enabled: activeTab === "sellers",
+  });
+
+  const { data: reportsList } = useQuery<Report[]>({
+    queryKey: ["admin-reports"],
+    queryFn: async () => {
+      const { data } = await api.get("/admin/reports");
+      return data.data || [];
+    },
+    enabled: activeTab === "disputes",
   });
 
   const { data: disputesList } = useQuery<Booking[]>({
