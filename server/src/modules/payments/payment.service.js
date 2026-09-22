@@ -4,7 +4,7 @@ import { bookingRepository } from "../bookings/booking.repository.js";
 import { bookingService } from "../bookings/booking.service.js";
 import { bookingInventoryRepository } from "../bookings/booking.inventory.repository.js";
 import { notificationService } from "../notifications/notification.service.js";
-import { emitProductAvailabilityChanged, emitToUser } from "../../sockets/index.js";
+import { emitProductAvailabilityChanged } from "../../sockets/index.js";
 import {
   NotFoundError,
   ForbiddenError,
@@ -293,7 +293,6 @@ export class PaymentService {
         actionUrl,
       });
 
-      emitToUser(booking.customerId, "booking_notification", customerNotification);
 
       const sellerNotification = await notificationService.createNotification({
         userId: booking.sellerId,
@@ -303,7 +302,6 @@ export class PaymentService {
         actionUrl,
       });
 
-      emitToUser(booking.sellerId, "booking_notification", sellerNotification);
     } catch (error) {
       logger.warn({ error, bookingId }, "Failed to create booking payment notification");
     }
