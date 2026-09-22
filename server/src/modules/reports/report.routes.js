@@ -6,6 +6,12 @@ import { createReportSchema } from "./report.schema.js";
 
 const router = Router();
 
+router.get(
+  "/",
+  authenticate,
+  (req, res, next) => reportController.getMine(req, res, next)
+);
+
 router.post(
   "/",
   authenticate,
