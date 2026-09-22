@@ -171,6 +171,51 @@ describe("HTTP authorization boundaries", () => {
     expect(bookingUpdateStatus).not.toHaveBeenCalled();
   });
 
+  it("allows a seller to pause their own product", async () => {
+    productFindById.mockResolvedValue({
+      id: "product-1",
+      sellerId: "seller-a",
+      status: "active",
+      isFeatured: true,
+    });
+    productUpdate.mockResolvedValue({
+      id: "product-1",
+      sellerId: "seller-a",
+      status: "inactive",
+      isFeatured: false,
+    });
+
+    const { response, json } = await request("/api/v1/products/product-1/status", {
+      userId: "seller-a",
+      role: "seller",
+      method: "PATCH",
+      body: { status: "inactive" },
+    });
+
+    expect(response.status).toBe(200);
+    expect(json?.data?.status).toBe("inactive");
+    expect(json?.data?.isFeatured).toBe(false);
+    expect(productUpdate).toHaveBeenCalledWith("product-1", { status: "inactive", isFeatured: false });
+  });
+
+  it("blocks a seller from changing another seller's product status", async () => {
+    productFindById.mockResolvedValue({
+      id: "product-1",
+      sellerId: "seller-b",
+      status: "active",
+    });
+
+    const { response, json } = await request("/api/v1/products/product-1/status", {
+      userId: "seller-a",
+      role: "seller",
+      method: "PATCH",
+      body: { status: "inactive" },
+    });
+
+    expect(response.status).toBe(403);
+    expect(json?.error?.code).toBe("FORBIDDEN");
+    expect(productUpdate).not.toHaveBeenCalled();
+  });
   it("blocks a seller from editing another seller's product", async () => {
     productFindById.mockResolvedValue({
       id: "product-1",
