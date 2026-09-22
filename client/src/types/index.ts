@@ -123,6 +123,7 @@ export interface Product {
   totalRentals: number;
   totalRatings: number;
   averageRating: string;
+  viewCount: number;
   isFeatured: boolean;
   images: ProductImage[];
   pricing?: ProductPricing;
