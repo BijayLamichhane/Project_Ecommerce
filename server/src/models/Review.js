@@ -35,6 +35,8 @@ const reviewSchema = new mongoose.Schema(
   }
 );
 
+reviewSchema.index({ productId: 1, reviewerId: 1 }, { unique: true });
+
 reviewSchema.virtual("id").get(function () {
   return this._id;
 });
