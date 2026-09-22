@@ -560,6 +560,7 @@ export function ProductDetailPage() {
             )}
           </div>
         </div>
+        </div>
 
         {reviewSuccess && (
           <div className="p-3 rounded-md bg-[#E7EFE2] border border-[#4B5D3A]/30 text-xs text-[#4B5D3A] font-medium">
