@@ -186,6 +186,7 @@ export function ProductDetailPage() {
     onSuccess: () => {
       setIsReportOpen(false);
       setReportDetails("");
+      setReportError(null);
       setReportSuccess(true);
       window.setTimeout(() => setReportSuccess(false), 2500);
     },
