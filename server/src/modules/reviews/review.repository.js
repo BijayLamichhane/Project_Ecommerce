@@ -34,6 +34,14 @@ export class ReviewRepository {
     return review.toJSON();
   }
 
+  async update(id, data) {
+    return Review.findByIdAndUpdate(
+      id,
+      { $set: data },
+      { new: true, runValidators: true }
+    ).lean({ virtuals: true });
+  }
+
   async updateReply(id, response) {
     return Review.findByIdAndUpdate(
       id,
