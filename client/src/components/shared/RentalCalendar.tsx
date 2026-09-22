@@ -9,7 +9,6 @@ import {
   isSameDay,
   isBefore,
   isAfter,
-  isWithinInterval,
   startOfToday,
   addDays,
 } from "date-fns";
@@ -25,6 +24,7 @@ interface RentalCalendarProps {
   startDate: Date | null;
   endDate: Date | null;
   onChange: (start: Date | null, end: Date | null) => void;
+  onMonthChange?: (month: Date) => void;
   minDays?: number;
   maxDays?: number;
 }
@@ -34,6 +34,7 @@ export function RentalCalendar({
   startDate,
   endDate,
   onChange,
+  onMonthChange,
   minDays = 1,
   maxDays = 90,
 }: RentalCalendarProps) {
@@ -46,8 +47,8 @@ export function RentalCalendar({
   }));
 
   const isDateBooked = (date: Date) => {
-    return parsedBookedRanges.some((range) =>
-      isWithinInterval(date, { start: range.start, end: range.end })
+    return parsedBookedRanges.some(
+      (range) => !isBefore(date, range.start) && isBefore(date, range.end)
     );
   };
 
@@ -100,14 +101,22 @@ export function RentalCalendar({
         <div className="flex items-center gap-1">
           <button
             type="button"
-            onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+            onClick={() => {
+              const month = subMonths(currentMonth, 1);
+              setCurrentMonth(month);
+              onMonthChange?.(month);
+            }}
             className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 transition"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             type="button"
-            onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+            onClick={() => {
+              const month = addMonths(currentMonth, 1);
+              setCurrentMonth(month);
+              onMonthChange?.(month);
+            }}
             className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 transition"
           >
             <ChevronRight className="w-4 h-4" />

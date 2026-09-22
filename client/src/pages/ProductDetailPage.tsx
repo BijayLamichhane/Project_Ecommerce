@@ -34,6 +34,7 @@ export function ProductDetailPage() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
+  const [availabilityMonth, setAvailabilityMonth] = useState(() => new Date());
   const [quantity, setQuantity] = useState(1);
   const [isSubmittingBooking, setIsSubmittingBooking] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
@@ -58,12 +59,29 @@ export function ProductDetailPage() {
 
   // 2. Fetch Availability / Booked ranges
   const { data: bookedRanges } = useQuery({
-    queryKey: ["product-availability", id],
+    queryKey: [
+      "product-availability",
+      id,
+      availabilityMonth.getFullYear(),
+      availabilityMonth.getMonth() + 1,
+    ],
     queryFn: async () => {
-      const { data } = await api.get(`/bookings/availability/${id}`);
+      const year = availabilityMonth.getFullYear();
+      const month = availabilityMonth.getMonth() + 1;
+      const { data } = await api.get(
+        `/bookings/availability/${id}?year=${year}&month=${month}`
+      );
       return data.data || [];
     },
     enabled: !!id,
+  });
+
+  const currentBookingRange = (bookedRanges || []).find((range: { startDate: string; endDate: string }) => {
+    const now = new Date();
+    return (
+      new Date(range.startDate) <= now &&
+      now < new Date(range.endDate)
+    );
   });
 
   useEffect(() => {
@@ -364,11 +382,22 @@ export function ProductDetailPage() {
                 bookedRanges={bookedRanges}
                 startDate={startDate}
                 endDate={endDate}
+                onMonthChange={setAvailabilityMonth}
                 onChange={(start, end) => {
                   setStartDate(start);
                   setEndDate(end);
                 }}
               />
+              {currentBookingRange && (
+                <div className="rounded-md border border-[#C17817]/30 bg-[#F1E0C8]/60 p-3">
+                  <p className="text-xs font-semibold text-[#211E1B]">
+                    Currently rented
+                  </p>
+                  <p className="text-[11px] text-[#6F685F] mt-1">
+                    This product is scheduled to return on {formatDate(currentBookingRange.endDate)}. You can select that date or any later available date to reserve it in advance.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Error prompt */}
