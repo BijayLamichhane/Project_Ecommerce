@@ -17,6 +17,7 @@ RentHub is a full-stack web application for renting physical products such as ca
 - **Redis Caching & Rate Limiting**: Optional Redis support for product/category caching and rate limiting; booking concurrency is enforced by the MongoDB inventory ledger.
 - **Server-Verified Payments**: eSewa checkout is verified server-side before a booking is confirmed.
 - **Recommendation Architecture**: Recommendations are implemented as a dedicated module without adding an ML dependency or storing a separate tracking profile. Existing marketplace behavior is used as the signal source.
+- **Admin Product Governance**: Administrators can search marketplace listings, filter by status or featured state, activate or suspend listings, and feature or unfeature active products from the admin panel. Featured changes are recorded in the admin audit log and reflected in homepage discovery.
 - **One Review Per Product**: Each customer can have only one review for a product. The existing review can be edited, while the database still enforces a unique `(productId, reviewerId)` index for concurrent requests.
 - **Easy Payment Access**: Unpaid pending bookings are surfaced directly from the customer dashboard and navbar with Pay Now links, so customers do not need to return to the product page or search through booking history to continue payment.
 - **Payment Cancellation**: Customers can cancel a pending payment from the booking detail page. The booking hold is cancelled, reserved dates are released, and the pending payment attempt is marked cancelled. A late gateway completion after cancellation is flagged for refund instead of confirming the cancelled booking.
@@ -25,7 +26,8 @@ RentHub is a full-stack web application for renting physical products such as ca
 
 ## ✨ Recent Reliability & Security Improvements
 
-- **Authentication compatibility**: Existing seeded bcrypt credentials are migrated into Better Auth credential accounts automatically during server startup.
+- **Authentication compatibility**: Legacy bcrypt credentials from earlier application versions are migrated into Better Auth credential accounts automatically during server startup.
+- **Legacy authentication cleanup**: Passwords migrated from the older user collection are removed from the legacy user record after the Better Auth credential account is created.
 - **Session normalization**: Login and registration fetch the canonical `/users/me` profile after Better Auth creates the session, keeping application roles and profile fields consistent.
 - **Origin protection**: Better Auth and Socket.IO trust only configured frontend origins.
 - **WebSocket authentication**: Socket connections derive the user identity from the Better Auth session instead of accepting a client-supplied user ID.
@@ -107,15 +109,7 @@ cd ../client
 npm install
 ```
 
-### 4. Seed Realistic Demo Data
-```bash
-cd server
-npm run db:seed
-```
-
-The seed script creates demo users, verified sellers, categories, products, bookings, reviews, and notifications.
-
-### 5. Start Development Servers
+### 4. Start Development Servers
 ```bash
 # Backend API
 cd server
@@ -130,31 +124,13 @@ The default development URLs are **`http://localhost:5000`** for the API and **`
 
 ---
 
-## 🔑 Pre-Configured Demo Accounts
-
-All seeded demo accounts use the same password:
-
-```text
-Password123!
-```
-
-| Role | Email | Details |
-|---|---|---|
-| **Admin** | `admin@renthub.app` | Governance, moderation, analytics |
-| **Seller / Lender** | `apex.rentals@renthub.app` | Camera rental shop, bookings and earnings |
-| **Customer** | `prashant@example.com` | Customer account with active and past rentals |
-
-The server automatically migrates seeded legacy bcrypt passwords into Better Auth credential accounts when required.
-
----
-
 ## 🧪 Running Automated Tests
 ```bash
 cd server
 npm test
 ```
 
-The test suite covers core pricing, booking conflict and expiry behavior, booking state-machine transitions, late-payment resurrection/refund handling, recommendation ranking and fallbacks, HTTP authorization boundaries, return-condition validation, and upload signature detection.
+The test suite covers core pricing, booking conflict and expiry behavior, booking state-machine transitions, late-payment resurrection/refund handling, recommendation ranking and fallbacks, HTTP authorization boundaries including admin product governance, return-condition validation, and upload signature detection.
 
 ---
 
