@@ -15,6 +15,8 @@ const BookingsPage = lazy(() => import("../pages/BookingsPage").then((module) =>
 const BookingDetailPage = lazy(() => import("../pages/BookingDetailPage").then((module) => ({ default: module.BookingDetailPage })));
 const WishlistPage = lazy(() => import("../pages/WishlistPage").then((module) => ({ default: module.WishlistPage })));
 const MessagesPage = lazy(() => import("../pages/MessagesPage").then((module) => ({ default: module.MessagesPage })));
+const NotificationsPage = lazy(() => import("../pages/NotificationsPage").then((module) => ({ default: module.NotificationsPage })));
+const ReportsPage = lazy(() => import("../pages/ReportsPage").then((module) => ({ default: module.ReportsPage })));
 const SellerDashboardPage = lazy(() => import("../pages/SellerDashboardPage").then((module) => ({ default: module.SellerDashboardPage })));
 const SellerProductEditorPage = lazy(() => import("../pages/SellerProductEditorPage").then((module) => ({ default: module.SellerProductEditorPage })));
 const BecomeSellerPage = lazy(() => import("../pages/BecomeSellerPage").then((module) => ({ default: module.BecomeSellerPage })));
@@ -70,6 +72,8 @@ export function AppRoutes() {
             <Route path="/bookings" element={<ProtectedRoute><BookingsPage /></ProtectedRoute>} />
             <Route path="/bookings/:id" element={<ProtectedRoute><BookingDetailPage /></ProtectedRoute>} />
             <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
+            <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+            <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
 
             <Route path="/seller" element={<ProtectedRoute role="seller"><SellerDashboardPage /></ProtectedRoute>} />
             <Route path="/seller/products/new" element={<ProtectedRoute role="seller"><SellerProductEditorPage /></ProtectedRoute>} />
