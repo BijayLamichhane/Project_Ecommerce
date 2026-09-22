@@ -1,5 +1,6 @@
 import { userRepository } from "./user.repository.js";
 import { NotFoundError, ConflictError } from "../../middleware/errorHandler.js";
+import { notificationService } from "../notifications/notification.service.js";
 
 const OPEN_SELLER_BOOKING_MESSAGE = "Resolve all pending, confirmed, active, or return-requested rentals before disbanding your seller account";
 
@@ -28,6 +29,18 @@ export class UserService {
     if (!sellerProfile) {
       throw new ConflictError("You cannot submit a seller application in your current account state");
     }
+
+    try {
+      await notificationService.notifyAdmins({
+        type: "seller_application_submitted",
+        title: "New seller application",
+        message: `${user.name || "A customer"} submitted a seller application for review.`,
+        actionUrl: `/admin?section=sellers&user=${encodeURIComponent(userId)}`,
+      });
+    } catch {
+      // Notification delivery must not block a successful seller application.
+    }
+
     return sellerProfile;
   }
 
