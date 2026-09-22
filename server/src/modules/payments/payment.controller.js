@@ -10,6 +10,17 @@ export class PaymentController {
     } catch (error) { next(error); }
   }
 
+  async cancelPayment(req, res, next) {
+    try {
+      const result = await paymentService.cancelPayment(
+        req.user.id,
+        req.params.bookingId,
+        req.body?.reason
+      );
+      sendSuccess(res, result, "Payment cancelled");
+    } catch (error) { next(error); }
+  }
+
   async getPaymentByBooking(req, res, next) {
     try {
       const result = await paymentService.getPaymentByBooking(req.user.id, req.params.bookingId, req.user.role);
