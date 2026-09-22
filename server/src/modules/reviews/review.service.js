@@ -3,6 +3,7 @@ import { bookingRepository } from "../bookings/booking.repository.js";
 import { productRepository } from "../products/product.repository.js";
 import { NotFoundError, ForbiddenError, ValidationError, ConflictError } from "../../middleware/errorHandler.js";
 import { v4 as uuidv4 } from "uuid";
+import { notificationService } from "../notifications/notification.service.js";
 
 export class ReviewService {
   async getByProductId(productId) {
@@ -66,6 +67,17 @@ export class ReviewService {
       reviewRepository.updateSellerRatingStats(product.sellerId),
     ]);
 
+    try {
+      await notificationService.notifyUser(product.sellerId, {
+        type: "review_created",
+        title: "New product review",
+        message: `A customer left a ${input.rating}-star review on "${product.name}".`,
+        actionUrl: `/products/${encodeURIComponent(input.productId)}`,
+      });
+    } catch {
+      // Notification delivery must not block a successful review submission.
+    }
+
     return review;
   }
 
@@ -102,7 +114,20 @@ export class ReviewService {
       throw new ForbiddenError("Only the seller can reply to this review");
     }
 
-    return reviewRepository.updateReply(reviewId, input.response);
+    const updated = await reviewRepository.updateReply(reviewId, input.response);
+
+    try {
+      await notificationService.notifyUser(review.reviewerId, {
+        type: "review_reply",
+        title: "Seller replied to your review",
+        message: `The seller replied to your review on "${product.name}".`,
+        actionUrl: `/products/${encodeURIComponent(review.productId)}`,
+      });
+    } catch {
+      // Notification delivery must not block a successful seller reply.
+    }
+
+    return updated;
   }
 }
 
