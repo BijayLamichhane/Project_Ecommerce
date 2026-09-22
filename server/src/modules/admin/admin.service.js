@@ -282,28 +282,36 @@ export class AdminService {
         ? report.reporterId?.id || report.reporterId?._id
         : report.reporterId;
 
-    if (reporterId && ["resolved", "dismissed"].includes(status)) {
+    if (reporterId && ["reviewed", "resolved", "dismissed"].includes(status)) {
       const targetName =
         report.reportedProductId?.name ||
         report.reportedUserId?.name ||
         (report.reportedReviewId ? "the reported review" : "the reported item");
 
       const notification =
-        status === "resolved"
+        status === "reviewed"
           ? {
               userId: String(reporterId),
-              type: "report_resolved",
-              title: "Your report was resolved",
-              message: `We reviewed your report about ${targetName} and took action. Moderator note: ${notes}`,
+              type: "report_reviewed",
+              title: "Your report is under review",
+              message: `Your report about ${targetName} is now being reviewed by moderation.`,
               actionUrl: "/reports",
             }
-          : {
-              userId: String(reporterId),
-              type: "report_dismissed",
-              title: "Your report was dismissed",
-              message: `We reviewed your report about ${targetName} and did not take further action. Moderator note: ${notes}`,
-              actionUrl: "/reports",
-            };
+          : status === "resolved"
+            ? {
+                userId: String(reporterId),
+                type: "report_resolved",
+                title: "Your report was resolved",
+                message: `We reviewed your report about ${targetName} and took action. Moderator note: ${notes}`,
+                actionUrl: "/reports",
+              }
+            : {
+                userId: String(reporterId),
+                type: "report_dismissed",
+                title: "Your report was dismissed",
+                message: `We reviewed your report about ${targetName} and did not take further action. Moderator note: ${notes}`,
+                actionUrl: "/reports",
+              };
 
       try {
         await notificationService.notifyUser(String(reporterId), notification);
