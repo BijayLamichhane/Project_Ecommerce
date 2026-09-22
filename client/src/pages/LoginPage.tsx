@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation, useSearchParams } from "react-router-do
 import { api } from "../lib/axios";
 import { useAuth } from "../hooks/useAuth";
 import { getPostLoginRedirect, getErrorMessage } from "../lib/utils";
-import { Layers, Lock, Mail, AlertCircle, Sparkles } from "lucide-react";
+import { Layers, Lock, Mail, AlertCircle } from "lucide-react";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -46,11 +46,6 @@ export function LoginPage() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleDemoFill = (demoEmail: string) => {
-    setEmail(demoEmail);
-    setPassword("Password123!");
   };
 
   if (isSessionLoading || user) {
