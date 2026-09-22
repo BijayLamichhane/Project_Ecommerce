@@ -3,6 +3,8 @@ import { getRedisClient, CacheKeys, CacheTTL } from "../../config/redis.js";
 import { uploadImage as cloudUploadImage, deleteImage as cloudDeleteImage, CLOUDINARY_FOLDERS } from "../../config/cloudinary.js";
 import { NotFoundError, ForbiddenError } from "../../middleware/errorHandler.js";
 import { logger } from "../../utils/logger.js";
+import { notificationService } from "../notifications/notification.service.js";
+import { wishlistRepository } from "../wishlist/wishlist.repository.js";
 import { env } from "../../config/env.js";
 import { v4 as uuidv4 } from "uuid";
 import fs from "node:fs/promises";
@@ -79,6 +81,23 @@ export class ProductService {
 
     const updated = await productRepository.update(productId, update);
     await this.invalidateProductCache(productId);
+
+    try {
+      const subscriberIds = await wishlistRepository.findUserIdsByProductId(productId);
+      await Promise.all(subscriberIds
+        .filter((userId) => String(userId) !== String(sellerId))
+        .map((userId) => notificationService.notifyUser(userId, {
+          type: status === "active" ? "wishlisted_product_available" : "wishlisted_product_unavailable",
+          title: status === "active" ? "Wishlisted listing is available" : "Wishlisted listing is unavailable",
+          message: status === "active"
+            ? `Your wishlisted listing "${product.name}" is available again.`
+            : `Your wishlisted listing "${product.name}" is currently unavailable.`,
+          actionUrl: `/products/${encodeURIComponent(productId)}`,
+        })));
+    } catch (error) {
+      logger.warn({ error, productId }, "Failed to notify wishlist subscribers");
+    }
+
     return updated;
   }
   async delete(productId, sellerId, isAdmin = false) { const product = await productRepository.findById(productId); if (!product) throw new NotFoundError("Product"); if (!isAdmin && String(product.sellerId) !== String(sellerId)) throw new ForbiddenError(); await productRepository.delete(productId); await this.invalidateProductCache(productId); }
