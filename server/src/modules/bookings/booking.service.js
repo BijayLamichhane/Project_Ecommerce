@@ -275,6 +275,7 @@ export class BookingService {
 
   async notifyBookingStatusChange(previousBooking, booking, actorId, actorRole, reason) {
     if (!booking?.customerId || !booking?.sellerId) return;
+    if (["rejected", "cancelled"].includes(booking.status)) return;
 
     const bookingId = booking.id || booking._id;
     const actionUrl = `/bookings/${encodeURIComponent(bookingId)}`;
