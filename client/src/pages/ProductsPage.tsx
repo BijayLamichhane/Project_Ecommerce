@@ -59,12 +59,19 @@ export function ProductsPage() {
 
   const updateParam = (key: string, value: string) => {
     const newParams = new URLSearchParams(searchParams);
+
     if (value) {
       newParams.set(key, value);
     } else {
       newParams.delete(key);
     }
-    newParams.set("page", "1");
+
+    // Filters and sorting should restart pagination from page 1.
+    // Pagination itself must preserve the requested page value.
+    if (key !== "page") {
+      newParams.set("page", "1");
+    }
+
     setSearchParams(newParams);
   };
 
