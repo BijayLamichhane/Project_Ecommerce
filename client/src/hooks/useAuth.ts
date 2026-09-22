@@ -26,13 +26,13 @@ function checkSession() {
 }
 
 export function useAuth() {
-  const { user, isLoading, setUser, setLoading, logout: clearStore } = useAuthStore();
+  const { user, isLoading, setUser, logout: clearStore } = useAuthStore();
 
   useEffect(() => {
-    if (!user) {
+    if (!user && isLoading) {
       checkSession();
     }
-  }, []);
+  }, [user, isLoading]);
 
   const logout = async () => {
     try {
