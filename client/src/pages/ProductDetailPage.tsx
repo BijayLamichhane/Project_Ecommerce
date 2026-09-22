@@ -76,6 +76,14 @@ export function ProductDetailPage() {
     enabled: !!id,
   });
 
+  const currentBookingRange = (bookedRanges || []).find((range: { startDate: string; endDate: string }) => {
+    const now = new Date();
+    return (
+      new Date(range.startDate) <= now &&
+      now < new Date(range.endDate)
+    );
+  });
+
   useEffect(() => {
     if (!socket || !id) return;
 
@@ -380,6 +388,16 @@ export function ProductDetailPage() {
                   setEndDate(end);
                 }}
               />
+              {currentBookingRange && (
+                <div className="rounded-md border border-[#C17817]/30 bg-[#F1E0C8]/60 p-3">
+                  <p className="text-xs font-semibold text-[#211E1B]">
+                    Currently rented
+                  </p>
+                  <p className="text-[11px] text-[#6F685F] mt-1">
+                    This product is booked until {formatDate(currentBookingRange.endDate)}. Select another available date to reserve it in advance.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Error prompt */}
