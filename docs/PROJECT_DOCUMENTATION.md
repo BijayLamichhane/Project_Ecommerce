@@ -56,7 +56,7 @@ The admin panel exposes a protected product management workflow. Administrators 
 
 ### Reports and dispute moderation workflow
 
-Authenticated customers can submit a report for a marketplace listing from the product detail page. The server validates that the target exists, blocks self-reporting, prevents duplicate open reports for the same target, and stores the reporter, reason, details, target type, and moderation status. The public endpoint is POST /api/v1/reports.
+Authenticated customers can submit a report for a marketplace listing from the product detail page. The server validates that the target exists, blocks self-reporting, prevents duplicate open reports for the same target, and stores the reporter, reason, details, target type, and moderation status. The endpoint is POST /api/v1/reports. Authenticated users can retrieve their own report history from GET /api/v1/reports, which includes the moderation status, decision timestamp, and resolution notes. When an administrator resolves or dismisses a report, the issuer receives a persisted notification with a direct link to the report activity.
 
 Booking disputes are available to the customer or seller on active, return-requested, or returned bookings. A dispute requires a reason and stores the participant who raised it, the previous booking status, and the dispute timestamp. Disputed bookings remain reserved in availability calculations until an administrator makes a decision.
 
