@@ -9,6 +9,18 @@ export class ProductController {
   async getSellerProducts(req, res, next) { try { sendSuccess(res, await productService.getBySeller(req.params.sellerId ?? req.user.id)); } catch (error) { next(error); } }
   async create(req, res, next) { try { sendCreated(res, await productService.create(req.user.id, req.body), "Product created successfully"); } catch (error) { next(error); } }
   async update(req, res, next) { try { sendSuccess(res, await productService.update(req.params.id, req.user.id, req.body, req.user.role === "admin"), "Product updated successfully"); } catch (error) { next(error); } }
+  async updateStatus(req, res, next) {
+    try {
+      const product = await productService.updateStatus(
+        req.params.id,
+        req.user.id,
+        req.body.status
+      );
+      sendSuccess(res, product, "Product status updated successfully");
+    } catch (error) {
+      next(error);
+    }
+  }
   async uploadImages(req, res, next) {
     try {
       if (!req.files || req.files.length === 0) return sendError(res, "VALIDATION_ERROR", "Please select at least one image file", 400);
