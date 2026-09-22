@@ -1,5 +1,5 @@
 import { User } from "../../models/User.js";
-import { emitToUser } from "../../sockets/index.js";
+import { emitToUser } from "../../sockets/emitter.js";
 import { notificationRepository } from "./notification.repository.js";
 import { logger } from "../../utils/logger.js";
 
