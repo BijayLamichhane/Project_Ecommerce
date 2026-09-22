@@ -144,7 +144,9 @@ The service compares products using the current product's category, brand, city,
 
 ### Frontend placement
 
-Personalized recommendations are displayed on the customer dashboard.
+Personalized recommendations are displayed on the customer dashboard and on the home page for authenticated customers.
+
+The home page uses the same recommendation component and personalized endpoint, so customers can see relevant equipment without first visiting their dashboard. The recommendation service falls back to popular products when a customer has no useful rental or wishlist history.
 
 Similar products are displayed on the product detail page under the listing and review content.
 
