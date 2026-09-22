@@ -3,7 +3,12 @@ import { productController } from "./product.controller.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { requireSeller } from "../../middleware/authorize.js";
 import { validateQuery, validateParams, validateBody } from "../../middleware/validate.js";
-import { productSearchSchema, createProductSchema, updateProductSchema } from "./product.schema.js";
+import {
+  productSearchSchema,
+  createProductSchema,
+  updateProductSchema,
+  updateProductStatusSchema,
+} from "./product.schema.js";
 import { uploadProductImages } from "../../middleware/upload.js";
 import { z } from "zod";
 
@@ -48,6 +53,15 @@ router.patch(
   validateParams(idSchema),
   validateBody(updateProductSchema),
   (req, res, next) => productController.update(req, res, next)
+);
+
+router.patch(
+  "/:id/status",
+  authenticate,
+  requireSeller,
+  validateParams(idSchema),
+  validateBody(updateProductStatusSchema),
+  (req, res, next) => productController.updateStatus(req, res, next)
 );
 
 router.post(
