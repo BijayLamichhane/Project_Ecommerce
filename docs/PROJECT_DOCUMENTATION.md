@@ -2,7 +2,7 @@
 
 ## 1. Project Overview
 
-RentHub is a full-stack rental marketplace for physical equipment. Customers can discover products, check rental availability, place short-lived booking holds, complete payment, manage rentals, request returns, communicate with sellers, save products to a wishlist, and submit reviews. Sellers can list equipment, manage pricing and availability, manage rentals, and maintain payout information. Administrators manage users, seller applications, products, reports, disputes, and marketplace governance.
+RentHub is a full-stack rental marketplace for physical equipment. Customers can discover products, check rental availability, place short-lived booking holds, complete payment, manage rentals, request returns, communicate with sellers, save products to a wishlist, and submit reviews. Sellers can list equipment, manage pricing and availability, manage rentals, and maintain payout information. Administrators manage users, seller applications, products, reports, disputes, and marketplace governance. Product governance includes searching listings, filtering by lifecycle or featured state, activating or suspending listings, and controlling featured placement.
 
 The application is implemented as a modular marketplace rather than a simple product catalog. Booking, payment, availability, messaging, notifications, reviews, and seller workflows are separate domain areas connected through service and repository layers.
 
@@ -38,7 +38,13 @@ Better Auth handles sessions and credential authentication. Application roles ar
 
 ### Product marketplace
 
-Customers can search and filter rental products by query, category, price, city, condition, rating, and sort order. Products contain pricing, rental rules, images, seller information, and quantity.
+Customers can search and filter rental products by query, category, price, city, condition, rating, and sort order. Products contain pricing, rental rules, images, seller information, quantity, and an administrator-controlled featured flag.
+
+### Admin product governance
+
+The admin panel exposes a protected product management workflow. Administrators can search marketplace listings, filter by product status and featured state, activate or suspend listings, and feature or unfeature products. Only active products can be featured. Moving a product away from active status automatically removes it from featured placement, preventing inactive or suspended listings from appearing in homepage featured discovery.
+
+Featured changes are recorded through the existing audit log. Public featured discovery continues to use the /api/v1/products/featured endpoint, while customer recommendations may use the featured flag as a small ranking signal.
 
 ### Wishlist
 
@@ -152,6 +158,8 @@ Personalized recommendations are displayed on the customer dashboard and on the 
 
 The home page uses the same recommendation component and personalized endpoint, so customers can see relevant equipment without first visiting their dashboard. The recommendation service falls back to popular products when a customer has no useful rental or wishlist history.
 
+The homepage Featured Gear section is backed by products explicitly selected by an administrator through the admin product governance workflow.
+
 Similar products are displayed on the product detail page under the listing and review content.
 
 The recommendation UI uses the same ProductCard component as the normal marketplace, keeping presentation consistent.
@@ -204,7 +212,7 @@ Removed items:
 
 The core Redis product and category list cache entries that are still used were kept.
 
-Marketplace modules such as cart, wishlist, messaging, notifications, reviews, payments, users, products, bookings, and administration remain because they are actively connected to routes or other services.
+Marketplace modules such as cart, wishlist, messaging, notifications, reviews, payments, users, products, bookings, and administration remain because they are actively connected to routes or other services. The project no longer includes the destructive database seed script or a package command for resetting application data through that script.
 
 ## 9. Testing
 
