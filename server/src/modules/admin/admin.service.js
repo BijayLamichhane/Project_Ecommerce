@@ -5,7 +5,6 @@ import { bookingInventoryRepository } from "../bookings/booking.inventory.reposi
 import { NotFoundError, ConflictError, ValidationError } from "../../middleware/errorHandler.js";
 import { getRedisClient, CacheKeys } from "../../config/redis.js";
 import { notificationService } from "../notifications/notification.service.js";
-import { emitToUser } from "../../sockets/index.js";
 import { logger } from "../../utils/logger.js";
 
 const OPEN_SELLER_BOOKING_MESSAGE = "This seller has unresolved pending, confirmed, active, or return-requested rentals";
@@ -44,6 +43,19 @@ export class AdminService {
       targetProductId: productId,
     });
 
+    try {
+      await notificationService.notifyUser(product.sellerId, {
+        type: isFeatured ? "product_featured" : "product_unfeatured",
+        title: isFeatured ? "Your listing was featured" : "Your listing was unfeatured",
+        message: isFeatured
+          ? `Your listing "${product.name}" is now featured in marketplace discovery.`
+          : `Your listing "${product.name}" is no longer featured in marketplace discovery.`,
+        actionUrl: `/products/${encodeURIComponent(productId)}`,
+      });
+    } catch (error) {
+      logger.warn({ error, productId }, "Failed to notify seller about featured status");
+    }
+
     return {
       id: productId,
       status: product.status,
@@ -60,6 +72,18 @@ export class AdminService {
       targetUserId: userId,
       reason,
     });
+    try {
+      await notificationService.notifyUser(userId, {
+        type: "account_suspended",
+        title: "Account suspended",
+        message: reason?.trim()
+          ? `Your account has been suspended. Reason: ${reason.trim()}`
+          : "Your account has been suspended by an administrator.",
+        actionUrl: "/profile",
+      });
+    } catch (error) {
+      logger.warn({ error, userId }, "Failed to notify suspended user");
+    }
     return user;
   }
 
@@ -71,6 +95,16 @@ export class AdminService {
       actionType: "unsuspend_user",
       targetUserId: userId,
     });
+    try {
+      await notificationService.notifyUser(userId, {
+        type: "account_reactivated",
+        title: "Account reactivated",
+        message: "Your account has been reactivated and access is available again.",
+        actionUrl: "/profile",
+      });
+    } catch (error) {
+      logger.warn({ error, userId }, "Failed to notify reactivated user");
+    }
     return user;
   }
 
@@ -97,6 +131,12 @@ export class AdminService {
           actionType: "approve_seller_application",
           targetUserId: sellerId,
         });
+        await notificationService.notifyUser(sellerId, {
+          type: "seller_application_approved",
+          title: "Seller application approved",
+          message: "Your seller application has been approved. You can now manage rental listings from your seller account.",
+          actionUrl: "/seller/dashboard",
+        });
         return approvedSeller;
       }
 
@@ -107,6 +147,12 @@ export class AdminService {
         actionType: "reject_seller_application",
         targetUserId: sellerId,
         reason: reason.trim(),
+      });
+      await notificationService.notifyUser(sellerId, {
+        type: "seller_application_rejected",
+        title: "Seller application needs revision",
+        message: `Your seller application was not approved. Reason: ${reason.trim()}`,
+        actionUrl: "/become-seller",
       });
       return rejectedApplication;
     }
@@ -123,6 +169,12 @@ export class AdminService {
         actionType: "approve_seller",
         targetUserId: sellerId,
       });
+      await notificationService.notifyUser(sellerId, {
+        type: "seller_status_approved",
+        title: "Seller status approved",
+        message: "Your seller account has been approved.",
+        actionUrl: "/seller/dashboard",
+      });
       return updatedSeller;
     }
 
@@ -133,6 +185,12 @@ export class AdminService {
       actionType: "reject_seller",
       targetUserId: sellerId,
       reason: reason.trim(),
+    });
+    await notificationService.notifyUser(sellerId, {
+      type: "seller_status_rejected",
+      title: "Seller status changed",
+      message: `Your seller status was rejected. Reason: ${reason.trim()}`,
+      actionUrl: "/seller/dashboard",
     });
     return updatedSeller;
   }
@@ -153,6 +211,20 @@ export class AdminService {
       actionType: status === "active" ? "enable_product" : "disable_product",
       targetProductId: productId,
     });
+
+    try {
+      await notificationService.notifyUser(product.sellerId, {
+        type: status === "active" ? "product_activated" : "product_suspended",
+        title: status === "active" ? "Listing activated" : "Listing suspended",
+        message: status === "active"
+          ? `Your listing "${product.name}" is active again.`
+          : `Your listing "${product.name}" has been suspended by an administrator.`,
+        actionUrl: `/seller/products/${encodeURIComponent(productId)}/edit`,
+      });
+    } catch (error) {
+      logger.warn({ error, productId }, "Failed to notify seller about product status");
+    }
+
     return { id: productId, status, isFeatured: status === "active" ? product.isFeatured : false };
   }
 
@@ -218,7 +290,6 @@ export class AdminService {
 
       try {
         const createdNotification = await notificationService.createNotification(notification);
-        emitToUser(String(reporterId), "notification_created", createdNotification);
       } catch (error) {
         logger.error(
           { error, reportId, reporterId },
@@ -260,6 +331,31 @@ export class AdminService {
       targetBookingId: bookingId,
       notes,
     });
+
+    const customerId = String(updated.customerId);
+    const sellerId = String(updated.sellerId);
+    const resolutionMessage = action === "resolve"
+      ? "The administrator resolved the dispute and completed the booking."
+      : "The administrator dismissed the dispute and restored the booking to its previous state.";
+
+    try {
+      await Promise.all([
+        notificationService.notifyUser(customerId, {
+          type: `booking_dispute_${action}d`,
+          title: action === "resolve" ? "Dispute resolved" : "Dispute dismissed",
+          message: notes?.trim() ? `${resolutionMessage} Admin note: ${notes.trim()}` : resolutionMessage,
+          actionUrl: `/bookings/${encodeURIComponent(bookingId)}`,
+        }),
+        notificationService.notifyUser(sellerId, {
+          type: `booking_dispute_${action}d`,
+          title: action === "resolve" ? "Dispute resolved" : "Dispute dismissed",
+          message: notes?.trim() ? `${resolutionMessage} Admin note: ${notes.trim()}` : resolutionMessage,
+          actionUrl: `/bookings/${encodeURIComponent(bookingId)}`,
+        }),
+      ]);
+    } catch (error) {
+      logger.error({ error, bookingId }, "Failed to notify booking participants about dispute resolution");
+    }
 
     return updated;
   }
