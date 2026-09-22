@@ -15,12 +15,6 @@ export class CategoryRepository {
     return Category.findOne({ slug }).lean({ virtuals: true });
   }
 
-  async findRootCategories() {
-    return Category.find({ isActive: true, parentId: { $exists: false } })
-      .sort({ sortOrder: 1 })
-      .lean({ virtuals: true });
-  }
-
   async create(data) {
     const created = await Category.create(data);
     return created.toJSON();
