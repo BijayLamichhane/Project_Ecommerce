@@ -271,10 +271,11 @@ export function SellerProductEditorPage() {
                 onChange={(e) => setFormData({ ...formData, condition: e.target.value })}
                 className="w-full px-3.5 py-2.5 text-xs bg-[#F1ECE1] border border-[#C8C0B3] rounded-md outline-none"
               >
-                <option value="new">Brand New</option>
-                <option value="like_new">Like New / Mint</option>
-                <option value="good">Good (Normal wear)</option>
-                <option value="fair">Fair (Visible cosmetic wear)</option>
+                <option value="new">New</option>
+                <option value="like_new">Like New</option>
+                <option value="good">Good</option>
+                <option value="fair">Fair</option>
+              <option value="poor">Poor</option>
               </select>
             </div>
           </div>
