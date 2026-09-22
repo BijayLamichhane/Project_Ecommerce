@@ -1,6 +1,7 @@
 import { User } from "../../models/User.js";
 import { emitToUser } from "../../sockets/index.js";
 import { notificationRepository } from "./notification.repository.js";
+import { logger } from "../../utils/logger.js";
 
 export class NotificationService {
   async getUserNotifications(userId) {
@@ -29,7 +30,12 @@ export class NotificationService {
   }
 
   async notifyUser(userId, data) {
-    return this.createNotification({ ...data, userId });
+    try {
+      return await this.createNotification({ ...data, userId });
+    } catch (error) {
+      logger.warn({ error, userId, type: data?.type }, "Notification delivery failed");
+      return null;
+    }
   }
 
   async notifyAdmins(data) {
@@ -38,12 +44,7 @@ export class NotificationService {
       .lean();
 
     return Promise.all(
-      admins.map((admin) =>
-        this.createNotification(
-          { ...data, userId: String(admin._id) },
-          { emit: true }
-        )
-      )
+      admins.map((admin) => this.notifyUser(String(admin._id), data))
     );
   }
 
