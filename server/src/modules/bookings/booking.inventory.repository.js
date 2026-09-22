@@ -145,7 +145,9 @@ export class BookingInventoryRepository {
 
   async reconcileFromBookings(now = new Date()) {
     const bookings = await Booking.find({
-      status: { $in: ["pending", "confirmed", "active", "return_requested"] },
+      status: {
+        $in: ["pending", "confirmed", "active", "return_requested", "disputed"],
+      },
       $or: [
         { status: { $ne: "pending" } },
         { status: "pending", expiresAt: { $gt: now } },

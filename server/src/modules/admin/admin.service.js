@@ -1,5 +1,7 @@
 import { adminRepository } from "./admin.repository.js";
 import { productRepository } from "../products/product.repository.js";
+import { bookingRepository } from "../bookings/booking.repository.js";
+import { bookingInventoryRepository } from "../bookings/booking.inventory.repository.js";
 import { NotFoundError, ConflictError, ValidationError } from "../../middleware/errorHandler.js";
 import { getRedisClient, CacheKeys } from "../../config/redis.js";
 
@@ -166,8 +168,58 @@ export class AdminService {
     return adminRepository.getReports();
   }
 
+  async updateReportStatus(adminId, reportId, status, notes) {
+    const report = await adminRepository.updateReportStatus(
+      reportId,
+      adminId,
+      status,
+      notes
+    );
+    if (!report) throw new NotFoundError("Report");
+
+    await adminRepository.logAdminAction({
+      adminId,
+      actionType: `update_report_${status}`,
+      entityType: "report",
+      targetReportId: reportId,
+      notes,
+    });
+
+    return report;
+  }
+
   async getDisputes() {
     return adminRepository.getDisputes();
+  }
+
+  async resolveDispute(adminId, bookingId, action, notes) {
+    const booking = await bookingRepository.findById(bookingId);
+    if (!booking || booking.status !== "disputed") {
+      throw new NotFoundError("Dispute");
+    }
+
+    const updated = await bookingRepository.resolveDispute(
+      bookingId,
+      adminId,
+      action,
+      notes
+    );
+
+    if (!updated) throw new ConflictError("Dispute is no longer open");
+
+    if (action === "resolve") {
+      await bookingInventoryRepository.releaseBooking(bookingId);
+    }
+
+    await adminRepository.logAdminAction({
+      adminId,
+      actionType: `${action}_booking_dispute`,
+      entityType: "booking",
+      targetBookingId: bookingId,
+      notes,
+    });
+
+    return updated;
   }
 }
 

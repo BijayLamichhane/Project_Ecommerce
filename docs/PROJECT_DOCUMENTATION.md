@@ -54,6 +54,14 @@ Seller status controls are intentionally limited to active and inactive. Adminis
 
 The admin panel exposes a protected product management workflow. Administrators can search marketplace listings, filter by product status and featured state, activate or suspend listings, and feature or unfeature products. Only active products can be featured. Moving a product away from active status automatically removes it from featured placement, preventing inactive or suspended listings from appearing in homepage featured discovery.
 
+### Reports and dispute moderation workflow
+
+Authenticated customers can submit a report for a marketplace listing from the product detail page. The server validates that the target exists, blocks self-reporting, prevents duplicate open reports for the same target, and stores the reporter, reason, details, target type, and moderation status. The public endpoint is POST /api/v1/reports.
+
+Booking disputes are available to the customer or seller on active, return-requested, or returned bookings. A dispute requires a reason and stores the participant who raised it, the previous booking status, and the dispute timestamp. Disputed bookings remain reserved in availability calculations until an administrator makes a decision.
+
+The admin Reports & Disputes workspace contains two queues. Report actions are Reviewed, Resolved, and Dismissed and require an administrative note. Booking disputes can be resolved by completing the booking or dismissed by restoring the booking to the status that existed before the dispute. Every administrative moderation action is written to the audit log, and resolving a dispute releases its booking inventory reservation.
+
 Featured changes are recorded through the existing audit log. Public featured discovery continues to use the /api/v1/products/featured endpoint, while customer recommendations may use the featured flag as a small ranking signal.
 
 ### Wishlist

@@ -1,7 +1,13 @@
 import { Booking } from "../../models/Booking.js";
 import { bookingInventoryRepository } from "./booking.inventory.repository.js";
 
-const BLOCKING_STATUSES = ["pending", "confirmed", "active", "return_requested"];
+const BLOCKING_STATUSES = [
+  "pending",
+  "confirmed",
+  "active",
+  "return_requested",
+  "disputed",
+];
 
 function populateBooking(query) {
   return query
@@ -270,6 +276,60 @@ export class BookingRepository {
                 extra.note ||
                 `Status changed to ${status}`,
               actorId: extra.actorId,
+            },
+          },
+        },
+        { new: true }
+      )
+    );
+  }
+
+
+  async resolveDispute(id, adminId, action, notes) {
+    if (!["resolve", "dismiss"].includes(action)) return null;
+
+    const booking = await Booking.findOne({
+      _id: id,
+      status: "disputed",
+    }).lean();
+
+    if (!booking) return null;
+
+    const targetStatus =
+      action === "resolve" ? "completed" : booking.disputePreviousStatus;
+
+    if (!["active", "return_requested", "returned", "completed"].includes(targetStatus)) {
+      return null;
+    }
+
+    return populateBooking(
+      Booking.findOneAndUpdate(
+        {
+          _id: id,
+          status: "disputed",
+          ...(action === "dismiss"
+            ? { disputePreviousStatus: targetStatus }
+            : {}),
+        },
+        {
+          $set: {
+            status: targetStatus,
+            disputeResolutionNotes: notes,
+            disputeResolvedBy: adminId,
+            disputeResolvedAt: new Date(),
+            ...(targetStatus === "completed"
+              ? { completedAt: new Date() }
+              : {}),
+          },
+          $push: {
+            timeline: {
+              status: targetStatus,
+              timestamp: new Date(),
+              note:
+                action === "resolve"
+                  ? `Dispute resolved by admin: ${notes}`
+                  : `Dispute dismissed by admin: ${notes}`,
+              actorId: adminId,
             },
           },
         },

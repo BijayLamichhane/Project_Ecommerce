@@ -5,13 +5,20 @@ const authSession = vi.fn();
 const getAccountStatus = vi.fn();
 const bookingFindById = vi.fn();
 const bookingUpdateStatus = vi.fn();
+const bookingResolveDispute = vi.fn();
 const productFindById = vi.fn();
 const productUpdate = vi.fn();
 const productDelete = vi.fn();
 const inventoryReleaseBooking = vi.fn();
 const notificationCreate = vi.fn();
 const adminGetProducts = vi.fn();
+const adminGetReports = vi.fn();
+const adminUpdateReportStatus = vi.fn();
+const adminGetDisputes = vi.fn();
 const adminLogAdminAction = vi.fn();
+const reportGetTarget = vi.fn();
+const reportFindPendingDuplicate = vi.fn();
+const reportCreate = vi.fn();
 
 vi.mock("../src/config/auth.js", () => ({
   auth: {
@@ -35,6 +42,7 @@ vi.mock("../src/modules/bookings/booking.repository.js", () => ({
   bookingRepository: {
     findById: bookingFindById,
     updateStatus: bookingUpdateStatus,
+    resolveDispute: bookingResolveDispute,
     findByCustomer: vi.fn(),
     findBySeller: vi.fn(),
     findOverlappingBookings: vi.fn(),
@@ -45,7 +53,18 @@ vi.mock("../src/modules/bookings/booking.repository.js", () => ({
 vi.mock("../src/modules/admin/admin.repository.js", () => ({
   adminRepository: {
     getProducts: adminGetProducts,
+    getReports: adminGetReports,
+    updateReportStatus: adminUpdateReportStatus,
+    getDisputes: adminGetDisputes,
     logAdminAction: adminLogAdminAction,
+  },
+}));
+
+vi.mock("../src/modules/reports/report.repository.js", () => ({
+  reportRepository: {
+    getTarget: reportGetTarget,
+    findPendingDuplicate: reportFindPendingDuplicate,
+    create: reportCreate,
   },
 }));
 
@@ -134,6 +153,174 @@ async function request(path, { userId, role, method = "GET", body } = {}) {
 }
 
 describe("HTTP authorization boundaries", () => {
+  it("allows a booking participant to raise a dispute with a reason", async () => {
+    bookingFindById.mockResolvedValue({
+      id: "booking-1",
+      customerId: "customer-a",
+      sellerId: "seller-a",
+      status: "active",
+    });
+    bookingUpdateStatus.mockResolvedValue({
+      id: "booking-1",
+      status: "disputed",
+    });
+
+    const { response, json } = await request("/api/v1/bookings/booking-1/status", {
+      userId: "customer-a",
+      role: "customer",
+      method: "PATCH",
+      body: { status: "disputed", reason: "The equipment arrived damaged" },
+    });
+
+    expect(response.status).toBe(200);
+    expect(json?.data?.status).toBe("disputed");
+    expect(bookingUpdateStatus).toHaveBeenCalledWith(
+      "booking-1",
+      "disputed",
+      expect.objectContaining({
+        disputeReason: "The equipment arrived damaged",
+        disputeRaisedBy: "customer-a",
+        disputePreviousStatus: "active",
+        actorId: "customer-a",
+      })
+    );
+  });
+
+  it("requires a reason when raising a booking dispute", async () => {
+    bookingFindById.mockResolvedValue({
+      id: "booking-1",
+      customerId: "customer-a",
+      sellerId: "seller-a",
+      status: "active",
+    });
+
+    const { response, json } = await request("/api/v1/bookings/booking-1/status", {
+      userId: "customer-a",
+      role: "customer",
+      method: "PATCH",
+      body: { status: "disputed" },
+    });
+
+    expect(response.status).toBe(400);
+    expect(json?.error?.code).toBe("VALIDATION_ERROR");
+    expect(bookingUpdateStatus).not.toHaveBeenCalled();
+  });
+
+  it("blocks an unrelated user from raising a booking dispute", async () => {
+    bookingFindById.mockResolvedValue({
+      id: "booking-1",
+      customerId: "customer-a",
+      sellerId: "seller-a",
+      status: "active",
+    });
+
+    const { response, json } = await request("/api/v1/bookings/booking-1/status", {
+      userId: "customer-b",
+      role: "customer",
+      method: "PATCH",
+      body: { status: "disputed", reason: "Test dispute" },
+    });
+
+    expect(response.status).toBe(403);
+    expect(json?.error?.code).toBe("FORBIDDEN");
+    expect(bookingUpdateStatus).not.toHaveBeenCalled();
+  });
+
+  it("allows a customer to submit a product report", async () => {
+    reportGetTarget.mockResolvedValue({
+      id: "product-1",
+      sellerId: "seller-a",
+    });
+    reportFindPendingDuplicate.mockResolvedValue(null);
+    reportCreate.mockResolvedValue({
+      id: "report-1",
+      targetType: "product",
+      reason: "Inaccurate listing",
+      status: "pending",
+    });
+
+    const { response, json } = await request("/api/v1/reports", {
+      userId: "customer-a",
+      role: "customer",
+      method: "POST",
+      body: {
+        targetType: "product",
+        targetId: "product-1",
+        reason: "Inaccurate listing",
+      },
+    });
+
+    expect(response.status).toBe(201);
+    expect(json?.data?.status).toBe("pending");
+    expect(reportCreate).toHaveBeenCalledWith({
+      reporterId: "customer-a",
+      targetType: "product",
+      reportedProductId: "product-1",
+      reason: "Inaccurate listing",
+      details: undefined,
+    });
+  });
+
+  it("allows an admin to resolve a report", async () => {
+    adminUpdateReportStatus.mockResolvedValue({
+      id: "report-1",
+      status: "resolved",
+      resolutionNotes: "Listing reviewed and corrected",
+    });
+
+    const { response, json } = await request("/api/v1/admin/reports/report-1/status", {
+      userId: "admin-1",
+      role: "admin",
+      method: "PATCH",
+      body: {
+        status: "resolved",
+        notes: "Listing reviewed and corrected",
+      },
+    });
+
+    expect(response.status).toBe(200);
+    expect(json?.data?.status).toBe("resolved");
+    expect(adminUpdateReportStatus).toHaveBeenCalledWith(
+      "report-1",
+      "admin-1",
+      "resolved",
+      "Listing reviewed and corrected"
+    );
+  });
+
+  it("allows an admin to resolve a booking dispute", async () => {
+    bookingFindById.mockResolvedValue({
+      id: "booking-1",
+      customerId: "customer-a",
+      sellerId: "seller-a",
+      status: "disputed",
+    });
+    bookingResolveDispute.mockResolvedValue({
+      id: "booking-1",
+      status: "completed",
+    });
+
+    const { response, json } = await request("/api/v1/admin/disputes/booking-1", {
+      userId: "admin-1",
+      role: "admin",
+      method: "PATCH",
+      body: {
+        action: "resolve",
+        notes: "Return condition and timeline reviewed",
+      },
+    });
+
+    expect(response.status).toBe(200);
+    expect(json?.data?.status).toBe("completed");
+    expect(bookingResolveDispute).toHaveBeenCalledWith(
+      "booking-1",
+      "admin-1",
+      "resolve",
+      "Return condition and timeline reviewed"
+    );
+    expect(inventoryReleaseBooking).toHaveBeenCalledWith("booking-1");
+  });
+
   it("blocks customer A from reading customer B's booking", async () => {
     bookingFindById.mockResolvedValue({
       id: "booking-1",

@@ -281,18 +281,27 @@ export class AdminRepository {
   }
 
   async logAdminAction(data) {
+    const inferredEntityType = data.actionType.includes("user")
+      ? "user"
+      : data.actionType.includes("seller")
+      ? "user"
+      : data.actionType.includes("product")
+      ? "product"
+      : data.actionType.includes("report")
+      ? "report"
+      : "booking";
+
     const log = await AuditLog.create({
       userId: normalizeId(data.adminId),
       action: data.actionType,
-      entityType: data.actionType.includes("user")
-        ? "user"
-        : data.actionType.includes("seller")
-        ? "user"
-        : data.actionType.includes("product")
-        ? "product"
-        : "booking",
-      entityId: normalizeId(data.targetUserId || data.targetProductId || data.targetBookingId),
-      details: { reason: data.reason },
+      entityType: data.entityType || inferredEntityType,
+      entityId: normalizeId(
+        data.targetUserId ||
+          data.targetProductId ||
+          data.targetBookingId ||
+          data.targetReportId
+      ),
+      details: { reason: data.reason, notes: data.notes },
     });
     return log.toJSON();
   }
@@ -301,14 +310,55 @@ export class AdminRepository {
     return Report.find()
       .sort({ createdAt: -1 })
       .populate("reporterId", "id name email")
+      .populate("reportedUserId", "id name email")
+      .populate("reportedProductId", "id name slug status")
+      .populate("reportedReviewId", "id rating title comment productId reviewerId createdAt")
+      .populate("resolvedBy", "id name email")
+      .lean({ virtuals: true });
+  }
+
+  async updateReportStatus(reportId, adminId, status, notes) {
+    const update = {
+      $set: {
+        status,
+        resolutionNotes: notes,
+      },
+    };
+
+    if (status === "resolved" || status === "dismissed") {
+      update.$set.resolvedBy = adminId;
+      update.$set.resolvedAt = new Date();
+    } else {
+      update.$unset = {
+        resolvedBy: 1,
+        resolvedAt: 1,
+      };
+    }
+
+    return Report.findOneAndUpdate(
+      {
+        _id: reportId,
+        status: { $in: ["pending", "reviewed"] },
+      },
+      update,
+      { new: true, runValidators: true }
+    )
+      .populate("reporterId", "id name email")
+      .populate("reportedUserId", "id name email")
+      .populate("reportedProductId", "id name slug status")
+      .populate("reportedReviewId", "id rating title comment productId reviewerId createdAt")
+      .populate("resolvedBy", "id name email")
       .lean({ virtuals: true });
   }
 
   async getDisputes() {
     return Booking.find({ status: "disputed" })
-      .sort({ createdAt: -1 })
+      .sort({ disputedAt: -1, createdAt: -1 })
       .populate("customer", "id name email")
-      .populate("bookingItems.product")
+      .populate("seller", "id name email")
+      .populate("disputeRaisedBy", "id name email")
+      .populate("disputeResolvedBy", "id name email")
+      .populate("bookingItems.product", "id name slug images pricing")
       .lean({ virtuals: true });
   }
 }

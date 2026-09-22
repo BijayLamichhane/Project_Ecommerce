@@ -21,6 +21,7 @@ import path from "node:path";
 import userRoutes from "./modules/users/user.routes.js";
 import adminRoutes from "./modules/admin/admin.routes.js";
 import recommendationRoutes from "./modules/recommendations/recommendation.routes.js";
+import reportRoutes from "./modules/reports/report.routes.js";
 import { apiRateLimiter, authRateLimiter } from "./middleware/rateLimit.js";
 
 export function createApp() {
@@ -97,6 +98,7 @@ export function createApp() {
   apiRouter.use("/users", userRoutes);
   apiRouter.use("/admin", adminRoutes);
   apiRouter.use("/recommendations", recommendationRoutes);
+  apiRouter.use("/reports", reportRoutes);
 
   // Apply once before the compatibility mounts so a request is counted only once.
   app.use(apiRateLimiter);

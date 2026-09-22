@@ -33,6 +33,8 @@ export function BookingDetailPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [remainingHoldMs, setRemainingHoldMs] = useState<number | null>(null);
   const [isCancelPaymentOpen, setIsCancelPaymentOpen] = useState(false);
+  const [isDisputeOpen, setIsDisputeOpen] = useState(false);
+  const [disputeReason, setDisputeReason] = useState("");
 
   const { data: booking, isLoading } = useQuery({ queryKey: ["booking", id], queryFn: async () => { const { data } = await api.get(`/bookings/${id}`); return data.data as Booking; }, enabled: !!id });
   const reviewProductId = booking?.bookingItems?.[0]?.productId || getEntityId(booking?.bookingItems?.[0]?.product);
@@ -97,6 +99,27 @@ export function BookingDetailPage() {
           : message
       );
     },
+  });
+
+  const disputeMutation = useMutation({
+    mutationFn: async () => {
+      if (!id) throw new Error("Booking could not be found.");
+      const reason = disputeReason.trim();
+      if (reason.length < 3) throw new Error("Please explain the issue before raising a dispute.");
+      await api.patch(`/bookings/${id}/status`, {
+        status: "disputed",
+        reason,
+      });
+    },
+    onSuccess: () => {
+      setIsDisputeOpen(false);
+      setDisputeReason("");
+      setErrorMsg(null);
+      queryClient.invalidateQueries({ queryKey: ["booking", id] });
+      queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["customer-stats"] });
+    },
+    onError: (err: unknown) => setErrorMsg(getErrorMessage(err, "Failed to raise the dispute.")),
   });
 
   const cancelPaymentMutation = useMutation({
@@ -179,10 +202,18 @@ export function BookingDetailPage() {
 
   const userId = getEntityId(user);
   const isCustomer = String(userId) === String(booking.customerId);
+  const isSeller = String(userId) === String(booking.sellerId);
+  const canRaiseDispute =
+    (isCustomer || isSeller) &&
+    ["active", "return_requested", "returned"].includes(booking.status);
   const firstItem = booking.bookingItems?.[0];
   const product = firstItem?.product;
   const bookingId = getEntityId(booking);
-  const currentIndex = lifecycleStatuses.indexOf(booking.status);
+  const lifecycleStatus =
+    booking.status === "disputed"
+      ? booking.disputePreviousStatus || booking.status
+      : booking.status;
+  const currentIndex = lifecycleStatuses.indexOf(lifecycleStatus);
   const holdExpired = booking.status === "expired" || (booking.status === "pending" && remainingHoldMs === 0);
   const canReview = isCustomer && ["returned", "completed"].includes(booking.status);
   const existingReview = productReviews?.find((review: { reviewerId?: string }) => String(review.reviewerId) === String(userId));
@@ -195,7 +226,21 @@ export function BookingDetailPage() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-5 border-b border-[#DDD5C7]">
           <div><span className="text-[11px] font-bold text-[#C17817] font-mono">Booking ID: {bookingId.substring(0, 13)}</span><h1 className="text-3xl font-extrabold text-[#211E1B] mt-1">Rental Details</h1><p className="text-xs text-[#8B8377] mt-1">Created {formatDate(booking.createdAt, "MMM d, yyyy h:mm a")}</p></div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="px-3 py-2 rounded-md bg-[#F1E0C8] border border-[#C17817]/30 text-[#A66314] text-xs font-bold">{statusLabel[booking.status] || booking.status}</span>
+            <span className="px-3 py-2 rounded-md bg-[#F1E0C8] border border-[#C17817]/30 text-[#A66314] text-xs font-bold">{booking.status === "disputed" ? "Under Dispute Review" : statusLabel[booking.status] || booking.status}</span>
+            {canRaiseDispute && (
+              <button
+                type="button"
+                onClick={() => {
+                  setErrorMsg(null);
+                  setDisputeReason("");
+                  setIsDisputeOpen(true);
+                }}
+                className="px-4 py-2.5 rounded-md border border-[#A23B2E]/40 bg-white hover:bg-[#FBE9E5] text-[#A23B2E] text-xs font-extrabold transition flex items-center gap-2"
+              >
+                <AlertTriangle className="w-4 h-4" />
+                Raise Dispute
+              </button>
+            )}
             {booking.status === "pending" && isCustomer && !holdExpired && <div className="flex flex-wrap gap-2"><button onClick={() => payMutation.mutate("esewa")} disabled={payMutation.isPending || cancelPaymentMutation.isPending} className="px-4 py-2.5 rounded-md bg-[#C17817] hover:bg-[#A66314] disabled:opacity-50 text-[#211E1B] text-xs font-extrabold transition flex items-center gap-2"><CreditCard className="w-4 h-4" />{payMutation.isPending ? "Opening payment..." : "Pay with eSewa"}</button><button onClick={() => payMutation.mutate("card")} disabled={payMutation.isPending || cancelPaymentMutation.isPending} className="px-4 py-2.5 rounded-md bg-[#C17817] hover:bg-[#A66314] disabled:opacity-50 text-[#211E1B] text-xs font-extrabold transition flex items-center gap-2"><CreditCard className="w-4 h-4" />{payMutation.isPending ? "Opening payment..." : "Debit / Credit Card"}</button><button onClick={() => setIsCancelPaymentOpen(true)} disabled={payMutation.isPending || cancelPaymentMutation.isPending} className="px-4 py-2.5 rounded-md border border-[#A23B2E]/40 bg-white hover:bg-[#FBE9E5] disabled:opacity-50 text-[#A23B2E] text-xs font-extrabold transition flex items-center gap-2"><X className="w-4 h-4" />{cancelPaymentMutation.isPending ? "Cancelling..." : "Cancel Payment"}</button></div>}
             {booking.status === "active" && isCustomer && <button onClick={() => returnMutation.mutate()} disabled={returnMutation.isPending} className="px-4 py-2.5 rounded-md bg-[#C17817] hover:bg-[#A66314] disabled:opacity-50 text-[#211E1B] text-xs font-extrabold transition flex items-center gap-2"><RotateCcw className="w-4 h-4" />{returnMutation.isPending ? "Requesting..." : "Request Return"}</button>}
             {canReview && (
@@ -229,6 +274,38 @@ export function BookingDetailPage() {
           <div className="lg:col-span-5 bg-white rounded-md border border-[#DDD5C7] p-6  space-y-5"><h3 className="text-base font-bold text-[#211E1B]">Charges & Security Deposit</h3><div className="space-y-3 text-xs text-[#8B8377]"><div className="flex justify-between"><span>Rental Charges</span><span className="font-bold text-[#211E1B]">{formatCurrency(booking.totalRentalPrice)}</span></div><div className="flex justify-between"><span>Service Fee</span><span className="font-bold text-[#211E1B]">{formatCurrency(booking.serviceFee)}</span></div>{Number(booking.deliveryFee) > 0 && <div className="flex justify-between"><span>Delivery</span><span className="font-bold text-[#211E1B]">{formatCurrency(booking.deliveryFee)}</span></div>}<div className="pt-3 border-t border-[#DDD5C7] flex justify-between text-sm font-extrabold"><span className="text-[#211E1B]">Rental Total</span><span className="text-[#A66314]">{formatCurrency(booking.totalAmount)}</span></div></div><div className="p-4 rounded-md bg-[#E7EFE2] border border-[#4B5D3A]/30"><div className="flex justify-between font-bold text-[#4B5D3A]"><span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4" />Security Deposit</span><span>{formatCurrency(booking.totalDeposit)}</span></div><p className="text-[11px] text-[#4B5D3A] mt-2">Status: <span className="font-bold capitalize">{paymentInfo?.deposit?.status || "Held"}</span></p></div></div>
         </div>
         {booking.status === "active" && isCustomer && <div className="bg-white rounded-md border border-[#DDD5C7] p-6"><h3 className="text-sm font-bold text-[#211E1B]">Return Handover Details</h3><div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4"><select value={returnCondition} onChange={(e) => setReturnCondition(e.target.value)} className="px-4 py-3 rounded-md bg-[#F7F3EA] border border-[#B8B0A3] text-sm text-[#211E1B] outline-none focus:border-[#C17817]"><option value="like_new">Like New</option><option value="good">Good</option><option value="fair">Fair</option><option value="damaged">Damaged</option></select><input value={returnNotes} onChange={(e) => setReturnNotes(e.target.value)} placeholder="Optional return notes" className="px-4 py-3 rounded-md bg-[#F7F3EA] border border-[#B8B0A3] text-sm text-[#211E1B] placeholder:text-[#8B8377] outline-none focus:border-[#C17817]" /></div><p className="text-[11px] text-[#8B8377] mt-3">Your return request will be reviewed by the seller before the booking is marked returned.</p></div>}
+        {isDisputeOpen && <div className="fixed inset-0 z-50 bg-[#211E1B]/75 flex items-center justify-center p-4">
+          <div className="bg-white border border-[#DDD5C7] rounded-md p-6 max-w-lg w-full shadow-sm space-y-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-bold text-[#211E1B]">Raise a Rental Dispute</h3>
+                <p className="text-xs text-[#8B8377] mt-1">Explain what happened so an administrator can review both sides.</p>
+              </div>
+              <button type="button" onClick={() => setIsDisputeOpen(false)} disabled={disputeMutation.isPending} className="p-2 rounded-lg hover:bg-[#E8E1D5] text-[#8B8377]">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <textarea
+              autoFocus
+              rows={6}
+              maxLength={2000}
+              value={disputeReason}
+              onChange={(e) => setDisputeReason(e.target.value)}
+              disabled={disputeMutation.isPending}
+              placeholder="Describe the damage, return issue, missing item, payment concern, or other problem..."
+              className="w-full px-4 py-3 text-sm bg-[#F7F3EA] border border-[#B8B0A3] rounded-md text-[#211E1B] placeholder:text-[#8B8377] outline-none focus:border-[#C17817] resize-none"
+            />
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-[#8B8377]">{disputeReason.length}/2000</span>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setIsDisputeOpen(false)} disabled={disputeMutation.isPending} className="px-4 py-2.5 rounded-md text-xs font-bold text-[#8B8377] hover:bg-[#E8E1D5]">Cancel</button>
+                <button type="button" onClick={() => disputeMutation.mutate()} disabled={disputeMutation.isPending || disputeReason.trim().length < 3} className="px-4 py-2.5 rounded-md bg-[#A23B2E] hover:bg-[#8F3328] disabled:opacity-50 text-white text-xs font-extrabold">
+                  {disputeMutation.isPending ? "Submitting..." : "Submit Dispute"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>}
         {isCancelPaymentOpen && <div className="fixed inset-0 z-50 bg-[#211E1B]/75 flex items-center justify-center p-4">
           <div className="bg-white border border-[#DDD5C7] rounded-md p-6 max-w-md w-full shadow-sm space-y-5">
             <div className="flex items-center justify-between gap-4">

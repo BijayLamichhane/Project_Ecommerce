@@ -9,6 +9,8 @@ const router = Router();
 const userIdSchema = z.object({ userId: z.string().min(1) });
 const sellerIdSchema = z.object({ sellerId: z.string().min(1) });
 const productIdSchema = z.object({ productId: z.string().min(1) });
+const reportIdSchema = z.object({ reportId: z.string().min(1) });
+const bookingIdSchema = z.object({ bookingId: z.string().min(1) });
 const adminProductsQuerySchema = z.object({
   q: z.string().trim().max(255).optional(),
   status: z.enum(["all", "active", "inactive", "suspended", "draft", "deleted"]).default("all"),
@@ -25,6 +27,14 @@ const toggleProductBodySchema = z.object({
 });
 const featureProductBodySchema = z.object({
   isFeatured: z.boolean(),
+});
+const updateReportStatusSchema = z.object({
+  status: z.enum(["reviewed", "resolved", "dismissed"]),
+  notes: z.string().trim().min(3).max(2000),
+});
+const resolveDisputeSchema = z.object({
+  action: z.enum(["resolve", "dismiss"]),
+  notes: z.string().trim().min(3).max(2000),
 });
 
 router.use(authenticate, requireAdmin);
@@ -84,8 +94,22 @@ router.get("/reports", (req, res, next) =>
   adminController.getReports(req, res, next)
 );
 
+router.patch(
+  "/reports/:reportId/status",
+  validateParams(reportIdSchema),
+  validateBody(updateReportStatusSchema),
+  (req, res, next) => adminController.updateReportStatus(req, res, next)
+);
+
 router.get("/disputes", (req, res, next) =>
   adminController.getDisputes(req, res, next)
+);
+
+router.patch(
+  "/disputes/:bookingId",
+  validateParams(bookingIdSchema),
+  validateBody(resolveDisputeSchema),
+  (req, res, next) => adminController.resolveDispute(req, res, next)
 );
 
 export default router;

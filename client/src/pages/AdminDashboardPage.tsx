@@ -2,13 +2,18 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/axios";
 import { formatCurrency, formatDate, getEntityId, getErrorMessage } from "../lib/utils";
-import type { Booking, Category, User } from "../types";
+import type { Booking, Category, Report, User } from "../types";
 import { AdminProductManagement } from "../components/admin/AdminProductManagement";
 import {
   ShieldAlert,
   AlertTriangle,
   Plus,
   Trash2,
+  Flag,
+  CheckCircle2,
+  Search,
+  Gavel,
+  XCircle,
 } from "lucide-react";
 import { ConfirmModal } from "../components/shared/ConfirmModal";
 import { CATEGORY_ICON_NAMES, getCategoryIcon } from "../lib/categoryIcons";
@@ -32,9 +37,23 @@ type AdminDashboardData = {
     totalProducts: number;
     featuredProducts: number;
     activeRentals: number;
+    pendingDisputes?: number;
   };
   recentActivity: AdminActivity[];
 };
+
+type ModerationModal =
+  | {
+      kind: "report";
+      item: Report;
+      status: "reviewed" | "resolved" | "dismissed";
+    }
+  | {
+      kind: "dispute";
+      item: Booking;
+      action: "resolve" | "dismiss";
+    }
+  | null;
 
 const adminTabs: { id: ActiveTab; label: string }[] = [
   { id: "overview", label: "Overview & Analytics" },
@@ -59,6 +78,12 @@ export function AdminDashboardPage() {
   const [newCategoryIcon, setNewCategoryIcon] = useState("Package");
   const [sellerRejectionModal, setSellerRejectionModal] = useState<{ seller: User } | null>(null);
   const [sellerRejectionReason, setSellerRejectionReason] = useState("");
+  const [moderationMode, setModerationMode] = useState<"reports" | "disputes">("reports");
+  const [reportStatusFilter, setReportStatusFilter] = useState<"all" | Report["status"]>("all");
+  const [reportSearch, setReportSearch] = useState("");
+  const [disputeSearch, setDisputeSearch] = useState("");
+  const [moderationModal, setModerationModal] = useState<ModerationModal>(null);
+  const [moderationNotes, setModerationNotes] = useState("");
 
   const { data: dashboardData } = useQuery<AdminDashboardData>({
     queryKey: ["admin-dashboard"],
@@ -84,6 +109,15 @@ export function AdminDashboardPage() {
       return (data.data as User[] || []).map((seller: User) => ({ ...seller, id: getEntityId(seller) }));
     },
     enabled: activeTab === "sellers",
+  });
+
+  const { data: reportsList } = useQuery<Report[]>({
+    queryKey: ["admin-reports"],
+    queryFn: async () => {
+      const { data } = await api.get("/admin/reports");
+      return data.data || [];
+    },
+    enabled: activeTab === "disputes",
   });
 
   const { data: disputesList } = useQuery<Booking[]>({
@@ -170,6 +204,58 @@ export function AdminDashboardPage() {
     moderateSellerMutation.mutate({ sellerId, status: "rejected", reason });
   };
 
+  const updateReportStatusMutation = useMutation({
+    mutationFn: async ({
+      reportId,
+      status,
+      notes,
+    }: {
+      reportId: string;
+      status: "reviewed" | "resolved" | "dismissed";
+      notes: string;
+    }) => {
+      setErrorMsg(null);
+      await api.patch(`/admin/reports/${encodeURIComponent(reportId)}/status`, {
+        status,
+        notes,
+      });
+    },
+    onSuccess: () => {
+      setModerationModal(null);
+      setModerationNotes("");
+      queryClient.invalidateQueries({ queryKey: ["admin-reports"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
+    },
+    onError: (err: unknown) =>
+      setErrorMsg(getErrorMessage(err, "Failed to update the report.")),
+  });
+
+  const resolveDisputeMutation = useMutation({
+    mutationFn: async ({
+      bookingId,
+      action,
+      notes,
+    }: {
+      bookingId: string;
+      action: "resolve" | "dismiss";
+      notes: string;
+    }) => {
+      setErrorMsg(null);
+      await api.patch(`/admin/disputes/${encodeURIComponent(bookingId)}`, {
+        action,
+        notes,
+      });
+    },
+    onSuccess: () => {
+      setModerationModal(null);
+      setModerationNotes("");
+      queryClient.invalidateQueries({ queryKey: ["admin-disputes"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
+    },
+    onError: (err: unknown) =>
+      setErrorMsg(getErrorMessage(err, "Failed to resolve the dispute.")),
+  });
+
   const createCategoryMutation = useMutation({
     mutationFn: async () => {
       setErrorMsg(null);
@@ -209,6 +295,32 @@ export function AdminDashboardPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["categories"] }),
     onError: (err: unknown) => setErrorMsg(getErrorMessage(err, "Failed to update category icon")),
   });
+
+  const filteredReports = (reportsList || []).filter((report) => {
+    const reporter = typeof report.reporterId === "object" ? report.reporterId?.name || report.reporterId?.email : "";
+    const product = report.reportedProductId?.name || "";
+    const user = report.reportedUserId?.name || report.reportedUserId?.email || "";
+    const review = report.reportedReviewId?.comment || report.reportedReviewId?.title || "";
+    const haystack = `${report.reason} ${report.details || ""} ${reporter} ${product} ${user} ${review}`.toLowerCase();
+
+    return (
+      (reportStatusFilter === "all" || report.status === reportStatusFilter) &&
+      haystack.includes(reportSearch.trim().toLowerCase())
+    );
+  });
+
+  const filteredDisputes = (disputesList || []).filter((dispute) => {
+    const productName = dispute.bookingItems?.[0]?.product?.name || "";
+    const customer = dispute.customer?.name || dispute.customer?.email || "";
+    const seller = dispute.seller?.name || dispute.seller?.email || "";
+    const haystack = `${getEntityId(dispute)} ${productName} ${customer} ${seller} ${dispute.disputeReason || ""}`.toLowerCase();
+    return haystack.includes(disputeSearch.trim().toLowerCase());
+  });
+
+  const openReportsCount = (reportsList || []).filter((report) =>
+    ["pending", "reviewed"].includes(report.status)
+  ).length;
+  const openDisputesCount = disputesList?.length || 0;
 
   const metrics = dashboardData?.metrics;
 
@@ -374,12 +486,400 @@ export function AdminDashboardPage() {
 
       {activeTab === "products" && <AdminProductManagement />}
       {activeTab === "disputes" && (
-        <div className="bg-white rounded-md border border-[#C8C0B3] p-6 shadow-sm space-y-4">
-          <h3 className="text-base font-bold text-[#211E1B]">Reports & Disputes</h3>
-          {(disputesList || []).length === 0 ? <p className="text-sm text-[#8B8377]">No disputes found.</p> : <div className="space-y-3">{(disputesList || []).map((dispute, index) => <div key={getEntityId(dispute) || `dispute-${index}`} className="rounded-md border border-[#E6DED1] p-4"><p className="text-sm font-bold text-[#211E1B]">Booking {getEntityId(dispute)}</p><p className="text-xs text-[#8B8377] mt-1">{dispute.customer?.name || "Customer"} · {dispute.status}</p></div>)}</div>}
+        <div className="space-y-6">
+          <div className="bg-white rounded-md border border-[#C8C0B3] p-6 shadow-sm">
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Gavel className="w-5 h-5 text-[#C17817]" />
+                  <h3 className="text-base font-bold text-[#211E1B]">Reports & Disputes</h3>
+                </div>
+                <p className="text-[11px] text-[#8B8377] mt-1">
+                  Review marketplace reports and rental disputes, record the decision, and keep the booking lifecycle consistent.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider">
+                <span className="px-2.5 py-1 rounded-md bg-[#F1ECE1] text-[#C17817]">Open Reports {openReportsCount}</span>
+                <span className="px-2.5 py-1 rounded-md bg-[#FBE9E5] text-[#A23B2E]">Open Disputes {openDisputesCount}</span>
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-5">
+              {([
+                { id: "reports", label: "Reports", count: reportsList?.length || 0 },
+                { id: "disputes", label: "Booking Disputes", count: disputesList?.length || 0 },
+              ] as const).map((mode) => (
+                <button
+                  key={mode.id}
+                  type="button"
+                  onClick={() => setModerationMode(mode.id)}
+                  className={`px-4 py-2 rounded-md text-xs font-bold transition ${
+                    moderationMode === mode.id
+                      ? "bg-[#211E1B] text-white"
+                      : "bg-[#F1ECE1] text-[#6F685F] hover:bg-[#E8E1D5]"
+                  }`}
+                >
+                  {mode.label} ({mode.count})
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {moderationMode === "reports" ? (
+            <div className="bg-white rounded-md border border-[#C8C0B3] p-6 shadow-sm space-y-5">
+              <div className="flex flex-col md:flex-row gap-3">
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#A39A8D]" />
+                  <input
+                    value={reportSearch}
+                    onChange={(e) => setReportSearch(e.target.value)}
+                    placeholder="Search reason, reporter, listing, or report details"
+                    className="w-full pl-9 pr-3 py-2.5 rounded-md border border-[#C8C0B3] bg-white text-sm outline-none focus:border-[#C17817]"
+                  />
+                </div>
+                <select
+                  value={reportStatusFilter}
+                  onChange={(e) => setReportStatusFilter(e.target.value as "all" | Report["status"])}
+                  className="md:w-44 px-3 py-2.5 rounded-md border border-[#C8C0B3] bg-white text-xs font-semibold text-[#514B44]"
+                >
+                  <option value="all">All statuses</option>
+                  <option value="pending">Pending</option>
+                  <option value="reviewed">Reviewed</option>
+                  <option value="resolved">Resolved</option>
+                  <option value="dismissed">Dismissed</option>
+                </select>
+              </div>
+
+              <div className="text-[11px] text-[#8B8377]">
+                Showing {filteredReports.length} of {reportsList?.length || 0} reports
+              </div>
+
+              {filteredReports.length ? (
+                <div className="space-y-3">
+                  {filteredReports.map((report, index) => {
+                    const reportId = getEntityId(report);
+                    const reporter =
+                      typeof report.reporterId === "object"
+                        ? report.reporterId?.name || report.reporterId?.email
+                        : "Reporter";
+                    const target =
+                      report.targetType === "product"
+                        ? report.reportedProductId?.name || "Product"
+                        : report.targetType === "user"
+                          ? report.reportedUserId?.name || "User"
+                          : report.reportedReviewId?.title || "Review";
+                    const rowKey = reportId || `report-${index}`;
+
+                    return (
+                      <div key={rowKey} className="rounded-md border border-[#E6DED1] p-4 space-y-3">
+                        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-bold text-[#211E1B]">{target}</span>
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#F1ECE1] text-[#C17817]">
+                                {report.targetType}
+                              </span>
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                report.status === "pending"
+                                  ? "bg-[#F1ECE1] text-[#C17817]"
+                                  : report.status === "reviewed"
+                                    ? "bg-[#E8E1D5] text-[#514B44]"
+                                    : report.status === "resolved"
+                                      ? "bg-[#E7EFE2] text-[#4B5D3A]"
+                                      : "bg-[#FBE9E5] text-[#A23B2E]"
+                              }`}>
+                                {report.status}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-[#8B8377] mt-1">
+                              Reported by {reporter || "Reporter"} · {formatDate(report.createdAt, "MMM d, yyyy h:mm a")}
+                            </p>
+                          </div>
+
+                          {["pending", "reviewed"].includes(report.status) && reportId && (
+                            <div className="flex gap-2 shrink-0">
+                              {report.status === "pending" && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setModerationNotes("");
+                                    setModerationModal({ kind: "report", item: report, status: "reviewed" });
+                                  }}
+                                  className="px-3 py-1.5 rounded-md bg-[#F1ECE1] text-[#C17817] hover:bg-[#E8E1D5] text-[11px] font-bold"
+                                >
+                                  Mark Reviewed
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setModerationNotes("");
+                                  setModerationModal({ kind: "report", item: report, status: "resolved" });
+                                }}
+                                className="px-3 py-1.5 rounded-md bg-[#E7EFE2] text-[#4B5D3A] hover:bg-[#DCE7D4] text-[11px] font-bold"
+                              >
+                                Resolve
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setModerationNotes("");
+                                  setModerationModal({ kind: "report", item: report, status: "dismissed" });
+                                }}
+                                className="px-3 py-1.5 rounded-md bg-[#FBE9E5] text-[#A23B2E] hover:bg-[#F3D8D2] text-[11px] font-bold"
+                              >
+                                Dismiss
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                          <div className="rounded-md bg-[#F7F3EA] border border-[#E6DED1] p-3">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A39A8D]">Reason</p>
+                            <p className="text-xs text-[#514B44] mt-1">{report.reason}</p>
+                          </div>
+                          <div className="rounded-md bg-[#F7F3EA] border border-[#E6DED1] p-3">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A39A8D]">Details</p>
+                            <p className="text-xs text-[#514B44] mt-1">{report.details || "No additional details provided."}</p>
+                          </div>
+                        </div>
+
+                        {report.resolutionNotes && (
+                          <div className="rounded-md border border-[#C8C0B3] p-3">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A39A8D]">Resolution</p>
+                            <p className="text-xs text-[#514B44] mt-1">{report.resolutionNotes}</p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="py-10 text-center text-xs text-[#A39A8D]">No reports match the current filters.</div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-white rounded-md border border-[#C8C0B3] p-6 shadow-sm space-y-5">
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#A39A8D]" />
+                <input
+                  value={disputeSearch}
+                  onChange={(e) => setDisputeSearch(e.target.value)}
+                  placeholder="Search booking, customer, seller, product, or dispute reason"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-md border border-[#C8C0B3] bg-white text-sm outline-none focus:border-[#C17817]"
+                />
+              </div>
+
+              <div className="text-[11px] text-[#8B8377]">
+                Showing {filteredDisputes.length} of {disputesList?.length || 0} open disputes
+              </div>
+
+              {filteredDisputes.length ? (
+                <div className="space-y-3">
+                  {filteredDisputes.map((dispute, index) => {
+                    const bookingId = getEntityId(dispute);
+                    const productName = dispute.bookingItems?.[0]?.product?.name || "Product unavailable";
+                    const rowKey = bookingId || `dispute-${index}`;
+
+                    return (
+                      <div key={rowKey} className="rounded-md border border-[#E6DED1] p-4 space-y-4">
+                        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-bold text-[#211E1B]">Booking {bookingId}</span>
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#FBE9E5] text-[#A23B2E]">Disputed</span>
+                              {dispute.disputePreviousStatus && (
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#E8E1D5] text-[#514B44]">
+                                  Previous: {dispute.disputePreviousStatus.replace("_", " ")}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-[#8B8377] mt-1">
+                              Raised {formatDate(dispute.disputedAt || dispute.createdAt, "MMM d, yyyy h:mm a")}
+                            </p>
+                          </div>
+                          {bookingId && (
+                            <div className="flex gap-2 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setModerationNotes("");
+                                  setModerationModal({ kind: "dispute", item: dispute, action: "resolve" });
+                                }}
+                                className="px-3 py-1.5 rounded-md bg-[#E7EFE2] text-[#4B5D3A] hover:bg-[#DCE7D4] text-[11px] font-bold"
+                              >
+                                Resolve & Complete
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setModerationNotes("");
+                                  setModerationModal({ kind: "dispute", item: dispute, action: "dismiss" });
+                                }}
+                                className="px-3 py-1.5 rounded-md bg-[#FBE9E5] text-[#A23B2E] hover:bg-[#F3D8D2] text-[11px] font-bold"
+                              >
+                                Dismiss & Restore
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div className="rounded-md bg-[#F7F3EA] border border-[#E6DED1] p-3">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A39A8D]">Customer</p>
+                            <p className="text-xs font-semibold text-[#211E1B] mt-1">{dispute.customer?.name || "Customer"}</p>
+                            <p className="text-[11px] text-[#8B8377]">{dispute.customer?.email || "—"}</p>
+                          </div>
+                          <div className="rounded-md bg-[#F7F3EA] border border-[#E6DED1] p-3">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A39A8D]">Seller</p>
+                            <p className="text-xs font-semibold text-[#211E1B] mt-1">{dispute.seller?.name || "Seller"}</p>
+                            <p className="text-[11px] text-[#8B8377]">{dispute.seller?.email || "—"}</p>
+                          </div>
+                          <div className="rounded-md bg-[#F7F3EA] border border-[#E6DED1] p-3">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A39A8D]">Rental</p>
+                            <p className="text-xs font-semibold text-[#211E1B] mt-1">{productName}</p>
+                            <p className="text-[11px] text-[#8B8377]">{dispute.totalAmount ? formatCurrency(dispute.totalAmount) : "—"} total</p>
+                          </div>
+                        </div>
+
+                        <div className="rounded-md border border-[#C8C0B3] p-3">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-[#A39A8D]">Dispute Reason</p>
+                          <p className="text-xs text-[#514B44] mt-1">{dispute.disputeReason || "No reason recorded."}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="py-10 text-center text-xs text-[#A39A8D]">No open disputes match the current search.</div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
+      {moderationModal && (
+        <div className="fixed inset-0 z-50 bg-[#211E1B]/75 flex items-center justify-center p-4">
+          <div className="bg-white border border-[#DDD5C7] rounded-md p-6 max-w-lg w-full shadow-sm space-y-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  {moderationModal.kind === "report" ? (
+                    <Flag className="w-5 h-5 text-[#C17817]" />
+                  ) : (
+                    <Gavel className="w-5 h-5 text-[#A23B2E]" />
+                  )}
+                  <h3 className="text-lg font-bold text-[#211E1B]">
+                    {moderationModal.kind === "report"
+                      ? `${moderationModal.status === "reviewed" ? "Review" : moderationModal.status === "resolved" ? "Resolve" : "Dismiss"} Report`
+                      : moderationModal.action === "resolve"
+                        ? "Resolve Dispute"
+                        : "Dismiss Dispute"}
+                  </h3>
+                </div>
+                <p className="text-xs text-[#8B8377] mt-1">
+                  {moderationModal.kind === "report"
+                    ? "Record the moderation decision and leave an internal note."
+                    : moderationModal.action === "resolve"
+                      ? "This closes the dispute and completes the booking."
+                      : "This closes the dispute and restores the booking to its previous state."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModerationModal(null)}
+                disabled={updateReportStatusMutation.isPending || resolveDisputeMutation.isPending}
+                className="p-2 rounded-lg hover:bg-[#E8E1D5] text-[#8B8377]"
+              >
+                <XCircle className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="rounded-md bg-[#F7F3EA] border border-[#E6DED1] p-3">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#A39A8D]">
+                {moderationModal.kind === "report" ? "Report" : "Dispute"}
+              </p>
+              <p className="text-xs font-semibold text-[#211E1B] mt-1">
+                {moderationModal.kind === "report"
+                  ? moderationModal.item.reason
+                  : `Booking ${getEntityId(moderationModal.item)}`}
+              </p>
+              {moderationModal.kind === "report" && moderationModal.item.details && (
+                <p className="text-[11px] text-[#6F685F] mt-1">{moderationModal.item.details}</p>
+              )}
+              {moderationModal.kind === "dispute" && moderationModal.item.disputeReason && (
+                <p className="text-[11px] text-[#6F685F] mt-1">{moderationModal.item.disputeReason}</p>
+              )}
+            </div>
+
+            <textarea
+              autoFocus
+              rows={5}
+              maxLength={2000}
+              value={moderationNotes}
+              onChange={(e) => setModerationNotes(e.target.value)}
+              disabled={updateReportStatusMutation.isPending || resolveDisputeMutation.isPending}
+              placeholder="Add the decision or evidence note..."
+              className="w-full px-4 py-3 text-sm bg-[#F7F3EA] border border-[#B8B0A3] rounded-md text-[#211E1B] placeholder:text-[#8B8377] outline-none focus:border-[#C17817] resize-none"
+            />
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-[#8B8377]">{moderationNotes.length}/2000</span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setModerationModal(null)}
+                  disabled={updateReportStatusMutation.isPending || resolveDisputeMutation.isPending}
+                  className="px-4 py-2.5 rounded-md text-xs font-bold text-[#8B8377] hover:bg-[#E8E1D5]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={
+                    moderationNotes.trim().length < 3 ||
+                    updateReportStatusMutation.isPending ||
+                    resolveDisputeMutation.isPending
+                  }
+                  onClick={() => {
+                    const itemId = getEntityId(moderationModal.item);
+                    if (!itemId) {
+                      setErrorMsg("The selected moderation item has no valid ID.");
+                      return;
+                    }
+
+                    if (moderationModal.kind === "report") {
+                      updateReportStatusMutation.mutate({
+                        reportId: itemId,
+                        status: moderationModal.status,
+                        notes: moderationNotes.trim(),
+                      });
+                      return;
+                    }
+
+                    resolveDisputeMutation.mutate({
+                      bookingId: itemId,
+                      action: moderationModal.action,
+                      notes: moderationNotes.trim(),
+                    });
+                  }}
+                  className="px-4 py-2.5 rounded-md bg-[#211E1B] hover:bg-[#C17817] disabled:opacity-50 text-white text-xs font-extrabold inline-flex items-center gap-1.5"
+                >
+                  {moderationModal.kind === "report"
+                    ? moderationModal.status === "dismissed"
+                      ? "Dismiss Report"
+                      : moderationModal.status === "resolved"
+                        ? "Resolve Report"
+                        : "Mark Reviewed"
+                    : moderationModal.action === "resolve"
+                      ? "Resolve & Complete"
+                      : "Dismiss & Restore"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <ConfirmModal
         open={Boolean(sellerRejectionModal)}
         title="Reject Seller Application"
