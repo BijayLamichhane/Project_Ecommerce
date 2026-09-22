@@ -42,6 +42,7 @@ vi.mock("../src/modules/bookings/booking.repository.js", () => ({
   bookingRepository: {
     findById: bookingFindById,
     updateStatus: bookingUpdateStatus,
+    resolveDispute: bookingResolveDispute,
     findByCustomer: vi.fn(),
     findBySeller: vi.fn(),
     findOverlappingBookings: vi.fn(),
