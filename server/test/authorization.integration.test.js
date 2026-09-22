@@ -12,7 +12,13 @@ const productDelete = vi.fn();
 const inventoryReleaseBooking = vi.fn();
 const notificationCreate = vi.fn();
 const adminGetProducts = vi.fn();
+const adminGetReports = vi.fn();
+const adminUpdateReportStatus = vi.fn();
+const adminGetDisputes = vi.fn();
 const adminLogAdminAction = vi.fn();
+const reportGetTarget = vi.fn();
+const reportFindPendingDuplicate = vi.fn();
+const reportCreate = vi.fn();
 
 vi.mock("../src/config/auth.js", () => ({
   auth: {
