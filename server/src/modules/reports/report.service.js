@@ -13,8 +13,22 @@ export class ReportService {
       throw new ValidationError("You cannot report your own account");
     }
 
-    const exists = await reportRepository.targetExists(input.targetType, input.targetId);
-    if (!exists) throw new NotFoundError("Report target");
+    const target = await reportRepository.getTarget(input.targetType, input.targetId);
+    if (!target) throw new NotFoundError("Report target");
+
+    if (
+      input.targetType === "product" &&
+      String(target.sellerId) === String(reporterId)
+    ) {
+      throw new ValidationError("You cannot report your own listing");
+    }
+
+    if (
+      input.targetType === "review" &&
+      String(target.reviewerId) === String(reporterId)
+    ) {
+      throw new ValidationError("You cannot report your own review");
+    }
 
     const duplicate = await reportRepository.findPendingDuplicate(
       reporterId,
