@@ -202,11 +202,45 @@ export interface Review {
   };
 }
 
+export type NotificationType =
+  | "booking_created"
+  | "booking_payment_success"
+  | "booking_payment_received"
+  | "booking_expired"
+  | "booking_rejected"
+  | "booking_cancelled"
+  | "booking_active"
+  | "booking_return_requested"
+  | "booking_returned"
+  | "booking_completed"
+  | "booking_dispute_opened"
+  | "booking_dispute_resolved"
+  | "booking_dispute_dismissed"
+  | "report_resolved"
+  | "report_dismissed"
+  | "seller_application_submitted"
+  | "seller_application_approved"
+  | "seller_application_rejected"
+  | "seller_status_approved"
+  | "seller_status_rejected"
+  | "account_suspended"
+  | "account_reactivated"
+  | "product_featured"
+  | "product_unfeatured"
+  | "product_activated"
+  | "product_suspended"
+  | "wishlisted_product_available"
+  | "wishlisted_product_unavailable"
+  | "review_created"
+  | "review_reply"
+  | "new_message"
+  | (string & {});
+
 export interface Notification {
   _id: string;
   id?: string;
   userId: string;
-  type: string;
+  type: NotificationType;
   title: string;
   message: string;
   actionUrl?: string;
