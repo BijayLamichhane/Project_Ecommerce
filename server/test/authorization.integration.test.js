@@ -8,6 +8,8 @@ const bookingUpdateStatus = vi.fn();
 const productFindById = vi.fn();
 const productUpdate = vi.fn();
 const productDelete = vi.fn();
+const inventoryReleaseBooking = vi.fn();
+const notificationCreate = vi.fn();
 const adminGetProducts = vi.fn();
 const adminLogAdminAction = vi.fn();
 
@@ -45,6 +47,23 @@ vi.mock("../src/modules/admin/admin.repository.js", () => ({
     getProducts: adminGetProducts,
     logAdminAction: adminLogAdminAction,
   },
+}));
+
+vi.mock("../src/modules/bookings/booking.inventory.repository.js", () => ({
+  bookingInventoryRepository: {
+    releaseBooking: inventoryReleaseBooking,
+  },
+}));
+
+vi.mock("../src/modules/notifications/notification.service.js", () => ({
+  notificationService: {
+    createNotification: notificationCreate,
+  },
+}));
+
+vi.mock("../src/sockets/index.js", () => ({
+  emitProductAvailabilityChanged: vi.fn(),
+  emitToUser: vi.fn(),
 }));
 
 vi.mock("../src/modules/products/product.repository.js", () => ({
@@ -243,6 +262,7 @@ describe("HTTP authorization boundaries", () => {
 
     expect(response.status).toBe(200);
     expect(json?.data).toEqual({
+      _id: "product-1",
       id: "product-1",
       status: "active",
       isFeatured: true,
