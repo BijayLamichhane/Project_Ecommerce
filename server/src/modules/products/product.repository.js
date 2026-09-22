@@ -65,42 +65,83 @@ export class ProductRepository {
       filter._id = { $nin: unavailableProductIds };
     }
 
-    if (minPrice !== undefined || maxPrice !== undefined) {
-      filter["pricing.dailyRate"] = {};
-      if (minPrice !== undefined) filter["pricing.dailyRate"].$gte = String(minPrice);
-      if (maxPrice !== undefined) filter["pricing.dailyRate"].$lte = String(maxPrice);
-    }
+    // Product pricing is stored as strings for backward compatibility with
+    // existing booking/payment data. Normalize the daily rate to a number
+    // for filtering and sorting so values such as 2,000 are never compared
+    // lexicographically against 200 or 300.
+    const dailyRateExpression = {
+      $convert: {
+        input: {
+          $replaceAll: {
+            input: { $ifNull: ["$pricing.dailyRate", ""] },
+            find: ",",
+            replacement: "",
+          },
+        },
+        to: "double",
+        onError: null,
+        onNull: null,
+      },
+    };
 
-    let sort = { createdAt: -1 };
-    switch (sortBy) {
-      case "price_asc":
-        sort = { "pricing.dailyRate": 1 };
-        break;
-      case "price_desc":
-        sort = { "pricing.dailyRate": -1 };
-        break;
-      case "rating":
-        sort = { averageRating: -1 };
-        break;
-      case "popular":
-        sort = { totalRentals: -1 };
-        break;
-      case "newest":
-      default:
-        sort = { createdAt: -1 };
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      const priceConditions = [];
+      if (minPrice !== undefined) {
+        priceConditions.push({ $gte: [dailyRateExpression, Number(minPrice)] });
+      }
+      if (maxPrice !== undefined) {
+        priceConditions.push({ $lte: [dailyRateExpression, Number(maxPrice)] });
+      }
+
+      filter.$expr = priceConditions.length === 1
+        ? priceConditions[0]
+        : { $and: priceConditions };
     }
 
     const skip = (page - 1) * limit;
+    const numericPriceSort =
+      sortBy === "price_asc" ? 1 : sortBy === "price_desc" ? -1 : null;
 
-    const [items, total] = await Promise.all([
-      Product.find(filter)
+    let itemsQuery;
+    if (numericPriceSort) {
+      itemsQuery = Product.aggregate([
+        { $match: filter },
+        { $addFields: { _numericDailyRate: dailyRateExpression } },
+        { $sort: { _numericDailyRate: numericPriceSort, createdAt: -1 } },
+        { $skip: skip },
+        { $limit: limit },
+        { $project: { _numericDailyRate: 0 } },
+      ]);
+    } else {
+      let sort = { createdAt: -1 };
+      switch (sortBy) {
+        case "rating":
+          sort = { averageRating: -1, createdAt: -1 };
+          break;
+        case "popular":
+          sort = { totalRentals: -1, createdAt: -1 };
+          break;
+        case "newest":
+        default:
+          sort = { createdAt: -1 };
+      }
+
+      itemsQuery = Product.find(filter)
         .populate("category")
         .sort(sort)
         .skip(skip)
         .limit(limit)
-        .lean({ virtuals: true }),
+        .lean({ virtuals: true });
+    }
+
+    const [items, total] = await Promise.all([
+      itemsQuery,
       Product.countDocuments(filter),
     ]);
+
+    if (numericPriceSort) {
+      await Product.populate(items, { path: "category" });
+    }
 
     return {
       items,
