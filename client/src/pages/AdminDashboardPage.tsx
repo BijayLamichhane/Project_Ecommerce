@@ -22,7 +22,7 @@ type AdminActivity = {
   actionType?: string;
   createdAt?: string;
   admin?: { name?: string };
-  userId?: string | { name?: string };
+  userId?: string | { name?: string } | null;
 };
 
 type AdminDashboardData = {
@@ -260,7 +260,8 @@ export function AdminDashboardPage() {
               <div className="divide-y divide-[#E6DED1] text-xs">
                 {dashboardData.recentActivity.map((act, index) => {
                   const action = act?.action ?? act?.actionType;
-                  const actorName = typeof act?.userId === "object" ? act.userId.name : undefined;
+                  const actorName =
+                    act?.userId && typeof act.userId === "object" ? act.userId.name : undefined;
                   const key = getEntityId(act) || `activity-${index}`;
                   return (
                     <div key={key} className="py-2.5 flex items-center justify-between">
