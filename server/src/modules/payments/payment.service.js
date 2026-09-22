@@ -285,7 +285,7 @@ export class PaymentService {
     const productName = booking.bookingItems?.[0]?.product?.name || "your rental";
 
     try {
-      const customerNotification = await notificationService.createNotification({
+      await notificationService.notifyUser(booking.customerId, {
         userId: booking.customerId,
         type: "booking_payment_success",
         title: "Payment successful",
@@ -294,7 +294,7 @@ export class PaymentService {
       });
 
 
-      const sellerNotification = await notificationService.createNotification({
+      await notificationService.notifyUser(booking.sellerId, {
         userId: booking.sellerId,
         type: "booking_payment_received",
         title: "Booking paid",
