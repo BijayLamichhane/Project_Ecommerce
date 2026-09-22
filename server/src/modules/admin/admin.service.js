@@ -6,6 +6,7 @@ import { NotFoundError, ConflictError, ValidationError } from "../../middleware/
 import { getRedisClient, CacheKeys } from "../../config/redis.js";
 import { notificationService } from "../notifications/notification.service.js";
 import { logger } from "../../utils/logger.js";
+import { wishlistRepository } from "../wishlist/wishlist.repository.js";
 
 const OPEN_SELLER_BOOKING_MESSAGE = "This seller has unresolved pending, confirmed, active, or return-requested rentals";
 
@@ -223,6 +224,22 @@ export class AdminService {
       });
     } catch (error) {
       logger.warn({ error, productId }, "Failed to notify seller about product status");
+    }
+
+    try {
+      const subscriberIds = await wishlistRepository.findUserIdsByProductId(productId);
+      await Promise.all(subscriberIds
+        .filter((userId) => String(userId) !== String(product.sellerId))
+        .map((userId) => notificationService.notifyUser(userId, {
+          type: status === "active" ? "wishlisted_product_available" : "wishlisted_product_unavailable",
+          title: status === "active" ? "Wishlisted listing is available" : "Wishlisted listing is unavailable",
+          message: status === "active"
+            ? `Your wishlisted listing "${product.name}" is available again.`
+            : `Your wishlisted listing "${product.name}" is currently unavailable.`,
+          actionUrl: `/products/${encodeURIComponent(productId)}`,
+        })));
+    } catch (error) {
+      logger.warn({ error, productId }, "Failed to notify wishlist subscribers");
     }
 
     return { id: productId, status, isFeatured: status === "active" ? product.isFeatured : false };
