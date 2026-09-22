@@ -8,6 +8,10 @@ const targetField = {
 };
 
 export class ReportService {
+  async getMyReports(reporterId) {
+    return reportRepository.findByReporterId(reporterId);
+  }
+
   async create(reporterId, input) {
     if (input.targetType === "user" && String(input.targetId) === String(reporterId)) {
       throw new ValidationError("You cannot report your own account");

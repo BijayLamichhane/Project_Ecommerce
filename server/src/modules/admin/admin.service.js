@@ -4,6 +4,9 @@ import { bookingRepository } from "../bookings/booking.repository.js";
 import { bookingInventoryRepository } from "../bookings/booking.inventory.repository.js";
 import { NotFoundError, ConflictError, ValidationError } from "../../middleware/errorHandler.js";
 import { getRedisClient, CacheKeys } from "../../config/redis.js";
+import { notificationService } from "../notifications/notification.service.js";
+import { emitToUser } from "../../sockets/index.js";
+import { logger } from "../../utils/logger.js";
 
 const OPEN_SELLER_BOOKING_MESSAGE = "This seller has unresolved pending, confirmed, active, or return-requested rentals";
 
@@ -184,6 +187,45 @@ export class AdminService {
       targetReportId: reportId,
       notes,
     });
+
+    const reporterId =
+      typeof report.reporterId === "object"
+        ? report.reporterId?.id || report.reporterId?._id
+        : report.reporterId;
+
+    if (reporterId && ["resolved", "dismissed"].includes(status)) {
+      const targetName =
+        report.reportedProductId?.name ||
+        report.reportedUserId?.name ||
+        (report.reportedReviewId ? "the reported review" : "the reported item");
+
+      const notification =
+        status === "resolved"
+          ? {
+              userId: String(reporterId),
+              type: "report_resolved",
+              title: "Your report was resolved",
+              message: `We reviewed your report about ${targetName} and took action. Moderator note: ${notes}`,
+              actionUrl: "/reports",
+            }
+          : {
+              userId: String(reporterId),
+              type: "report_dismissed",
+              title: "Your report was dismissed",
+              message: `We reviewed your report about ${targetName} and did not take further action. Moderator note: ${notes}`,
+              actionUrl: "/reports",
+            };
+
+      try {
+        const createdNotification = await notificationService.createNotification(notification);
+        emitToUser(String(reporterId), "notification_created", createdNotification);
+      } catch (error) {
+        logger.error(
+          { error, reportId, reporterId },
+          "Failed to notify report issuer about moderation decision"
+        );
+      }
+    }
 
     return report;
   }
