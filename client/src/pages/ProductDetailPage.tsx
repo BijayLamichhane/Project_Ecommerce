@@ -724,6 +724,9 @@ export function ProductDetailPage() {
               <option>Incorrect pricing or availability</option>
               <option>Other policy concern</option>
             </select>
+            {reportError && (
+              <p className="text-xs text-[#A23B2E] font-medium">{reportError}</p>
+            )}
             <textarea
               rows={5}
               maxLength={2000}
