@@ -40,6 +40,7 @@ export class AdminRepository {
       totalUsersCount,
       totalSellersCount,
       totalProductsCount,
+      featuredProductsCount,
       activeRentalsCount,
       totalRevenueResult,
       pendingDisputesCount,
@@ -49,6 +50,7 @@ export class AdminRepository {
       User.countDocuments(),
       User.countDocuments({ role: "seller" }),
       Product.countDocuments({ status: "active" }),
+      Product.countDocuments({ status: "active", isFeatured: true }),
       Booking.countDocuments({ status: "active" }),
       Payment.aggregate([
         { $match: { status: "completed" } },
@@ -73,12 +75,56 @@ export class AdminRepository {
         totalUsers: totalUsersCount,
         totalSellers: totalSellersCount,
         totalProducts: totalProductsCount,
+        featuredProducts: featuredProductsCount,
         activeRentals: activeRentalsCount,
         totalRevenue: Number(totalRevenueResult[0]?.total ?? 0),
         pendingDisputes: pendingDisputesCount,
       },
       recentBookings,
       recentActivity,
+    };
+  }
+
+  async getProducts({ q, status = "all", featured = "all", page = 1, limit = 20 } = {}) {
+    const filter = {};
+
+    if (q) {
+      const escapedQuery = q.replace(/[.*+?^${}()|[\]\\]/g, "\\  async getAllUsers(limit = 50, offset = 0) {");
+      filter.$or = [
+        { name: new RegExp(escapedQuery, "i") },
+        { brand: new RegExp(escapedQuery, "i") },
+        { model: new RegExp(escapedQuery, "i") },
+      ];
+    }
+
+    if (status !== "all") {
+      filter.status = status;
+    }
+
+    if (featured === "featured") {
+      filter.isFeatured = true;
+    } else if (featured === "standard") {
+      filter.isFeatured = false;
+    }
+
+    const skip = (page - 1) * limit;
+    const [items, total] = await Promise.all([
+      Product.find(filter)
+        .populate("category")
+        .populate("seller", "id name email")
+        .sort({ isFeatured: -1, createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean({ virtuals: true }),
+      Product.countDocuments(filter),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
     };
   }
 
