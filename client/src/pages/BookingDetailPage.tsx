@@ -270,6 +270,38 @@ export function BookingDetailPage() {
           <div className="lg:col-span-5 bg-white rounded-md border border-[#DDD5C7] p-6  space-y-5"><h3 className="text-base font-bold text-[#211E1B]">Charges & Security Deposit</h3><div className="space-y-3 text-xs text-[#8B8377]"><div className="flex justify-between"><span>Rental Charges</span><span className="font-bold text-[#211E1B]">{formatCurrency(booking.totalRentalPrice)}</span></div><div className="flex justify-between"><span>Service Fee</span><span className="font-bold text-[#211E1B]">{formatCurrency(booking.serviceFee)}</span></div>{Number(booking.deliveryFee) > 0 && <div className="flex justify-between"><span>Delivery</span><span className="font-bold text-[#211E1B]">{formatCurrency(booking.deliveryFee)}</span></div>}<div className="pt-3 border-t border-[#DDD5C7] flex justify-between text-sm font-extrabold"><span className="text-[#211E1B]">Rental Total</span><span className="text-[#A66314]">{formatCurrency(booking.totalAmount)}</span></div></div><div className="p-4 rounded-md bg-[#E7EFE2] border border-[#4B5D3A]/30"><div className="flex justify-between font-bold text-[#4B5D3A]"><span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4" />Security Deposit</span><span>{formatCurrency(booking.totalDeposit)}</span></div><p className="text-[11px] text-[#4B5D3A] mt-2">Status: <span className="font-bold capitalize">{paymentInfo?.deposit?.status || "Held"}</span></p></div></div>
         </div>
         {booking.status === "active" && isCustomer && <div className="bg-white rounded-md border border-[#DDD5C7] p-6"><h3 className="text-sm font-bold text-[#211E1B]">Return Handover Details</h3><div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4"><select value={returnCondition} onChange={(e) => setReturnCondition(e.target.value)} className="px-4 py-3 rounded-md bg-[#F7F3EA] border border-[#B8B0A3] text-sm text-[#211E1B] outline-none focus:border-[#C17817]"><option value="like_new">Like New</option><option value="good">Good</option><option value="fair">Fair</option><option value="damaged">Damaged</option></select><input value={returnNotes} onChange={(e) => setReturnNotes(e.target.value)} placeholder="Optional return notes" className="px-4 py-3 rounded-md bg-[#F7F3EA] border border-[#B8B0A3] text-sm text-[#211E1B] placeholder:text-[#8B8377] outline-none focus:border-[#C17817]" /></div><p className="text-[11px] text-[#8B8377] mt-3">Your return request will be reviewed by the seller before the booking is marked returned.</p></div>}
+        {isDisputeOpen && <div className="fixed inset-0 z-50 bg-[#211E1B]/75 flex items-center justify-center p-4">
+          <div className="bg-white border border-[#DDD5C7] rounded-md p-6 max-w-lg w-full shadow-sm space-y-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-bold text-[#211E1B]">Raise a Rental Dispute</h3>
+                <p className="text-xs text-[#8B8377] mt-1">Explain what happened so an administrator can review both sides.</p>
+              </div>
+              <button type="button" onClick={() => setIsDisputeOpen(false)} disabled={disputeMutation.isPending} className="p-2 rounded-lg hover:bg-[#E8E1D5] text-[#8B8377]">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <textarea
+              autoFocus
+              rows={6}
+              maxLength={2000}
+              value={disputeReason}
+              onChange={(e) => setDisputeReason(e.target.value)}
+              disabled={disputeMutation.isPending}
+              placeholder="Describe the damage, return issue, missing item, payment concern, or other problem..."
+              className="w-full px-4 py-3 text-sm bg-[#F7F3EA] border border-[#B8B0A3] rounded-md text-[#211E1B] placeholder:text-[#8B8377] outline-none focus:border-[#C17817] resize-none"
+            />
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-[#8B8377]">{disputeReason.length}/2000</span>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setIsDisputeOpen(false)} disabled={disputeMutation.isPending} className="px-4 py-2.5 rounded-md text-xs font-bold text-[#8B8377] hover:bg-[#E8E1D5]">Cancel</button>
+                <button type="button" onClick={() => disputeMutation.mutate()} disabled={disputeMutation.isPending || disputeReason.trim().length < 3} className="px-4 py-2.5 rounded-md bg-[#A23B2E] hover:bg-[#8F3328] disabled:opacity-50 text-white text-xs font-extrabold">
+                  {disputeMutation.isPending ? "Submitting..." : "Submit Dispute"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>}
         {isCancelPaymentOpen && <div className="fixed inset-0 z-50 bg-[#211E1B]/75 flex items-center justify-center p-4">
           <div className="bg-white border border-[#DDD5C7] rounded-md p-6 max-w-md w-full shadow-sm space-y-5">
             <div className="flex items-center justify-between gap-4">
