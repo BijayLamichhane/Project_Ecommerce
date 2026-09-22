@@ -759,6 +759,127 @@ export function AdminDashboardPage() {
         </div>
       )}
 
+      {moderationModal && (
+        <div className="fixed inset-0 z-50 bg-[#211E1B]/75 flex items-center justify-center p-4">
+          <div className="bg-white border border-[#DDD5C7] rounded-md p-6 max-w-lg w-full shadow-sm space-y-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  {moderationModal.kind === "report" ? (
+                    <Flag className="w-5 h-5 text-[#C17817]" />
+                  ) : (
+                    <Gavel className="w-5 h-5 text-[#A23B2E]" />
+                  )}
+                  <h3 className="text-lg font-bold text-[#211E1B]">
+                    {moderationModal.kind === "report"
+                      ? `${moderationModal.status === "reviewed" ? "Review" : moderationModal.status === "resolved" ? "Resolve" : "Dismiss"} Report`
+                      : moderationModal.action === "resolve"
+                        ? "Resolve Dispute"
+                        : "Dismiss Dispute"}
+                  </h3>
+                </div>
+                <p className="text-xs text-[#8B8377] mt-1">
+                  {moderationModal.kind === "report"
+                    ? "Record the moderation decision and leave an internal note."
+                    : moderationModal.action === "resolve"
+                      ? "This closes the dispute and completes the booking."
+                      : "This closes the dispute and restores the booking to its previous state."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModerationModal(null)}
+                disabled={updateReportStatusMutation.isPending || resolveDisputeMutation.isPending}
+                className="p-2 rounded-lg hover:bg-[#E8E1D5] text-[#8B8377]"
+              >
+                <XCircle className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="rounded-md bg-[#F7F3EA] border border-[#E6DED1] p-3">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#A39A8D]">
+                {moderationModal.kind === "report" ? "Report" : "Dispute"}
+              </p>
+              <p className="text-xs font-semibold text-[#211E1B] mt-1">
+                {moderationModal.kind === "report"
+                  ? moderationModal.item.reason
+                  : `Booking ${getEntityId(moderationModal.item)}`}
+              </p>
+              {moderationModal.kind === "report" && moderationModal.item.details && (
+                <p className="text-[11px] text-[#6F685F] mt-1">{moderationModal.item.details}</p>
+              )}
+              {moderationModal.kind === "dispute" && moderationModal.item.disputeReason && (
+                <p className="text-[11px] text-[#6F685F] mt-1">{moderationModal.item.disputeReason}</p>
+              )}
+            </div>
+
+            <textarea
+              autoFocus
+              rows={5}
+              maxLength={2000}
+              value={moderationNotes}
+              onChange={(e) => setModerationNotes(e.target.value)}
+              disabled={updateReportStatusMutation.isPending || resolveDisputeMutation.isPending}
+              placeholder="Add the decision or evidence note..."
+              className="w-full px-4 py-3 text-sm bg-[#F7F3EA] border border-[#B8B0A3] rounded-md text-[#211E1B] placeholder:text-[#8B8377] outline-none focus:border-[#C17817] resize-none"
+            />
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-[#8B8377]">{moderationNotes.length}/2000</span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setModerationModal(null)}
+                  disabled={updateReportStatusMutation.isPending || resolveDisputeMutation.isPending}
+                  className="px-4 py-2.5 rounded-md text-xs font-bold text-[#8B8377] hover:bg-[#E8E1D5]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={
+                    moderationNotes.trim().length < 3 ||
+                    updateReportStatusMutation.isPending ||
+                    resolveDisputeMutation.isPending
+                  }
+                  onClick={() => {
+                    const itemId = getEntityId(moderationModal.item);
+                    if (!itemId) {
+                      setErrorMsg("The selected moderation item has no valid ID.");
+                      return;
+                    }
+
+                    if (moderationModal.kind === "report") {
+                      updateReportStatusMutation.mutate({
+                        reportId: itemId,
+                        status: moderationModal.status,
+                        notes: moderationNotes.trim(),
+                      });
+                      return;
+                    }
+
+                    resolveDisputeMutation.mutate({
+                      bookingId: itemId,
+                      action: moderationModal.action,
+                      notes: moderationNotes.trim(),
+                    });
+                  }}
+                  className="px-4 py-2.5 rounded-md bg-[#211E1B] hover:bg-[#C17817] disabled:opacity-50 text-white text-xs font-extrabold inline-flex items-center gap-1.5"
+                >
+                  {moderationModal.kind === "report"
+                    ? moderationModal.status === "dismissed"
+                      ? "Dismiss Report"
+                      : moderationModal.status === "resolved"
+                        ? "Resolve Report"
+                        : "Mark Reviewed"
+                    : moderationModal.action === "resolve"
+                      ? "Resolve & Complete"
+                      : "Dismiss & Restore"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <ConfirmModal
         open={Boolean(sellerRejectionModal)}
         title="Reject Seller Application"
