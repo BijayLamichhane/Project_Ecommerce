@@ -522,6 +522,7 @@ export function ProductDetailPage() {
                 type="button"
                 onClick={() => {
                   setBookingError(null);
+                  setReportError(null);
                   setIsReportOpen(true);
                 }}
                 className="px-3 py-2 rounded-md border border-[#C8C0B3] bg-white hover:bg-[#F1ECE1] text-[#6F685F] text-xs font-bold transition flex items-center gap-1.5"
