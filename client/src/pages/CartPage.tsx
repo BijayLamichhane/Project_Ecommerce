@@ -100,7 +100,7 @@ export function CartPage() {
           className="inline-flex items-center gap-2 px-6 py-3 rounded-md bg-[#C17817] text-white text-xs font-bold shadow-md hover:bg-[#211E1B] transition"
         >
           Explore Rental Gear
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight className="w-4 h-4 pointer-events-none" />
         </Link>
       </div>
     );
@@ -243,7 +243,7 @@ export function CartPage() {
             className="w-full py-3.5 px-4 rounded-md bg-[#C17817] hover:bg-[#211E1B] text-white font-bold text-sm shadow-md shadow-none transition flex items-center justify-center gap-2"
           >
             {checkoutMutation.isPending ? "Creating Booking..." : "Proceed to Checkout"}
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-4 h-4 pointer-events-none" />
           </button>
         </div>
       </div>
