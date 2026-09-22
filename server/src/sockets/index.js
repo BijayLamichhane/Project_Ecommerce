@@ -4,6 +4,7 @@ import { auth } from "../config/auth.js";
 import { logger } from "../utils/logger.js";
 import { messagingService } from "../modules/messaging/messaging.service.js";
 import { getAccountStatus } from "../middleware/accountStatus.js";
+import { notificationService } from "../modules/notifications/notification.service.js";
 
 let ioInstance = null;
 
@@ -111,11 +112,27 @@ export function initSocketIO(httpServer) {
           .to(`conversation:${result.conversationId}`)
           .emit("new_message", result.message);
 
-        if (data?.recipientId) {
-          ioInstance.to(`user:${data.recipientId}`).emit("message_notification", {
+        if (result.recipientId) {
+          ioInstance.to(`user:${result.recipientId}`).emit("message_notification", {
             conversationId: result.conversationId,
             message: result.message,
           });
+
+          try {
+            await notificationService.notifyUser(result.recipientId, {
+              type: "new_message",
+              title: "New message",
+              message: result.message.content?.length > 120
+                ? result.message.content.slice(0, 117) + "..."
+                : result.message.content || "You received a new message.",
+              actionUrl: `/messages?conversation=${encodeURIComponent(result.conversationId)}`,
+            });
+          } catch (notificationError) {
+            logger.warn(
+              { error: notificationError, recipientId: result.recipientId, conversationId: result.conversationId },
+              "Failed to persist message notification"
+            );
+          }
         }
 
         if (typeof callback === "function") {
