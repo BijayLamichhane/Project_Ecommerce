@@ -167,8 +167,62 @@ export class AdminService {
     return adminRepository.getReports();
   }
 
+  async updateReportStatus(adminId, reportId, status, notes) {
+    const report = await adminRepository.updateReportStatus(
+      reportId,
+      adminId,
+      status,
+      notes
+    );
+    if (!report) throw new NotFoundError("Report");
+
+    await adminRepository.logAdminAction({
+      adminId,
+      actionType: `update_report_${status}`,
+      entityType: "report",
+      targetReportId: reportId,
+      notes,
+    });
+
+    return report;
+  }
+
   async getDisputes() {
     return adminRepository.getDisputes();
+  }
+
+  async resolveDispute(adminId, bookingId, action, notes) {
+    const booking = await adminRepository.getDisputes().then((items) =>
+      items.find((item) => String(item.id || item._id) === String(bookingId))
+    );
+
+    if (!booking) throw new NotFoundError("Dispute");
+
+    const updated = await (async () => {
+      const result = await import("../bookings/booking.repository.js");
+      return result.bookingRepository.resolveDispute(
+        bookingId,
+        adminId,
+        action,
+        notes
+      );
+    })();
+
+    if (!updated) throw new ConflictError("Dispute is no longer open");
+
+    if (action === "resolve") {
+      await bookingInventoryRepository.releaseBooking(bookingId);
+    }
+
+    await adminRepository.logAdminAction({
+      adminId,
+      actionType: `${action}_booking_dispute`,
+      entityType: "booking",
+      targetBookingId: bookingId,
+      notes,
+    });
+
+    return updated;
   }
 }
 
