@@ -38,7 +38,7 @@ export function RentalCalendar({
   minDays = 1,
   maxDays = 90,
 }: RentalCalendarProps) {
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [currentMonth, setCurrentMonth] = useState<Date>(() => startOfMonth(new Date()));
   const today = startOfToday();
 
   const parsedBookedRanges = bookedRanges.map((r) => ({
@@ -81,6 +81,16 @@ export function RentalCalendar({
     }
   };
 
+  const changeMonth = (direction: "previous" | "next") => {
+    const nextMonth =
+      direction === "next"
+        ? addMonths(currentMonth, 1)
+        : subMonths(currentMonth, 1);
+
+    setCurrentMonth(nextMonth);
+    onMonthChange?.(nextMonth);
+  };
+
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(monthStart);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
@@ -98,28 +108,22 @@ export function RentalCalendar({
             {format(currentMonth, "MMMM yyyy")}
           </h4>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="relative z-10 flex items-center gap-1">
           <button
             type="button"
-            onClick={() => {
-              const month = subMonths(currentMonth, 1);
-              setCurrentMonth(month);
-              onMonthChange?.(month);
-            }}
-            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 transition"
+            aria-label="Previous month"
+            onClick={() => changeMonth("previous")}
+            className="relative z-10 p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 transition"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-4 h-4 pointer-events-none" />
           </button>
           <button
             type="button"
-            onClick={() => {
-              const month = addMonths(currentMonth, 1);
-              setCurrentMonth(month);
-              onMonthChange?.(month);
-            }}
-            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 transition"
+            aria-label="Next month"
+            onClick={() => changeMonth("next")}
+            className="relative z-10 p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 transition"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4 pointer-events-none" />
           </button>
         </div>
       </div>
