@@ -150,6 +150,34 @@ export class BookingService {
     return bookingRepository.findById(bookingId);
   }
 
+  async cancelPendingForCustomer(bookingId, userId, reason = "Payment cancelled by customer") {
+    const booking = await bookingRepository.findById(bookingId);
+    if (!booking) throw new NotFoundError("Booking");
+    if (String(booking.customerId) !== String(userId)) {
+      throw new ForbiddenError("You can only cancel your own payment");
+    }
+    if (booking.status !== "pending") {
+      throw new ValidationError("Only a pending payment can be cancelled");
+    }
+
+    const cancelled = await bookingRepository.cancelPending(bookingId, {
+      cancellationReason: reason,
+      actorId: userId,
+    });
+
+    if (!cancelled) {
+      const latest = await bookingRepository.findById(bookingId);
+      if (latest?.status === "cancelled") return latest;
+      throw new ValidationError("This payment is already being processed and can no longer be cancelled");
+    }
+
+    await bookingInventoryRepository.releaseBooking(bookingId);
+    await this.notifyBookingReleased(cancelled, "cancelled");
+    await this.emitAvailabilityChanges(cancelled);
+
+    return cancelled;
+  }
+
   async updateStatus(bookingId, userId, userRole, newStatus, reason) {
     const booking = await bookingRepository.findById(bookingId);
     if (!booking) throw new NotFoundError("Booking");
