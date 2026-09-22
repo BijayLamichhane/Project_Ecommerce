@@ -514,7 +514,21 @@ export function ProductDetailPage() {
               Share your rental experience with this listing
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            {isAuthenticated && String(product.sellerId) !== String(user?.id ?? user?._id) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setBookingError(null);
+                  setIsReportOpen(true);
+                }}
+                className="px-3 py-2 rounded-md border border-[#C8C0B3] bg-white hover:bg-[#F1ECE1] text-[#6F685F] text-xs font-bold transition flex items-center gap-1.5"
+              >
+                <Flag className="w-3.5 h-3.5" />
+                Report Listing
+              </button>
+            )}
+            <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#F1ECE1] border border-[#C17817]/30 text-[#211E1B] font-bold text-sm">
               <Star className="w-4 h-4 fill-[#C17817] text-[#C17817]" />
               <span>{parseFloat(product.averageRating || "0").toFixed(1)} / 5.0</span>
