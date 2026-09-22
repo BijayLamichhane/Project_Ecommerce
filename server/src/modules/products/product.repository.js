@@ -149,24 +149,6 @@ export class ProductRepository {
     return updated;
   }
 
-  async upsertPricing(data) {
-    const { productId, ...pricingData } = data;
-    return Product.findByIdAndUpdate(
-      productId,
-      { pricing: pricingData },
-      { new: true }
-    ).lean({ virtuals: true });
-  }
-
-  async upsertRules(data) {
-    const { productId, ...rulesData } = data;
-    return Product.findByIdAndUpdate(
-      productId,
-      { rules: rulesData },
-      { new: true }
-    ).lean({ virtuals: true });
-  }
-
   async incrementViewCount(id) {
     await Product.findByIdAndUpdate(id, { $inc: { viewCount: 1 } });
   }

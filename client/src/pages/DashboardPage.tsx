@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../lib/axios";
 import { useAuth } from "../hooks/useAuth";
-import { ProductCard } from "../components/shared/ProductCard";
-import type { Booking, Product } from "../types";
+import { RecommendedProducts } from "../components/shared/RecommendedProducts";
+import type { Booking } from "../types";
 import { formatCurrency, getEntityId, formatDate } from "../lib/utils";
 import { Calendar, Clock, CheckCircle2, ArrowRight, Sparkles, Package, History, ChevronRight } from "lucide-react";
 
@@ -41,13 +41,6 @@ export function DashboardPage() {
     },
   });
 
-  const { data: featuredProducts = [] } = useQuery<Product[]>({
-    queryKey: ["featured-products"],
-    queryFn: async () => {
-      const { data } = await api.get("/products/featured");
-      return (data.data || []) as Product[];
-    },
-  });
 
   const previousBookings = allBookings.filter((booking) => previousStatuses.has(booking.status)).slice(0, 5);
 
@@ -95,10 +88,12 @@ export function DashboardPage() {
           </div>
         </section>
 
-        <div className="space-y-6">
-          <div className="flex items-center justify-between"><div><h3 className="text-lg font-bold text-[#211E1B]">Recommended Gear For You</h3><p className="text-xs text-[#8B8377]">Top rated cameras, drones, and instruments</p></div><Link to="/products" className="text-xs font-semibold text-[#C17817] hover:underline flex items-center gap-1">Explore all <ArrowRight className="w-3.5 h-3.5" /></Link></div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">{(featuredProducts || []).slice(0, 4).map((product) => <ProductCard key={getEntityId(product)} product={product} />)}</div>
-        </div>
+        <RecommendedProducts
+          mode="personalized"
+          title="Recommended Gear For You"
+          subtitle="Suggestions based on your rental history and wishlist"
+          limit={4}
+        />
       </div>
     </div>
   );

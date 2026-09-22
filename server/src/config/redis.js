@@ -59,16 +59,12 @@ export async function disconnectRedis() {
 
 export const CacheKeys = {
   product: (id) => `product:${id}`,
-  productList: (params) => `products:list:${params}`,
-  category: (id) => `category:${id}`,
   categoryList: () => "categories:list",
-  sellerProfile: (id) => `seller:${id}`,
   rateLimitKey: (ip) => `rate_limit:${ip}`,
 };
 
 export const CacheTTL = {
   product: 300,       // 5 minutes
-  productList: 120,   // 2 minutes
   category: 3600,     // 1 hour
   categoryList: 3600, // 1 hour
   seller: 300,        // 5 minutes

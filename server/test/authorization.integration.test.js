@@ -51,8 +51,6 @@ vi.mock("../src/modules/products/product.repository.js", () => ({
     addImage: vi.fn(),
     deleteImage: vi.fn(),
     incrementViewCount: vi.fn(),
-    upsertPricing: vi.fn(),
-    upsertRules: vi.fn(),
   },
 }));
 

@@ -11,10 +11,12 @@ RentHub is a full-stack web application for renting physical products such as ca
 - **Availability & Conflict Engine**: Payment-driven booking holds with expiry-aware availability and an atomic per-product/day MongoDB inventory ledger that prevents concurrent overbooking without requiring Redis locks.
 - **Security Deposit Architecture**: Refundable security deposits tracked separately from rental revenue and released upon verified return.
 - **Dynamic Tiered Pricing**: Hourly, daily, weekly, and monthly pricing calculated on the backend.
-- **Real-Time Communication**: Socket.IO integration for customer-seller messaging, typing indicators, and instant notifications. New conversations resolve seller ownership from the referenced product or booking, and booking references are persisted on conversations.
+- **Recommendation System**: Personalized customer recommendations use existing wishlist, rental history, category, brand, city, rating, and popularity signals, with a popular-products fallback for new customers. Product detail pages also show similar gear.
+- **Real-Time Communication**: Socket.IO integration for customer-seller messaging, typing indicators, and instant notifications.
 - **Role-Based Access Control**: RBAC for `customer`, `seller`, and `admin` roles.
 - **Redis Caching & Rate Limiting**: Optional Redis support for product/category caching and rate limiting; booking concurrency is enforced by the MongoDB inventory ledger.
 - **Server-Verified Payments**: eSewa checkout is verified server-side before a booking is confirmed.
+- **Recommendation Architecture**: Recommendations are implemented as a dedicated module without adding an ML dependency or storing a separate tracking profile. Existing marketplace behavior is used as the signal source.
 
 ---
 
@@ -149,7 +151,7 @@ cd server
 npm test
 ```
 
-The test suite covers core pricing, booking conflict and expiry behavior, booking state-machine transitions, late-payment resurrection/refund handling, HTTP authorization boundaries, and upload signature detection.
+The test suite covers core pricing, booking conflict and expiry behavior, booking state-machine transitions, late-payment resurrection/refund handling, recommendation ranking and fallbacks, HTTP authorization boundaries, return-condition validation, and upload signature detection.
 
 ---
 
@@ -175,3 +177,7 @@ Project_Ecommerce/
     │   └── pages/              # Marketplace, customer, seller and admin pages
     └── package.json
 ```
+
+## Documentation
+
+Detailed architecture, feature behavior, API boundaries, recommendation logic, booking flow, and the latest maintenance audit are documented in [docs/PROJECT_DOCUMENTATION.md](docs/PROJECT_DOCUMENTATION.md).
