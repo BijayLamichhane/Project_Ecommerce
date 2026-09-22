@@ -55,7 +55,9 @@ export function NotificationBell() {
     };
 
     socket.on("notification_created", handleNotificationCreated);
-    return () => socket.off("notification_created", handleNotificationCreated);
+    return () => {
+      socket.off("notification_created", handleNotificationCreated);
+    };
   }, [socket, queryClient]);
 
   useEffect(() => {
