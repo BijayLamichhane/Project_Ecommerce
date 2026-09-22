@@ -83,7 +83,7 @@ export function SellerProductEditorPage() {
   useEffect(() => {
     if (isEditing || formData.categoryId) return;
     if (categories && categories.length > 0) {
-      setFormData((prev) => (prev.categoryId ? prev : { ...prev, categoryId: categories[0].id }));
+      setFormData((prev) => (prev.categoryId ? prev : { ...prev, categoryId: categories[0].id || categories[0]._id }));
     }
   }, [categories, isEditing]);
 

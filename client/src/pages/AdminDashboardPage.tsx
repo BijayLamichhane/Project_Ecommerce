@@ -3,9 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/axios";
 import { formatCurrency, formatDate, getEntityId, getErrorMessage } from "../lib/utils";
 import type { Booking, Category, User } from "../types";
+import { AdminProductManagement } from "../components/admin/AdminProductManagement";
 import {
-  Users,
-  Building,
   ShieldAlert,
   AlertTriangle,
   Plus,
@@ -31,6 +30,7 @@ type AdminDashboardData = {
     totalRevenue: number;
     totalUsers: number;
     totalProducts: number;
+    featuredProducts: number;
     activeRentals: number;
   };
   recentActivity: AdminActivity[];
@@ -40,6 +40,7 @@ const adminTabs: { id: ActiveTab; label: string }[] = [
   { id: "overview", label: "Overview & Analytics" },
   { id: "users", label: "Users Management" },
   { id: "sellers", label: "Seller Moderation" },
+  { id: "products", label: "Products" },
   { id: "categories", label: "Categories" },
   { id: "disputes", label: "Reports & Disputes" },
 ];
@@ -71,7 +72,7 @@ export function AdminDashboardPage() {
     queryKey: ["admin-users"],
     queryFn: async () => {
       const { data } = await api.get("/admin/users");
-      return (data.data || []).map((user) => ({ ...user, id: getEntityId(user) }));
+      return (data.data as User[] || []).map((user: User) => ({ ...user, id: getEntityId(user) }));
     },
     enabled: activeTab === "users",
   });
@@ -80,7 +81,7 @@ export function AdminDashboardPage() {
     queryKey: ["admin-sellers"],
     queryFn: async () => {
       const { data } = await api.get("/admin/sellers");
-      return (data.data || []).map((seller) => ({ ...seller, id: getEntityId(seller) }));
+      return (data.data as User[] || []).map((seller: User) => ({ ...seller, id: getEntityId(seller) }));
     },
     enabled: activeTab === "sellers",
   });
@@ -228,13 +229,7 @@ export function AdminDashboardPage() {
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-1 border-b border-[#C8C0B3]">
-        {[
-          { id: "overview", label: "Overview & Analytics" },
-          { id: "users", label: "Users Management" },
-          { id: "sellers", label: "Seller Moderation" },
-          { id: "categories", label: "Categories" },
-          { id: "disputes", label: "Reports & Disputes" },
-        ].map((tab) => (
+        {adminTabs.map((tab) => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 py-2 text-xs font-bold rounded-md transition ${activeTab === tab.id ? "bg-[#211E1B] text-white shadow-sm" : "text-[#6F685F] hover:bg-[#E8E1D5]"}`}>
             {tab.label}
           </button>
@@ -243,11 +238,12 @@ export function AdminDashboardPage() {
 
       {activeTab === "overview" && (
         <div className="space-y-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
             {[
               { label: "Platform Revenue", value: formatCurrency(metrics?.totalRevenue ?? 0), hint: "Gross rental GMV" },
               { label: "Total Users", value: metrics?.totalUsers ?? 0, hint: "Registered members" },
               { label: "Active Listings", value: metrics?.totalProducts ?? 0, hint: "Rentable gear" },
+              { label: "Featured Listings", value: metrics?.featuredProducts ?? 0, hint: "Admin-promoted gear" },
               { label: "Active Rentals", value: metrics?.activeRentals ?? 0, hint: "Currently in use" },
             ].map((metric) => (
               <div key={metric.label} className="bg-white rounded-md border border-[#C8C0B3] p-6 shadow-sm">
@@ -264,12 +260,13 @@ export function AdminDashboardPage() {
               <div className="divide-y divide-[#E6DED1] text-xs">
                 {dashboardData.recentActivity.map((act, index) => {
                   const action = act?.action ?? act?.actionType;
+                  const actorName = typeof act?.userId === "object" ? act.userId.name : undefined;
                   const key = getEntityId(act) || `activity-${index}`;
                   return (
                     <div key={key} className="py-2.5 flex items-center justify-between">
                       <div>
                         <span className="font-bold text-[#211E1B] capitalize">{getActionLabel(action)}</span>
-                        <span className="text-[#8B8377] ml-2">by {act?.admin?.name || act?.userId?.name || "Admin"}</span>
+                        <span className="text-[#8B8377] ml-2">by {act?.admin?.name || actorName || "Admin"}</span>
                       </div>
                       <span className="text-[10px] text-[#A39A8D]">{act?.createdAt ? formatDate(act.createdAt, "MMM d, h:mm a") : "—"}</span>
                     </div>
@@ -374,7 +371,7 @@ export function AdminDashboardPage() {
         </div>
       )}
 
-      {activeTab === "products" && <div className="bg-white rounded-md border border-[#C8C0B3] p-6 shadow-sm"><p className="text-sm text-[#8B8377]">Product administration is available from seller listing workflows.</p></div>}
+      {activeTab === "products" && <AdminProductManagement />}
       {activeTab === "disputes" && (
         <div className="bg-white rounded-md border border-[#C8C0B3] p-6 shadow-sm space-y-4">
           <h3 className="text-base font-bold text-[#211E1B]">Reports & Disputes</h3>

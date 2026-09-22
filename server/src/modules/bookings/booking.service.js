@@ -192,19 +192,17 @@ export class BookingService {
     const currentStatus = booking.status;
 
     if (userRole !== "admin") {
-      if (newStatus === "rejected") {
-        if (String(booking.sellerId) !== String(userId)) throw new ForbiddenError();
+      const isCustomer = String(booking.customerId) === String(userId);
+      const isSeller = String(booking.sellerId) === String(userId);
+
+      if (newStatus === "rejected" || newStatus === "active") {
+        if (!isSeller) throw new ForbiddenError();
       } else if (newStatus === "cancelled") {
-        if (
-          String(booking.customerId) !== String(userId) &&
-          String(booking.sellerId) !== String(userId)
-        ) {
-          throw new ForbiddenError();
-        }
+        if (!isCustomer && !isSeller) throw new ForbiddenError();
       } else if (newStatus === "return_requested") {
-        if (String(booking.customerId) !== String(userId)) throw new ForbiddenError();
+        if (!isCustomer) throw new ForbiddenError();
       } else if (newStatus === "returned" || newStatus === "completed") {
-        if (String(booking.sellerId) !== String(userId)) throw new ForbiddenError();
+        if (!isSeller) throw new ForbiddenError();
       }
     }
 

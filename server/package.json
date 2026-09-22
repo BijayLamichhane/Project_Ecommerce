@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "db:seed": "node src/db/seed.js",
     "test": "vitest run",
     "test:watch": "vitest"
   },

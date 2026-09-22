@@ -1,6 +1,7 @@
 import { adminRepository } from "./admin.repository.js";
 import { productRepository } from "../products/product.repository.js";
 import { NotFoundError, ConflictError, ValidationError } from "../../middleware/errorHandler.js";
+import { getRedisClient, CacheKeys } from "../../config/redis.js";
 
 const OPEN_SELLER_BOOKING_MESSAGE = "This seller has unresolved pending, confirmed, active, or return-requested rentals";
 
@@ -15,6 +16,34 @@ export class AdminService {
 
   async getSellers() {
     return adminRepository.getAllSellers();
+  }
+
+  async getProducts(params) {
+    return adminRepository.getProducts(params);
+  }
+
+  async setProductFeatured(adminId, productId, isFeatured) {
+    const product = await productRepository.findById(productId);
+    if (!product) throw new NotFoundError("Product");
+
+    if (isFeatured && product.status !== "active") {
+      throw new ValidationError("Only active products can be featured");
+    }
+
+    await productRepository.update(productId, { isFeatured });
+    await this.invalidateProductCache(productId);
+
+    await adminRepository.logAdminAction({
+      adminId,
+      actionType: isFeatured ? "feature_product" : "unfeature_product",
+      targetProductId: productId,
+    });
+
+    return {
+      id: productId,
+      status: product.status,
+      isFeatured,
+    };
   }
 
   async suspendUser(adminId, userId, reason) {
@@ -106,13 +135,31 @@ export class AdminService {
   async toggleProductStatus(adminId, productId, status) {
     const product = await productRepository.findById(productId);
     if (!product) throw new NotFoundError("Product");
-    await productRepository.update(productId, { status });
+    const update = { status };
+    if (status !== "active") {
+      update.isFeatured = false;
+    }
+
+    await productRepository.update(productId, update);
+    await this.invalidateProductCache(productId);
+
     await adminRepository.logAdminAction({
       adminId,
-      actionType: status === "suspended" ? "disable_product" : "enable_product",
+      actionType: status === "active" ? "enable_product" : "disable_product",
       targetProductId: productId,
     });
-    return { id: productId, status };
+    return { id: productId, status, isFeatured: status === "active" ? product.isFeatured : false };
+  }
+
+  async invalidateProductCache(productId) {
+    const redis = getRedisClient();
+    if (!redis) return;
+
+    try {
+      await redis.del(CacheKeys.product(productId));
+    } catch {
+      // Cache failures should not block administrative product updates.
+    }
   }
 
   async getReports() {

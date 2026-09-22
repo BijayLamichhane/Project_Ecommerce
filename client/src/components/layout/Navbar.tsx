@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../lib/axios";
+import { formatCurrency } from "../../lib/utils";
 import type { Booking } from "../../types";
 import { Search, ShoppingCart, Heart, User, PlusCircle, ShieldCheck, Menu, X, Layers, LogOut, Package, CreditCard } from "lucide-react";
 
