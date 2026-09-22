@@ -202,6 +202,10 @@ export function BookingDetailPage() {
 
   const userId = getEntityId(user);
   const isCustomer = String(userId) === String(booking.customerId);
+  const isSeller = String(userId) === String(booking.sellerId);
+  const canRaiseDispute =
+    (isCustomer || isSeller) &&
+    ["active", "return_requested", "returned"].includes(booking.status);
   const firstItem = booking.bookingItems?.[0];
   const product = firstItem?.product;
   const bookingId = getEntityId(booking);
