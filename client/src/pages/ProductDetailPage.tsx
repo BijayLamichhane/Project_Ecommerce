@@ -48,6 +48,10 @@ export function ProductDetailPage() {
   const [reviewSuccess, setReviewSuccess] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("Inaccurate or misleading listing");
+  const [reportDetails, setReportDetails] = useState("");
+  const [reportSuccess, setReportSuccess] = useState(false);
 
   // 1. Fetch Product
   const { data: product, isLoading: loadingProduct } = useQuery({
