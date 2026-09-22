@@ -10,7 +10,7 @@ const paymentSchema = new mongoose.Schema(
     currency: { type: String, default: "NPR" },
     status: {
       type: String,
-      enum: ["pending", "completed", "failed", "refunded"],
+      enum: ["pending", "completed", "failed", "refunded", "cancelled"],
       default: "pending",
     },
     paymentMethod: { type: String, enum: ["esewa", "card"], default: "esewa" },
