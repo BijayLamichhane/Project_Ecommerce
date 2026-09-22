@@ -10,14 +10,14 @@ const targetField = {
 };
 
 export class ReportRepository {
-  async targetExists(targetType, targetId) {
+  async getTarget(targetType, targetId) {
     const models = {
       product: Product,
       user: User,
       review: Review,
     };
     const model = models[targetType];
-    return Boolean(await model.findById(targetId).select("_id").lean());
+    return model.findById(targetId).lean();
   }
 
   async findPendingDuplicate(reporterId, targetType, targetId) {
