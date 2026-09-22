@@ -220,6 +220,11 @@ export function ProductDetailPage() {
   const images = product.images?.length > 0 ? product.images : [{ id: "1", url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800", isPrimary: true, sortOrder: 0, productId: product.id }];
   const currentImage = images[selectedImageIndex]?.url || images[0]?.url;
   const deposit = product.pricing?.securityDeposit ? parseFloat(product.pricing.securityDeposit) : 0;
+  const hasReviewedProduct = Boolean(
+    isAuthenticated &&
+    user &&
+    reviews?.some((review) => String(review.reviewerId) === String(user.id ?? user._id))
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
@@ -444,13 +449,19 @@ export function ProductDetailPage() {
               <Star className="w-4 h-4 fill-[#C17817] text-[#C17817]" />
               <span>{parseFloat(product.averageRating || "0").toFixed(1)} / 5.0</span>
             </div>
-            {isAuthenticated && user?.role !== "seller" && user?.role !== "admin" && (
-              <button
-                onClick={() => setShowReviewForm(!showReviewForm)}
-                className="px-4 py-2 rounded-md bg-[#C17817] hover:bg-[#211E1B] text-white text-xs font-bold transition"
-              >
-                {showReviewForm ? "Cancel" : "Write a Review"}
-              </button>
+            {isAuthenticated && user?.role !== "seller" && user?.role !== "admin" && reviews && (
+              hasReviewedProduct ? (
+                <span className="px-4 py-2 rounded-md bg-[#E8E1D5] border border-[#C8C0B3] text-[#6F685F] text-xs font-bold">
+                  You already reviewed this product
+                </span>
+              ) : (
+                <button
+                  onClick={() => setShowReviewForm(!showReviewForm)}
+                  className="px-4 py-2 rounded-md bg-[#C17817] hover:bg-[#211E1B] text-white text-xs font-bold transition"
+                >
+                  {showReviewForm ? "Cancel" : "Write a Review"}
+                </button>
+              )
             )}
           </div>
         </div>
