@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const productFindById = vi.fn();
 const reviewFindByProductAndReviewer = vi.fn();
 const reviewCreate = vi.fn();
+const reviewUpdate = vi.fn();
+const reviewFindById = vi.fn();
 const bookingFindById = vi.fn();
 const updateProductRatingStats = vi.fn();
 const updateSellerRatingStats = vi.fn();
@@ -11,7 +13,8 @@ vi.mock("./review.repository.js", () => ({
   reviewRepository: {
     findByProductAndReviewer: reviewFindByProductAndReviewer,
     create: reviewCreate,
-    findById: vi.fn(),
+    update: reviewUpdate,
+    findById: reviewFindById,
     updateReply: vi.fn(),
     updateProductRatingStats,
     updateSellerRatingStats,
@@ -91,6 +94,63 @@ describe("ReviewService", () => {
 
     expect(bookingFindById).not.toHaveBeenCalled();
     expect(reviewCreate).not.toHaveBeenCalled();
+  });
+
+  it("allows the review owner to update their existing product review", async () => {
+    reviewFindById.mockResolvedValue({
+      id: "review-1",
+      productId: "product-1",
+      reviewerId: "customer-1",
+      sellerId: "seller-1",
+    });
+    reviewUpdate.mockResolvedValue({
+      id: "review-1",
+      productId: "product-1",
+      reviewerId: "customer-1",
+      rating: 4,
+      title: "Updated review",
+      comment: "Updated rental experience.",
+    });
+
+    const service = new ReviewService();
+
+    const result = await service.updateReview("customer-1", "review-1", {
+      rating: 4,
+      title: "Updated review",
+      comment: "Updated rental experience.",
+    });
+
+    expect(result.rating).toBe(4);
+    expect(reviewUpdate).toHaveBeenCalledWith("review-1", {
+      rating: 4,
+      title: "Updated review",
+      comment: "Updated rental experience.",
+    });
+    expect(updateProductRatingStats).toHaveBeenCalledWith("product-1");
+    expect(updateSellerRatingStats).toHaveBeenCalledWith("seller-1");
+  });
+
+  it("blocks a user from updating another user's review", async () => {
+    reviewFindById.mockResolvedValue({
+      id: "review-1",
+      productId: "product-1",
+      reviewerId: "customer-2",
+      sellerId: "seller-1",
+    });
+
+    const service = new ReviewService();
+
+    await expect(
+      service.updateReview("customer-1", "review-1", {
+        rating: 4,
+        comment: "Unauthorized update.",
+      })
+    ).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      statusCode: 403,
+    });
+
+    expect(reviewUpdate).not.toHaveBeenCalled();
   });
 
   it("converts a database unique-index race into a conflict response", async () => {

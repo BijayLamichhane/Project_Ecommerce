@@ -50,7 +50,7 @@ Customers can hold selected rental details in a cart before creating a booking. 
 
 ### Reviews
 
-A customer may review a product only once. The service performs an application-level duplicate check, while MongoDB enforces a unique `(productId, reviewerId)` compound index so concurrent requests cannot create a second review for the same customer and product. The product detail page also hides the review form after the current customer already has a review on that product.
+A customer may have only one review for a product. The service performs an application-level duplicate check, while MongoDB enforces a unique `(productId, reviewerId)` compound index so concurrent requests cannot create a second review for the same customer and product. The existing review remains editable through the product detail page or the completed/returned booking detail page. Editing is restricted to the review owner and updates the existing record rather than creating another review.
 
 ### Booking and availability
 
@@ -68,6 +68,10 @@ Expired, rejected, and cancelled bookings release inventory.
 A BookingInventory ledger stores reservations by product and UTC day. Reservation creation uses an atomic MongoDB update so two concurrent requests cannot reserve beyond the product quantity.
 
 The server performs startup reconciliation and periodically expires stale pending bookings. Individual booking reads also self-heal expired pending records.
+
+### Payment access
+
+A pending booking can be paid directly from the customer dashboard and from the navbar. The dashboard shows a Payment Required section with a Pay Now link for each active pending hold. The desktop navbar shows a payment badge and dropdown with direct links to each pending booking, while mobile navigation exposes the payment due count and a direct Pay Now link. This keeps payment accessible even after the customer has left the original product page and avoids requiring a trip through booking history.
 
 ### Payment flow
 

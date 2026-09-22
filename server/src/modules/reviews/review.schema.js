@@ -10,6 +10,12 @@ export const createReviewSchema = z.object({
   sellerRating: z.number().int().min(1).max(5).optional(),
 });
 
+export const updateReviewSchema = z.object({
+  rating: z.number().int().min(1).max(5),
+  title: z.string().max(255).optional(),
+  comment: z.string().min(5, "Comment must be at least 5 characters").max(2000),
+});
+
 export const replyReviewSchema = z.object({
   response: z.string().min(3).max(1000),
 });

@@ -3,19 +3,23 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../lib/axios";
-import { Search, ShoppingCart, Heart, User, PlusCircle, ShieldCheck, Menu, X, Layers, LogOut, Package } from "lucide-react";
+import type { Booking } from "../../types";
+import { Search, ShoppingCart, Heart, User, PlusCircle, ShieldCheck, Menu, X, Layers, LogOut, Package, CreditCard } from "lucide-react";
 
 export function Navbar() {
   const { user, isAuthenticated, isSeller, isAdmin, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isPaymentMenuOpen, setIsPaymentMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const paymentMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setIsUserMenuOpen(false);
+      if (paymentMenuRef.current && !paymentMenuRef.current.contains(e.target as Node)) setIsPaymentMenuOpen(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -33,8 +37,16 @@ export function Navbar() {
     enabled: isAuthenticated,
   });
 
+  const { data: pendingBookings = [] } = useQuery<Booking[]>({
+    queryKey: ["pending-bookings-nav"],
+    queryFn: async () => (await api.get("/bookings/my-bookings?status=pending")).data.data || [],
+    enabled: isAuthenticated && !isSeller && !isAdmin,
+    staleTime: 30_000,
+  });
+
   const cartItemCount = cartData?.items?.length ?? 0;
   const wishlistItemCount = wishlistData?.length ?? 0;
+  const pendingPaymentCount = pendingBookings.length;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,6 +79,49 @@ export function Navbar() {
                 {isAdmin && <Link to="/admin" className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#F1E0C8] text-[#211E1B] border border-[#C17817]/40"><ShieldCheck className="w-4 h-4" />Admin</Link>}
                 <Link to="/wishlist" className="relative p-2 text-[#514B44] hover:text-[#C17817] transition rounded-full hover:bg-[#E8E1D5]" title="Wishlist"><Heart className="w-5 h-5" />{wishlistItemCount > 0 && <span className="absolute top-1 right-1 w-4 h-4 bg-[#A23B2E] text-white text-[10px] font-bold rounded-full flex items-center justify-center">{wishlistItemCount}</span>}</Link>
                 <Link to="/cart" className="relative p-2 text-[#514B44] hover:text-[#C17817] transition rounded-full hover:bg-[#E8E1D5]" title="Rental Cart"><ShoppingCart className="w-5 h-5" />{cartItemCount > 0 && <span className="absolute top-1 right-1 w-4 h-4 bg-[#C17817] text-white text-[10px] font-bold rounded-full flex items-center justify-center">{cartItemCount}</span>}</Link>
+                {!isSeller && !isAdmin && pendingPaymentCount > 0 && (
+                  <div className="relative" ref={paymentMenuRef}>
+                    <button
+                      onClick={() => setIsPaymentMenuOpen((value) => !value)}
+                      className="relative p-2 text-[#C17817] hover:bg-[#F1E0C8] rounded-full transition"
+                      title="Payment due"
+                      aria-label={`Payment due: ${pendingPaymentCount}`}
+                    >
+                      <CreditCard className="w-5 h-5" />
+                      <span className="absolute top-1 right-1 min-w-4 h-4 px-1 bg-[#A23B2E] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                        {pendingPaymentCount}
+                      </span>
+                    </button>
+                    {isPaymentMenuOpen && (
+                      <div className="absolute right-0 top-full mt-2 w-80 bg-[#F7F3EA] border border-[#B8B0A3] rounded-xl py-2 z-50 shadow-lg">
+                        <div className="px-4 py-2 border-b border-[#DDD5C7]">
+                          <p className="text-xs font-bold text-[#211E1B]">Payment Due</p>
+                          <p className="text-[11px] text-[#8B8377] mt-0.5">Open a booking directly to complete payment.</p>
+                        </div>
+                        <div className="max-h-64 overflow-y-auto">
+                          {pendingBookings.map((booking) => {
+                            const bookingId = booking.id || booking._id;
+                            const product = booking.bookingItems?.[0]?.product;
+                            return (
+                              <Link
+                                key={bookingId}
+                                to={`/bookings/${bookingId}`}
+                                onClick={() => setIsPaymentMenuOpen(false)}
+                                className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-[#E8E1D5] transition"
+                              >
+                                <div className="min-w-0">
+                                  <p className="text-xs font-bold text-[#211E1B] truncate">{product?.name || "Rental booking"}</p>
+                                  <p className="text-[11px] text-[#8B8377] mt-0.5">Amount due: {formatCurrency(booking.totalAmount)}</p>
+                                </div>
+                                <span className="text-[11px] font-extrabold text-[#C17817] whitespace-nowrap">Pay Now</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="relative" ref={userMenuRef}>
                   <button onClick={() => setIsUserMenuOpen((v) => !v)} className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full border border-[#B8B0A3] bg-[#F7F3EA]/70 hover:border-[#C17817] transition">
                     <div className="w-7 h-7 rounded-full bg-[#E8E1D5] overflow-hidden">{user?.avatarUrl ? <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" /> : <User className="w-4 h-4 m-1.5 text-[#8B8377]" />}</div>
@@ -92,6 +147,7 @@ export function Navbar() {
           <Link to="/products" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-sm font-medium text-[#514B44] hover:bg-[#E8E1D5]">Browse All Gear</Link>
           {isAuthenticated ? <>
             <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-sm font-medium text-[#514B44] hover:bg-[#E8E1D5]">My Rentals & Bookings</Link>
+            {!isSeller && !isAdmin && pendingPaymentCount > 0 && <Link to={`/bookings/${pendingBookings[0].id || pendingBookings[0]._id}`} onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-sm font-semibold text-[#C17817] bg-[#F1E0C8]">Payment Due ({pendingPaymentCount}) · Pay Now</Link>}
             <Link to="/wishlist" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-sm font-medium text-[#514B44] hover:bg-[#E8E1D5]">Saved Wishlist ({wishlistItemCount})</Link>
             <Link to="/messages" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-sm font-medium text-[#514B44] hover:bg-[#E8E1D5]">Messages</Link>
             {isSeller ? <Link to="/seller" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-sm font-medium text-[#211E1B] bg-[#E9D5B8]">Seller Dashboard</Link> : <Link to="/become-seller" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-sm font-medium text-[#514B44] hover:bg-[#E8E1D5]">Start Renting Out Your Gear</Link>}

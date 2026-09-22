@@ -2,7 +2,7 @@ import { Router } from "express";
 import { reviewController } from "./review.controller.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { validateParams, validateBody } from "../../middleware/validate.js";
-import { createReviewSchema, replyReviewSchema } from "./review.schema.js";
+import { createReviewSchema, updateReviewSchema, replyReviewSchema } from "./review.schema.js";
 import { z } from "zod";
 
 const router = Router();
@@ -27,6 +27,14 @@ router.post(
   authenticate,
   validateBody(createReviewSchema),
   (req, res, next) => reviewController.createReview(req, res, next)
+);
+
+router.patch(
+  "/:reviewId",
+  authenticate,
+  validateParams(reviewIdSchema),
+  validateBody(updateReviewSchema),
+  (req, res, next) => reviewController.updateReview(req, res, next)
 );
 
 router.post(
