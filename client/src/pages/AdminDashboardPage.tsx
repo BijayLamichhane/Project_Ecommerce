@@ -72,7 +72,7 @@ export function AdminDashboardPage() {
     queryKey: ["admin-users"],
     queryFn: async () => {
       const { data } = await api.get("/admin/users");
-      return (data.data || []).map((user) => ({ ...user, id: getEntityId(user) }));
+      return (data.data as User[] || []).map((user: User) => ({ ...user, id: getEntityId(user) }));
     },
     enabled: activeTab === "users",
   });
@@ -81,7 +81,7 @@ export function AdminDashboardPage() {
     queryKey: ["admin-sellers"],
     queryFn: async () => {
       const { data } = await api.get("/admin/sellers");
-      return (data.data || []).map((seller) => ({ ...seller, id: getEntityId(seller) }));
+      return (data.data as User[] || []).map((seller: User) => ({ ...seller, id: getEntityId(seller) }));
     },
     enabled: activeTab === "sellers",
   });
@@ -260,12 +260,13 @@ export function AdminDashboardPage() {
               <div className="divide-y divide-[#E6DED1] text-xs">
                 {dashboardData.recentActivity.map((act, index) => {
                   const action = act?.action ?? act?.actionType;
+                  const actorName = typeof act?.userId === "object" ? act.userId.name : undefined;
                   const key = getEntityId(act) || `activity-${index}`;
                   return (
                     <div key={key} className="py-2.5 flex items-center justify-between">
                       <div>
                         <span className="font-bold text-[#211E1B] capitalize">{getActionLabel(action)}</span>
-                        <span className="text-[#8B8377] ml-2">by {act?.admin?.name || act?.userId?.name || "Admin"}</span>
+                        <span className="text-[#8B8377] ml-2">by {act?.admin?.name || actorName || "Admin"}</span>
                       </div>
                       <span className="text-[10px] text-[#A39A8D]">{act?.createdAt ? formatDate(act.createdAt, "MMM d, h:mm a") : "—"}</span>
                     </div>
