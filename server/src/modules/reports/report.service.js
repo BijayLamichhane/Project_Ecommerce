@@ -1,5 +1,6 @@
 import { reportRepository } from "./report.repository.js";
 import { ConflictError, NotFoundError, ValidationError } from "../../middleware/errorHandler.js";
+import { notificationService } from "../notifications/notification.service.js";
 
 const targetField = {
   product: "reportedProductId",
@@ -43,13 +44,30 @@ export class ReportService {
       throw new ConflictError("You already have an open report for this item");
     }
 
-    return reportRepository.create({
+    const report = await reportRepository.create({
       reporterId,
       targetType: input.targetType,
       [targetField[input.targetType]]: input.targetId,
       reason: input.reason,
       details: input.details,
     });
+
+    await Promise.all([
+      notificationService.notifyUser(reporterId, {
+        type: "report_submitted",
+        title: "Report submitted",
+        message: "Your report has been submitted and is now in the moderation queue.",
+        actionUrl: "/reports",
+      }),
+      notificationService.notifyAdmins({
+        type: "report_submitted",
+        title: "New report requires review",
+        message: "A new marketplace report has been submitted for moderation.",
+        actionUrl: "/admin?section=reports",
+      }),
+    ]);
+
+    return report;
   }
 }
 
