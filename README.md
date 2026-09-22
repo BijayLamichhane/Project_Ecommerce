@@ -12,7 +12,8 @@ RentHub is a full-stack web application for renting physical products such as ca
 - **Security Deposit Architecture**: Refundable security deposits tracked separately from rental revenue and released upon verified return.
 - **Dynamic Tiered Pricing**: Hourly, daily, weekly, and monthly pricing calculated on the backend.
 - **Recommendation System**: Personalized customer recommendations use existing wishlist, rental history, category, brand, city, rating, and popularity signals, with a popular-products fallback for new customers. Product detail pages also show similar gear.
-- **Real-Time Communication**: Socket.IO integration for customer-seller messaging, typing indicators, and instant notifications.
+- **Real-Time Communication**: Socket.IO integration for customer-seller messaging, typing indicators, and centralized real-time notifications.
+- **Notification Center**: Persistent, unread-aware notifications cover booking lifecycle events, payments and refund status, disputes, reports and moderation, seller applications, account moderation, product governance, wishlist availability, messages, and review activity. New notifications are pushed immediately over Socket.IO and remain available in the notification history.
 - **Role-Based Access Control**: RBAC for `customer`, `seller`, and `admin` roles.
 - **Redis Caching & Rate Limiting**: Optional Redis support for product/category caching and rate limiting; booking concurrency is enforced by the MongoDB inventory ledger.
 - **Server-Verified Payments**: eSewa checkout is verified server-side before a booking is confirmed.
