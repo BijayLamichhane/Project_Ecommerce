@@ -193,21 +193,17 @@ export class AdminService {
   }
 
   async resolveDispute(adminId, bookingId, action, notes) {
-    const booking = await adminRepository.getDisputes().then((items) =>
-      items.find((item) => String(item.id || item._id) === String(bookingId))
+    const booking = await bookingRepository.findById(bookingId);
+    if (!booking || booking.status !== "disputed") {
+      throw new NotFoundError("Dispute");
+    }
+
+    const updated = await bookingRepository.resolveDispute(
+      bookingId,
+      adminId,
+      action,
+      notes
     );
-
-    if (!booking) throw new NotFoundError("Dispute");
-
-    const updated = await (async () => {
-      const result = await import("../bookings/booking.repository.js");
-      return result.bookingRepository.resolveDispute(
-        bookingId,
-        adminId,
-        action,
-        notes
-      );
-    })();
 
     if (!updated) throw new ConflictError("Dispute is no longer open");
 
