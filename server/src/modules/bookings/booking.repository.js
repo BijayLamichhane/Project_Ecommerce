@@ -1,7 +1,13 @@
 import { Booking } from "../../models/Booking.js";
 import { bookingInventoryRepository } from "./booking.inventory.repository.js";
 
-const BLOCKING_STATUSES = ["pending", "confirmed", "active", "return_requested"];
+const BLOCKING_STATUSES = [
+  "pending",
+  "confirmed",
+  "active",
+  "return_requested",
+  "disputed",
+];
 
 function populateBooking(query) {
   return query
