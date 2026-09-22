@@ -29,6 +29,24 @@ describe("Booking availability repository", () => {
     vi.clearAllMocks();
   });
 
+
+  it("allows a booking to start on the previous booking's return date", () => {
+    const existingItem = {
+      productId: "product-1",
+      startDate: new Date("2026-09-22T00:00:00.000Z"),
+      endDate: new Date("2026-09-24T00:00:00.000Z"),
+    };
+
+    expect(
+      overlap(
+        existingItem,
+        "product-1",
+        new Date("2026-09-24T00:00:00.000Z"),
+        new Date("2026-09-26T00:00:00.000Z")
+      )
+    ).toBe(false);
+  });
+
   it("does not treat an expired pending booking as blocking availability", async () => {
     const now = Date.now();
     const startDate = new Date(now + 2 * 24 * 60 * 60 * 1000);
