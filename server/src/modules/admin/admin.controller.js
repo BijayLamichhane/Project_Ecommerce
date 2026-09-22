@@ -124,6 +124,40 @@ export class AdminController {
       next(error);
     }
   }
+
+  async updateReportStatus(req, res, next) {
+    try {
+      const report = await adminService.updateReportStatus(
+        req.user.id,
+        req.params.reportId,
+        req.body.status,
+        req.body.notes
+      );
+      sendSuccess(res, report, `Report marked as ${req.body.status}`);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async resolveDispute(req, res, next) {
+    try {
+      const dispute = await adminService.resolveDispute(
+        req.user.id,
+        req.params.bookingId,
+        req.body.action,
+        req.body.notes
+      );
+      sendSuccess(
+        res,
+        dispute,
+        req.body.action === "resolve"
+          ? "Dispute resolved and booking completed"
+          : "Dispute dismissed and booking restored"
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const adminController = new AdminController();
