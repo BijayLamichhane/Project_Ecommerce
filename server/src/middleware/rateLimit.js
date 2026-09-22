@@ -28,7 +28,12 @@ export const apiRateLimiter = rateLimit({
   store: createStore("renthub:rate-limit:api:"),
   skip: (req) => {
     const path = req.path || "";
+    const isSessionBootstrap =
+      req.method === "GET" &&
+      ["/users/me", "/api/users/me", "/api/v1/users/me"].includes(path);
+
     return (
+      isSessionBootstrap ||
       path === "/health" ||
       path === "/favicon.ico" ||
       path.startsWith("/uploads") ||
