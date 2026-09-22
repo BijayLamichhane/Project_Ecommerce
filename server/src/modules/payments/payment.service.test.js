@@ -172,6 +172,26 @@ describe("PaymentService", () => {
     expect(result.payment.status).toBe("cancelled");
   });
 
+  it("does not cancel an already completed payment", async () => {
+    bookingFindById.mockResolvedValue({
+      ...booking,
+      status: "pending",
+    });
+    paymentFindByBookingId.mockResolvedValue({
+      ...payment,
+      status: "completed",
+    });
+
+    const service = new PaymentService();
+
+    await expect(
+      service.cancelPayment("customer-1", "booking-1")
+    ).rejects.toThrow("already been completed");
+
+    expect(bookingServiceCancelPending).not.toHaveBeenCalled();
+    expect(paymentCancelPending).not.toHaveBeenCalled();
+  });
+
   it("resurrects an expired booking when the dates can still be reserved", async () => {
     const service = new PaymentService();
     const encoded = signedResponse({
