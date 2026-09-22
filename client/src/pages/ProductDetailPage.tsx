@@ -22,6 +22,8 @@ import {
   ShoppingCart,
   Zap,
   Info,
+  Flag,
+  X,
 } from "lucide-react";
 
 export function ProductDetailPage() {
