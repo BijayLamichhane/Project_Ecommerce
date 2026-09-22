@@ -171,6 +171,28 @@ export function ProductDetailPage() {
     },
   });
 
+  const reportMutation = useMutation({
+    mutationFn: async () => {
+      if (!id) throw new Error("Product could not be found.");
+      const details = reportDetails.trim();
+      await api.post("/reports", {
+        targetType: "product",
+        targetId: id,
+        reason: reportReason,
+        details: details || undefined,
+      });
+    },
+    onSuccess: () => {
+      setIsReportOpen(false);
+      setReportDetails("");
+      setReportSuccess(true);
+      window.setTimeout(() => setReportSuccess(false), 2500);
+    },
+    onError: (err: unknown) => {
+      setBookingError(getErrorMessage(err, "Failed to submit the report."));
+    },
+  });
+
   // Add to Cart Mutation
   const addToCartMutation = useMutation({
     mutationFn: async () => {
