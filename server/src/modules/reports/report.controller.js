@@ -1,5 +1,5 @@
 import { reportService } from "./report.service.js";
-import { sendCreated } from "../../utils/response.js";
+import { sendCreated, sendSuccess } from "../../utils/response.js";
 
 export class ReportController {
   async getMine(req, res, next) {
