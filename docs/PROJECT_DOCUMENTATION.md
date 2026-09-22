@@ -54,6 +54,10 @@ A customer may have only one review for a product. The service performs an appli
 
 ### Booking and availability
 
+Product availability is date-based rather than a permanent product-level unavailable flag. A product remains listed while it is rented, but its booked dates are blocked in the rental calendar. Customers can select a future month and reserve the same product for dates after the existing rental ends, subject to inventory quantity and other booking rules.
+
+The product detail calendar loads availability for the month currently being viewed, so future booked ranges remain visible when customers advance the calendar. The frontend uses the same end-exclusive reservation rule as the inventory ledger: a booking blocks dates from its start date up to, but not including, its return date. This allows another rental to start on the previous rental's return date when the inventory quantity permits it.
+
 New bookings are created as pending payment holds. A pending hold expires after PENDING_BOOKING_TTL_MINUTES, which defaults to 20 minutes. Expired holds are retained as booking history rather than deleted.
 
 Availability treats these states as inventory blocking:
