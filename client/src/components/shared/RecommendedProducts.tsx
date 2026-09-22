@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { api } from "../../lib/axios";
@@ -70,13 +71,13 @@ export function RecommendedProducts({
           </div>
           <p className="text-xs text-[#8B8377] mt-1">{subtitle}</p>
         </div>
-        <a
-          href="/products"
+        <Link
+          to="/products"
           className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-[#C17817] hover:text-[#A66314]"
         >
           Explore all
           <ArrowRight className="w-3.5 h-3.5" />
-        </a>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
