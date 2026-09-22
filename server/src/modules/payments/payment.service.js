@@ -474,6 +474,9 @@ export class PaymentService {
         payment.id,
         reason
       );
+      if (!cancelledPayment) {
+        cancelledPayment = await paymentRepository.findByBookingId(bookingId);
+      }
     }
 
     return {
