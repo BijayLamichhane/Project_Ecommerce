@@ -486,9 +486,276 @@ export function AdminDashboardPage() {
 
       {activeTab === "products" && <AdminProductManagement />}
       {activeTab === "disputes" && (
-        <div className="bg-white rounded-md border border-[#C8C0B3] p-6 shadow-sm space-y-4">
-          <h3 className="text-base font-bold text-[#211E1B]">Reports & Disputes</h3>
-          {(disputesList || []).length === 0 ? <p className="text-sm text-[#8B8377]">No disputes found.</p> : <div className="space-y-3">{(disputesList || []).map((dispute, index) => <div key={getEntityId(dispute) || `dispute-${index}`} className="rounded-md border border-[#E6DED1] p-4"><p className="text-sm font-bold text-[#211E1B]">Booking {getEntityId(dispute)}</p><p className="text-xs text-[#8B8377] mt-1">{dispute.customer?.name || "Customer"} · {dispute.status}</p></div>)}</div>}
+        <div className="space-y-6">
+          <div className="bg-white rounded-md border border-[#C8C0B3] p-6 shadow-sm">
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Gavel className="w-5 h-5 text-[#C17817]" />
+                  <h3 className="text-base font-bold text-[#211E1B]">Reports & Disputes</h3>
+                </div>
+                <p className="text-[11px] text-[#8B8377] mt-1">
+                  Review marketplace reports and rental disputes, record the decision, and keep the booking lifecycle consistent.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider">
+                <span className="px-2.5 py-1 rounded-md bg-[#F1ECE1] text-[#C17817]">Open Reports {openReportsCount}</span>
+                <span className="px-2.5 py-1 rounded-md bg-[#FBE9E5] text-[#A23B2E]">Open Disputes {openDisputesCount}</span>
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-5">
+              {([
+                { id: "reports", label: "Reports", count: reportsList?.length || 0 },
+                { id: "disputes", label: "Booking Disputes", count: disputesList?.length || 0 },
+              ] as const).map((mode) => (
+                <button
+                  key={mode.id}
+                  type="button"
+                  onClick={() => setModerationMode(mode.id)}
+                  className={`px-4 py-2 rounded-md text-xs font-bold transition ${
+                    moderationMode === mode.id
+                      ? "bg-[#211E1B] text-white"
+                      : "bg-[#F1ECE1] text-[#6F685F] hover:bg-[#E8E1D5]"
+                  }`}
+                >
+                  {mode.label} ({mode.count})
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {moderationMode === "reports" ? (
+            <div className="bg-white rounded-md border border-[#C8C0B3] p-6 shadow-sm space-y-5">
+              <div className="flex flex-col md:flex-row gap-3">
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#A39A8D]" />
+                  <input
+                    value={reportSearch}
+                    onChange={(e) => setReportSearch(e.target.value)}
+                    placeholder="Search reason, reporter, listing, or report details"
+                    className="w-full pl-9 pr-3 py-2.5 rounded-md border border-[#C8C0B3] bg-white text-sm outline-none focus:border-[#C17817]"
+                  />
+                </div>
+                <select
+                  value={reportStatusFilter}
+                  onChange={(e) => setReportStatusFilter(e.target.value as "all" | Report["status"])}
+                  className="md:w-44 px-3 py-2.5 rounded-md border border-[#C8C0B3] bg-white text-xs font-semibold text-[#514B44]"
+                >
+                  <option value="all">All statuses</option>
+                  <option value="pending">Pending</option>
+                  <option value="reviewed">Reviewed</option>
+                  <option value="resolved">Resolved</option>
+                  <option value="dismissed">Dismissed</option>
+                </select>
+              </div>
+
+              <div className="text-[11px] text-[#8B8377]">
+                Showing {filteredReports.length} of {reportsList?.length || 0} reports
+              </div>
+
+              {filteredReports.length ? (
+                <div className="space-y-3">
+                  {filteredReports.map((report, index) => {
+                    const reportId = getEntityId(report);
+                    const reporter =
+                      typeof report.reporterId === "object"
+                        ? report.reporterId?.name || report.reporterId?.email
+                        : "Reporter";
+                    const target =
+                      report.targetType === "product"
+                        ? report.reportedProductId?.name || "Product"
+                        : report.targetType === "user"
+                          ? report.reportedUserId?.name || "User"
+                          : report.reportedReviewId?.title || "Review";
+                    const rowKey = reportId || `report-${index}`;
+
+                    return (
+                      <div key={rowKey} className="rounded-md border border-[#E6DED1] p-4 space-y-3">
+                        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-bold text-[#211E1B]">{target}</span>
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#F1ECE1] text-[#C17817]">
+                                {report.targetType}
+                              </span>
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                report.status === "pending"
+                                  ? "bg-[#F1ECE1] text-[#C17817]"
+                                  : report.status === "reviewed"
+                                    ? "bg-[#E8E1D5] text-[#514B44]"
+                                    : report.status === "resolved"
+                                      ? "bg-[#E7EFE2] text-[#4B5D3A]"
+                                      : "bg-[#FBE9E5] text-[#A23B2E]"
+                              }`}>
+                                {report.status}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-[#8B8377] mt-1">
+                              Reported by {reporter || "Reporter"} · {formatDate(report.createdAt, "MMM d, yyyy h:mm a")}
+                            </p>
+                          </div>
+
+                          {["pending", "reviewed"].includes(report.status) && reportId && (
+                            <div className="flex gap-2 shrink-0">
+                              {report.status === "pending" && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setModerationNotes("");
+                                    setModerationModal({ kind: "report", item: report, status: "reviewed" });
+                                  }}
+                                  className="px-3 py-1.5 rounded-md bg-[#F1ECE1] text-[#C17817] hover:bg-[#E8E1D5] text-[11px] font-bold"
+                                >
+                                  Mark Reviewed
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setModerationNotes("");
+                                  setModerationModal({ kind: "report", item: report, status: "resolved" });
+                                }}
+                                className="px-3 py-1.5 rounded-md bg-[#E7EFE2] text-[#4B5D3A] hover:bg-[#DCE7D4] text-[11px] font-bold"
+                              >
+                                Resolve
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setModerationNotes("");
+                                  setModerationModal({ kind: "report", item: report, status: "dismissed" });
+                                }}
+                                className="px-3 py-1.5 rounded-md bg-[#FBE9E5] text-[#A23B2E] hover:bg-[#F3D8D2] text-[11px] font-bold"
+                              >
+                                Dismiss
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                          <div className="rounded-md bg-[#F7F3EA] border border-[#E6DED1] p-3">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A39A8D]">Reason</p>
+                            <p className="text-xs text-[#514B44] mt-1">{report.reason}</p>
+                          </div>
+                          <div className="rounded-md bg-[#F7F3EA] border border-[#E6DED1] p-3">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A39A8D]">Details</p>
+                            <p className="text-xs text-[#514B44] mt-1">{report.details || "No additional details provided."}</p>
+                          </div>
+                        </div>
+
+                        {report.resolutionNotes && (
+                          <div className="rounded-md border border-[#C8C0B3] p-3">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A39A8D]">Resolution</p>
+                            <p className="text-xs text-[#514B44] mt-1">{report.resolutionNotes}</p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="py-10 text-center text-xs text-[#A39A8D]">No reports match the current filters.</div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-white rounded-md border border-[#C8C0B3] p-6 shadow-sm space-y-5">
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#A39A8D]" />
+                <input
+                  value={disputeSearch}
+                  onChange={(e) => setDisputeSearch(e.target.value)}
+                  placeholder="Search booking, customer, seller, product, or dispute reason"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-md border border-[#C8C0B3] bg-white text-sm outline-none focus:border-[#C17817]"
+                />
+              </div>
+
+              <div className="text-[11px] text-[#8B8377]">
+                Showing {filteredDisputes.length} of {disputesList?.length || 0} open disputes
+              </div>
+
+              {filteredDisputes.length ? (
+                <div className="space-y-3">
+                  {filteredDisputes.map((dispute, index) => {
+                    const bookingId = getEntityId(dispute);
+                    const productName = dispute.bookingItems?.[0]?.product?.name || "Product unavailable";
+                    const rowKey = bookingId || `dispute-${index}`;
+
+                    return (
+                      <div key={rowKey} className="rounded-md border border-[#E6DED1] p-4 space-y-4">
+                        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-bold text-[#211E1B]">Booking {bookingId}</span>
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#FBE9E5] text-[#A23B2E]">Disputed</span>
+                              {dispute.disputePreviousStatus && (
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#E8E1D5] text-[#514B44]">
+                                  Previous: {dispute.disputePreviousStatus.replace("_", " ")}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-[#8B8377] mt-1">
+                              Raised {formatDate(dispute.disputedAt || dispute.createdAt, "MMM d, yyyy h:mm a")}
+                            </p>
+                          </div>
+                          {bookingId && (
+                            <div className="flex gap-2 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setModerationNotes("");
+                                  setModerationModal({ kind: "dispute", item: dispute, action: "resolve" });
+                                }}
+                                className="px-3 py-1.5 rounded-md bg-[#E7EFE2] text-[#4B5D3A] hover:bg-[#DCE7D4] text-[11px] font-bold"
+                              >
+                                Resolve & Complete
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setModerationNotes("");
+                                  setModerationModal({ kind: "dispute", item: dispute, action: "dismiss" });
+                                }}
+                                className="px-3 py-1.5 rounded-md bg-[#FBE9E5] text-[#A23B2E] hover:bg-[#F3D8D2] text-[11px] font-bold"
+                              >
+                                Dismiss & Restore
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div className="rounded-md bg-[#F7F3EA] border border-[#E6DED1] p-3">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A39A8D]">Customer</p>
+                            <p className="text-xs font-semibold text-[#211E1B] mt-1">{dispute.customer?.name || "Customer"}</p>
+                            <p className="text-[11px] text-[#8B8377]">{dispute.customer?.email || "—"}</p>
+                          </div>
+                          <div className="rounded-md bg-[#F7F3EA] border border-[#E6DED1] p-3">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A39A8D]">Seller</p>
+                            <p className="text-xs font-semibold text-[#211E1B] mt-1">{dispute.seller?.name || "Seller"}</p>
+                            <p className="text-[11px] text-[#8B8377]">{dispute.seller?.email || "—"}</p>
+                          </div>
+                          <div className="rounded-md bg-[#F7F3EA] border border-[#E6DED1] p-3">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A39A8D]">Rental</p>
+                            <p className="text-xs font-semibold text-[#211E1B] mt-1">{productName}</p>
+                            <p className="text-[11px] text-[#8B8377]">{dispute.totalAmount ? formatCurrency(dispute.totalAmount) : "—"} total</p>
+                          </div>
+                        </div>
+
+                        <div className="rounded-md border border-[#C8C0B3] p-3">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-[#A39A8D]">Dispute Reason</p>
+                          <p className="text-xs text-[#514B44] mt-1">{dispute.disputeReason || "No reason recorded."}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="py-10 text-center text-xs text-[#A39A8D]">No open disputes match the current search.</div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
