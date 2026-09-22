@@ -144,7 +144,7 @@ The service compares products using the current product's category, brand, city,
 
 ### Frontend placement
 
-Personalized recommendations are displayed on the customer dashboard and on the home page for authenticated customers.
+Personalized recommendations are displayed on the customer dashboard and on the home page for authenticated customer accounts. The application dashboard route is /dashboard; the separate /admin route is the administration interface and does not contain customer recommendations.
 
 The home page uses the same recommendation component and personalized endpoint, so customers can see relevant equipment without first visiting their dashboard. The recommendation service falls back to popular products when a customer has no useful rental or wishlist history.
 
@@ -247,6 +247,8 @@ Recommendation quality improves naturally as customers use the marketplace becau
 The recommendation algorithm is intentionally deterministic and explainable. It can be extended later with click history, search history, collaborative filtering, or a machine learning model without changing the frontend recommendation component contract.
 
 The current recommendation system should be considered a practical marketplace recommender rather than a machine-learning recommendation engine.
+
+If the recommendation section cannot load, the frontend now displays an explicit unavailable message instead of silently hiding the section. This helps distinguish an empty recommendation result from an authentication or API request problem.
 
 ## 13. Current Project Status
 
