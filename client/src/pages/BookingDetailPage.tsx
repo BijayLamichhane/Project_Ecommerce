@@ -33,6 +33,8 @@ export function BookingDetailPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [remainingHoldMs, setRemainingHoldMs] = useState<number | null>(null);
   const [isCancelPaymentOpen, setIsCancelPaymentOpen] = useState(false);
+  const [isDisputeOpen, setIsDisputeOpen] = useState(false);
+  const [disputeReason, setDisputeReason] = useState("");
 
   const { data: booking, isLoading } = useQuery({ queryKey: ["booking", id], queryFn: async () => { const { data } = await api.get(`/bookings/${id}`); return data.data as Booking; }, enabled: !!id });
   const reviewProductId = booking?.bookingItems?.[0]?.productId || getEntityId(booking?.bookingItems?.[0]?.product);
