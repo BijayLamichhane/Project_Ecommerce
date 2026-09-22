@@ -82,6 +82,16 @@ const bookingSchema = new mongoose.Schema(
     completedAt: { type: Date },
     cancelledAt: { type: Date },
     cancellationReason: { type: String },
+    disputeReason: { type: String },
+    disputeRaisedBy: { type: String, ref: "User" },
+    disputePreviousStatus: {
+      type: String,
+      enum: ["active", "return_requested", "returned"],
+    },
+    disputedAt: { type: Date },
+    disputeResolutionNotes: { type: String },
+    disputeResolvedBy: { type: String, ref: "User" },
+    disputeResolvedAt: { type: Date },
   },
   {
     timestamps: true,
