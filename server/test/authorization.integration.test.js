@@ -8,7 +8,6 @@ const bookingUpdateStatus = vi.fn();
 const productFindById = vi.fn();
 const productUpdate = vi.fn();
 const productDelete = vi.fn();
-const productStatusUpdate = vi.fn();
 const inventoryReleaseBooking = vi.fn();
 const notificationCreate = vi.fn();
 const adminGetProducts = vi.fn();
@@ -72,7 +71,6 @@ vi.mock("../src/modules/products/product.repository.js", () => ({
     findById: productFindById,
     update: productUpdate,
     delete: productDelete,
-    update: productStatusUpdate,
     create: vi.fn(),
     findBySeller: vi.fn(),
     findBySlug: vi.fn(),
