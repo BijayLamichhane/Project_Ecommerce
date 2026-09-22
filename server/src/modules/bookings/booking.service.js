@@ -282,7 +282,6 @@ export class BookingService {
     const customerId = String(booking.customerId);
     const sellerId = String(booking.sellerId);
     const recipientId = String(actorId) === customerId ? sellerId : customerId;
-    const actorIsAdmin = actorRole === "admin";
 
     const messages = {
       rejected: ["Booking request declined", "The seller declined your rental request."],
