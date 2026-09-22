@@ -40,6 +40,16 @@ Better Auth handles sessions and credential authentication. Application roles ar
 
 Customers can search and filter rental products by query, category, price, city, condition, rating, and sort order. Products contain pricing, rental rules, images, seller information, quantity, and an administrator-controlled featured flag.
 
+### Seller management workflow
+
+Seller dashboard management is separated into listing operations and rental operations. Sellers only receive their own listings from the protected /api/v1/products/mine endpoint.
+
+The seller panel supports catalog search and lifecycle filtering, including active, paused, draft, and administrator-suspended listings. Sellers can pause or reactivate listings through the protected PATCH /api/v1/products/:id/status endpoint. The service verifies product ownership before changing status, and pausing a listing also clears any featured flag so an unavailable listing cannot remain in featured discovery.
+
+The dashboard also exposes existing view count, rental count, and rating data for each listing and summarizes catalog performance from those stored product metrics. Booking management supports customer/product search and lifecycle filtering while preserving the existing role-protected booking state transitions.
+
+Seller status controls are intentionally limited to active and inactive. Administrator suspension remains an administrator-only moderation action.
+
 ### Admin product governance
 
 The admin panel exposes a protected product management workflow. Administrators can search marketplace listings, filter by product status and featured state, activate or suspend listings, and feature or unfeature products. Only active products can be featured. Moving a product away from active status automatically removes it from featured placement, preventing inactive or suspended listings from appearing in homepage featured discovery.
