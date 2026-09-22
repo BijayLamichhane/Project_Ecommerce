@@ -8,6 +8,8 @@ const bookingUpdateStatus = vi.fn();
 const productFindById = vi.fn();
 const productUpdate = vi.fn();
 const productDelete = vi.fn();
+const adminGetProducts = vi.fn();
+const adminLogAdminAction = vi.fn();
 
 vi.mock("../src/config/auth.js", () => ({
   auth: {
@@ -35,6 +37,13 @@ vi.mock("../src/modules/bookings/booking.repository.js", () => ({
     findBySeller: vi.fn(),
     findOverlappingBookings: vi.fn(),
     createWithTransaction: vi.fn(),
+  },
+}));
+
+vi.mock("../src/modules/admin/admin.repository.js", () => ({
+  adminRepository: {
+    getProducts: adminGetProducts,
+    logAdminAction: adminLogAdminAction,
   },
 }));
 
@@ -190,6 +199,74 @@ describe("HTTP authorization boundaries", () => {
     expect(json?.error?.code).toBe("FORBIDDEN");
   });
 
+
+  it("allows an admin to load product governance data", async () => {
+    adminGetProducts.mockResolvedValue({
+      items: [{ id: "product-1", name: "Camera", status: "active", isFeatured: false }],
+      total: 1,
+      page: 1,
+      limit: 20,
+      totalPages: 1,
+    });
+
+    const { response, json } = await request("/api/v1/admin/products", {
+      userId: "admin-1",
+      role: "admin",
+    });
+
+    expect(response.status).toBe(200);
+    expect(json?.data?.items).toHaveLength(1);
+    expect(adminGetProducts).toHaveBeenCalledWith({
+      q: undefined,
+      status: "all",
+      featured: "all",
+      page: 1,
+      limit: 20,
+    });
+  });
+
+  it("allows an admin to feature an active product", async () => {
+    productFindById.mockResolvedValue({
+      id: "product-1",
+      sellerId: "seller-1",
+      status: "active",
+      isFeatured: false,
+    });
+    adminLogAdminAction.mockResolvedValue({});
+
+    const { response, json } = await request("/api/v1/admin/products/product-1/featured", {
+      userId: "admin-1",
+      role: "admin",
+      method: "PATCH",
+      body: { isFeatured: true },
+    });
+
+    expect(response.status).toBe(200);
+    expect(json?.data).toEqual({
+      id: "product-1",
+      status: "active",
+      isFeatured: true,
+    });
+    expect(productUpdate).toHaveBeenCalledWith("product-1", { isFeatured: true });
+    expect(adminLogAdminAction).toHaveBeenCalledWith({
+      adminId: "admin-1",
+      actionType: "feature_product",
+      targetProductId: "product-1",
+    });
+  });
+
+  it("blocks a non-admin from changing featured status", async () => {
+    const { response, json } = await request("/api/v1/admin/products/product-1/featured", {
+      userId: "seller-1",
+      role: "seller",
+      method: "PATCH",
+      body: { isFeatured: true },
+    });
+
+    expect(response.status).toBe(403);
+    expect(json?.error?.code).toBe("FORBIDDEN");
+    expect(productUpdate).not.toHaveBeenCalled();
+  });
 
   it("blocks suspended users before protected API handlers", async () => {
     getAccountStatus.mockResolvedValue("suspended");
