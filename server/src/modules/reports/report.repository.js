@@ -29,6 +29,16 @@ export class ReportRepository {
     }).lean();
   }
 
+  async findByReporterId(reporterId) {
+    return Report.find({ reporterId })
+      .sort({ createdAt: -1 })
+      .populate("reportedUserId", "id name email")
+      .populate("reportedProductId", "id name slug status")
+      .populate("reportedReviewId", "id rating title comment productId reviewerId createdAt")
+      .populate("resolvedBy", "id name email")
+      .lean({ virtuals: true });
+  }
+
   async create(data) {
     const report = await Report.create(data);
     return report.toJSON();
