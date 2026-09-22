@@ -136,7 +136,14 @@ export class MessagingService {
       isRead: false,
     });
 
-    return { conversationId, message };
+    const conversation = await messagingRepository.findConversationById(conversationId);
+    const recipientId = conversation
+      ? String(conversation.customerId) === String(senderId)
+        ? String(conversation.sellerId)
+        : String(conversation.customerId)
+      : null;
+
+    return { conversationId, message, recipientId };
   }
 
   async startConversation(userId, input) {
