@@ -255,6 +255,25 @@ describe("HTTP authorization boundaries", () => {
     });
   });
 
+  it("does not allow an admin to feature a non-active product", async () => {
+    productFindById.mockResolvedValue({
+      id: "product-1",
+      sellerId: "seller-1",
+      status: "suspended",
+      isFeatured: false,
+    });
+
+    const { response, json } = await request("/api/v1/admin/products/product-1/featured", {
+      userId: "admin-1",
+      role: "admin",
+      method: "PATCH",
+      body: { isFeatured: true },
+    });
+
+    expect(response.status).toBe(400);
+    expect(json?.error?.code).toBe("VALIDATION_ERROR");
+    expect(productUpdate).not.toHaveBeenCalled();
+  });
   it("blocks a non-admin from changing featured status", async () => {
     const { response, json } = await request("/api/v1/admin/products/product-1/featured", {
       userId: "seller-1",
