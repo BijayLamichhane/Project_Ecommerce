@@ -263,3 +263,33 @@ export interface RentalPriceCalculation {
   grandTotal: number;
   breakdown: { label: string; amount: number }[];
 }
+
+
+export type ReportStatus = "pending" | "reviewed" | "resolved" | "dismissed";
+export type ReportTargetType = "product" | "user" | "review";
+
+export interface Report {
+  _id: string;
+  id?: string;
+  reporterId: string | { id?: string; name?: string; email?: string };
+  reportedUserId?: { id?: string; name?: string; email?: string };
+  reportedProductId?: { id?: string; name?: string; slug?: string; status?: string };
+  reportedReviewId?: {
+    id?: string;
+    rating?: number;
+    title?: string;
+    comment?: string;
+    productId?: string;
+    reviewerId?: string;
+    createdAt?: string;
+  };
+  targetType: ReportTargetType;
+  reason: string;
+  details?: string;
+  status: ReportStatus;
+  resolvedBy?: { id?: string; name?: string; email?: string };
+  resolutionNotes?: string;
+  resolvedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
