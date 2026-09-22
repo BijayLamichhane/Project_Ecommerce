@@ -347,15 +347,12 @@ export class BookingService {
         : "The seller declined this booking request, so the selected dates are available again.";
 
     try {
-      const notification = await notificationService.createNotification({
-        userId: booking.customerId,
+      await notificationService.notifyUser(booking.customerId, {
         type: isExpired ? "booking_expired" : "booking_rejected",
         title,
         message,
         actionUrl,
       });
-
-      emitToUser(booking.customerId, "booking_notification", notification);
     } catch (error) {
       logger.warn({ error, bookingId: booking.id || booking._id }, "Failed to create booking release notification");
     }
