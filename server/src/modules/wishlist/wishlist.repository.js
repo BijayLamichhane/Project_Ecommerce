@@ -16,6 +16,11 @@ export class WishlistRepository {
     return items.filter((item) => !!item.product);
   }
 
+  async findUserIdsByProductId(productId) {
+    const items = await Wishlist.find({ productId }).select("userId").lean();
+    return items.map((item) => String(item.userId));
+  }
+
   async findByUserAndProduct(userId, productId) {
     return Wishlist.findOne({ userId, productId }).lean({ virtuals: true });
   }
