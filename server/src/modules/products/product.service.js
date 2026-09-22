@@ -67,7 +67,20 @@ export class ProductService {
     else if (image.url?.startsWith("/uploads/")) { const localPath = path.join(process.cwd(), image.url.replace(/^\//, "")); await fs.unlink(localPath).catch(() => {}); }
     await productRepository.deleteImage(imageId); await this.invalidateProductCache(productId);
   }
-  async updateStatus(productId, status) { await productRepository.update(productId, { status }); await this.invalidateProductCache(productId); }
+  async updateStatus(productId, sellerId, status) {
+    const product = await productRepository.findById(productId);
+    if (!product) throw new NotFoundError("Product");
+    if (String(product.sellerId) !== String(sellerId)) throw new ForbiddenError();
+
+    const update = { status };
+    if (status === "inactive") {
+      update.isFeatured = false;
+    }
+
+    const updated = await productRepository.update(productId, update);
+    await this.invalidateProductCache(productId);
+    return updated;
+  }
   async delete(productId, sellerId, isAdmin = false) { const product = await productRepository.findById(productId); if (!product) throw new NotFoundError("Product"); if (!isAdmin && String(product.sellerId) !== String(sellerId)) throw new ForbiddenError(); await productRepository.delete(productId); await this.invalidateProductCache(productId); }
   async invalidateProductCache(productId) { const redis = getRedisClient(); if (!redis) return; try { await redis.del(CacheKeys.product(productId)); } catch {} }
 }

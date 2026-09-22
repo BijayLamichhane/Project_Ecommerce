@@ -45,6 +45,10 @@ export const createProductSchema = z.object({
 
 export const updateProductSchema = createProductSchema.partial();
 
+export const updateProductStatusSchema = z.object({
+  status: z.enum(["active", "inactive"]),
+});
+
 export const productSearchSchema = z.object({
   q: z.string().max(200).optional(),
   category: z.string().optional(),
