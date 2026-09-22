@@ -48,6 +48,10 @@ Customers can add or remove products from a wishlist. Existing wishlist data is 
 
 Customers can hold selected rental details in a cart before creating a booking. Cart pricing is calculated from the same backend rental pricing utility used by direct booking.
 
+### Reviews
+
+A customer may review a product only once. The service performs an application-level duplicate check, while MongoDB enforces a unique `(productId, reviewerId)` compound index so concurrent requests cannot create a second review for the same customer and product. The product detail page also hides the review form after the current customer already has a review on that product.
+
 ### Booking and availability
 
 New bookings are created as pending payment holds. A pending hold expires after PENDING_BOOKING_TTL_MINUTES, which defaults to 20 minutes. Expired holds are retained as booking history rather than deleted.
