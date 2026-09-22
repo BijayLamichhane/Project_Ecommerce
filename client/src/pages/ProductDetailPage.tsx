@@ -191,7 +191,7 @@ export function ProductDetailPage() {
       window.setTimeout(() => setReportSuccess(false), 2500);
     },
     onError: (err: unknown) => {
-      setBookingError(getErrorMessage(err, "Failed to submit the report."));
+      setReportError(getErrorMessage(err, "Failed to submit the report."));
     },
   });
 
