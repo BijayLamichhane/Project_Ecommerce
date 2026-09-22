@@ -222,7 +222,21 @@ export function BookingDetailPage() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-5 border-b border-[#DDD5C7]">
           <div><span className="text-[11px] font-bold text-[#C17817] font-mono">Booking ID: {bookingId.substring(0, 13)}</span><h1 className="text-3xl font-extrabold text-[#211E1B] mt-1">Rental Details</h1><p className="text-xs text-[#8B8377] mt-1">Created {formatDate(booking.createdAt, "MMM d, yyyy h:mm a")}</p></div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="px-3 py-2 rounded-md bg-[#F1E0C8] border border-[#C17817]/30 text-[#A66314] text-xs font-bold">{statusLabel[booking.status] || booking.status}</span>
+            <span className="px-3 py-2 rounded-md bg-[#F1E0C8] border border-[#C17817]/30 text-[#A66314] text-xs font-bold">{booking.status === "disputed" ? "Under Dispute Review" : statusLabel[booking.status] || booking.status}</span>
+            {canRaiseDispute && (
+              <button
+                type="button"
+                onClick={() => {
+                  setErrorMsg(null);
+                  setDisputeReason("");
+                  setIsDisputeOpen(true);
+                }}
+                className="px-4 py-2.5 rounded-md border border-[#A23B2E]/40 bg-white hover:bg-[#FBE9E5] text-[#A23B2E] text-xs font-extrabold transition flex items-center gap-2"
+              >
+                <AlertTriangle className="w-4 h-4" />
+                Raise Dispute
+              </button>
+            )}
             {booking.status === "pending" && isCustomer && !holdExpired && <div className="flex flex-wrap gap-2"><button onClick={() => payMutation.mutate("esewa")} disabled={payMutation.isPending || cancelPaymentMutation.isPending} className="px-4 py-2.5 rounded-md bg-[#C17817] hover:bg-[#A66314] disabled:opacity-50 text-[#211E1B] text-xs font-extrabold transition flex items-center gap-2"><CreditCard className="w-4 h-4" />{payMutation.isPending ? "Opening payment..." : "Pay with eSewa"}</button><button onClick={() => payMutation.mutate("card")} disabled={payMutation.isPending || cancelPaymentMutation.isPending} className="px-4 py-2.5 rounded-md bg-[#C17817] hover:bg-[#A66314] disabled:opacity-50 text-[#211E1B] text-xs font-extrabold transition flex items-center gap-2"><CreditCard className="w-4 h-4" />{payMutation.isPending ? "Opening payment..." : "Debit / Credit Card"}</button><button onClick={() => setIsCancelPaymentOpen(true)} disabled={payMutation.isPending || cancelPaymentMutation.isPending} className="px-4 py-2.5 rounded-md border border-[#A23B2E]/40 bg-white hover:bg-[#FBE9E5] disabled:opacity-50 text-[#A23B2E] text-xs font-extrabold transition flex items-center gap-2"><X className="w-4 h-4" />{cancelPaymentMutation.isPending ? "Cancelling..." : "Cancel Payment"}</button></div>}
             {booking.status === "active" && isCustomer && <button onClick={() => returnMutation.mutate()} disabled={returnMutation.isPending} className="px-4 py-2.5 rounded-md bg-[#C17817] hover:bg-[#A66314] disabled:opacity-50 text-[#211E1B] text-xs font-extrabold transition flex items-center gap-2"><RotateCcw className="w-4 h-4" />{returnMutation.isPending ? "Requesting..." : "Request Return"}</button>}
             {canReview && (
