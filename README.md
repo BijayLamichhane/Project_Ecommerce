@@ -8,7 +8,7 @@ RentHub is a full-stack web application for renting physical products such as ca
 
 ## 🌟 Key Architectural Features
 
-- **Availability & Conflict Engine**: Payment-driven booking holds with expiry-aware availability and an atomic per-product/day MongoDB inventory ledger that prevents concurrent overbooking without requiring Redis locks.
+- **Availability & Conflict Engine**: Date-based availability keeps rented products listed while blocking only reserved dates. The product calendar loads each visible month, supports advance booking for future available dates, and uses an atomic per-product/day MongoDB inventory ledger to prevent concurrent overbooking without requiring Redis locks.
 - **Security Deposit Architecture**: Refundable security deposits tracked separately from rental revenue and released upon verified return.
 - **Dynamic Tiered Pricing**: Hourly, daily, weekly, and monthly pricing calculated on the backend.
 - **Recommendation System**: Personalized customer recommendations use existing wishlist, rental history, category, brand, city, rating, and popularity signals, with a popular-products fallback for new customers. Product detail pages also show similar gear.
