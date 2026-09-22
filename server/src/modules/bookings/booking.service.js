@@ -225,8 +225,8 @@ export class BookingService {
       extra.disputeRaisedBy = userId;
       extra.disputePreviousStatus = currentStatus;
       extra.disputedAt = new Date();
+      extra.actorId = userId;
     }
-    extra.actorId = userId;
 
     const updated = await bookingRepository.updateStatus(bookingId, newStatus, extra);
 
