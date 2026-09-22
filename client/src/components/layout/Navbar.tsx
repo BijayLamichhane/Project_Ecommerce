@@ -6,6 +6,7 @@ import { api } from "../../lib/axios";
 import { formatCurrency } from "../../lib/utils";
 import type { Booking } from "../../types";
 import { Search, ShoppingCart, Heart, User, PlusCircle, ShieldCheck, Menu, X, Layers, LogOut, Package, CreditCard } from "lucide-react";
+import { NotificationBell } from "../shared/NotificationBell";
 
 export function Navbar() {
   const { user, isAuthenticated, isSeller, isAdmin, logout } = useAuth();
@@ -80,6 +81,7 @@ export function Navbar() {
                 {isAdmin && <Link to="/admin" className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#F1E0C8] text-[#211E1B] border border-[#C17817]/40"><ShieldCheck className="w-4 h-4" />Admin</Link>}
                 <Link to="/wishlist" className="relative p-2 text-[#514B44] hover:text-[#C17817] transition rounded-full hover:bg-[#E8E1D5]" title="Wishlist"><Heart className="w-5 h-5" />{wishlistItemCount > 0 && <span className="absolute top-1 right-1 w-4 h-4 bg-[#A23B2E] text-white text-[10px] font-bold rounded-full flex items-center justify-center">{wishlistItemCount}</span>}</Link>
                 <Link to="/cart" className="relative p-2 text-[#514B44] hover:text-[#C17817] transition rounded-full hover:bg-[#E8E1D5]" title="Rental Cart"><ShoppingCart className="w-5 h-5" />{cartItemCount > 0 && <span className="absolute top-1 right-1 w-4 h-4 bg-[#C17817] text-white text-[10px] font-bold rounded-full flex items-center justify-center">{cartItemCount}</span>}</Link>
+                <NotificationBell />
                 {!isSeller && !isAdmin && pendingPaymentCount > 0 && (
                   <div className="relative" ref={paymentMenuRef}>
                     <button
@@ -128,7 +130,7 @@ export function Navbar() {
                     <div className="w-7 h-7 rounded-full bg-[#E8E1D5] overflow-hidden">{user?.avatarUrl ? <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" /> : <User className="w-4 h-4 m-1.5 text-[#8B8377]" />}</div>
                     <span className="text-xs font-semibold text-[#211E1B] truncate max-w-[100px]">{user?.name?.split(" ")[0]}</span>
                   </button>
-                  {isUserMenuOpen && <div className="absolute right-0 top-full mt-2 w-48 bg-[#F7F3EA] border border-[#B8B0A3] rounded-xl  py-1.5 z-50"><Link to="/dashboard" onClick={() => setIsUserMenuOpen(false)} className="block px-4 py-2 text-xs font-semibold text-[#211E1B] hover:bg-[#E8E1D5]">Dashboard</Link><button onClick={() => { setIsUserMenuOpen(false); logout(); }} className="w-full text-left px-4 py-2 text-xs font-semibold text-[#A23B2E] hover:bg-[#F3DFDB] flex items-center gap-2"><LogOut className="w-3.5 h-3.5" />Sign Out</button></div>}
+                  {isUserMenuOpen && <div className="absolute right-0 top-full mt-2 w-48 bg-[#F7F3EA] border border-[#B8B0A3] rounded-xl  py-1.5 z-50"><Link to="/dashboard" onClick={() => setIsUserMenuOpen(false)} className="block px-4 py-2 text-xs font-semibold text-[#211E1B] hover:bg-[#E8E1D5]">Dashboard</Link><Link to="/notifications" onClick={() => setIsUserMenuOpen(false)} className="block px-4 py-2 text-xs font-semibold text-[#211E1B] hover:bg-[#E8E1D5]">Notifications</Link><Link to="/reports" onClick={() => setIsUserMenuOpen(false)} className="block px-4 py-2 text-xs font-semibold text-[#211E1B] hover:bg-[#E8E1D5]">My Reports</Link><button onClick={() => { setIsUserMenuOpen(false); logout(); }} className="w-full text-left px-4 py-2 text-xs font-semibold text-[#A23B2E] hover:bg-[#F3DFDB] flex items-center gap-2"><LogOut className="w-3.5 h-3.5" />Sign Out</button></div>}
                 </div>
               </>
             ) : (
@@ -150,6 +152,8 @@ export function Navbar() {
             <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-sm font-medium text-[#514B44] hover:bg-[#E8E1D5]">My Rentals & Bookings</Link>
             {!isSeller && !isAdmin && pendingPaymentCount > 0 && <Link to={`/bookings/${pendingBookings[0].id || pendingBookings[0]._id}`} onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-sm font-semibold text-[#C17817] bg-[#F1E0C8]">Payment Due ({pendingPaymentCount}) · Pay Now</Link>}
             <Link to="/wishlist" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-sm font-medium text-[#514B44] hover:bg-[#E8E1D5]">Saved Wishlist ({wishlistItemCount})</Link>
+            <Link to="/notifications" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-sm font-medium text-[#514B44] hover:bg-[#E8E1D5]">Notifications</Link>
+            <Link to="/reports" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-sm font-medium text-[#514B44] hover:bg-[#E8E1D5]">My Reports</Link>
             <Link to="/messages" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-sm font-medium text-[#514B44] hover:bg-[#E8E1D5]">Messages</Link>
             {isSeller ? <Link to="/seller" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-sm font-medium text-[#211E1B] bg-[#E9D5B8]">Seller Dashboard</Link> : <Link to="/become-seller" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-sm font-medium text-[#514B44] hover:bg-[#E8E1D5]">Start Renting Out Your Gear</Link>}
             {isAdmin && <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-sm font-medium text-[#C17817] bg-[#E9D5B8]">Admin Panel</Link>}
