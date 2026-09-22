@@ -53,6 +53,9 @@ vi.mock("../src/modules/bookings/booking.repository.js", () => ({
 vi.mock("../src/modules/admin/admin.repository.js", () => ({
   adminRepository: {
     getProducts: adminGetProducts,
+    getReports: adminGetReports,
+    updateReportStatus: adminUpdateReportStatus,
+    getDisputes: adminGetDisputes,
     logAdminAction: adminLogAdminAction,
   },
 }));
