@@ -170,6 +170,13 @@ export interface Booking {
   returnRequestedAt?: string;
   returnedAt?: string;
   completedAt?: string;
+  disputeReason?: string;
+  disputeRaisedBy?: string | { id?: string; name?: string; email?: string };
+  disputePreviousStatus?: "active" | "return_requested" | "returned";
+  disputedAt?: string;
+  disputeResolutionNotes?: string;
+  disputeResolvedBy?: string | { id?: string; name?: string; email?: string };
+  disputeResolvedAt?: string;
   createdAt: string;
   bookingItems: BookingItem[];
   customer?: { _id: string; id?: string; name: string; email: string; avatarUrl?: string };
