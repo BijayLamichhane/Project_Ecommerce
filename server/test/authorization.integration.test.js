@@ -5,6 +5,7 @@ const authSession = vi.fn();
 const getAccountStatus = vi.fn();
 const bookingFindById = vi.fn();
 const bookingUpdateStatus = vi.fn();
+const bookingResolveDispute = vi.fn();
 const productFindById = vi.fn();
 const productUpdate = vi.fn();
 const productDelete = vi.fn();
