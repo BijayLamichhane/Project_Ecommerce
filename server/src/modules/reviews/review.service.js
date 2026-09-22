@@ -22,6 +22,14 @@ export class ReviewService {
       throw new ForbiddenError("You cannot review your own product");
     }
 
+    const existingReview = await reviewRepository.findByProductAndReviewer(
+      input.productId,
+      reviewerId
+    );
+    if (existingReview) {
+      throw new ConflictError("You have already reviewed this product");
+    }
+
     if (input.bookingId) {
       const booking = await bookingRepository.findById(input.bookingId);
       if (!booking) throw new NotFoundError("Booking");
@@ -31,36 +39,27 @@ export class ReviewService {
       if (booking.status !== "completed" && booking.status !== "returned") {
         throw new ValidationError("You can only review after completing or returning your rental");
       }
-
-      const existingReview = await reviewRepository.findByBookingAndReviewer(
-        input.bookingId,
-        reviewerId
-      );
-      if (existingReview) {
-        throw new ConflictError("You have already reviewed this rental booking");
-      }
-    } else {
-      // No bookingId: allow review but prevent duplicates per product+reviewer
-      const existingReview = await reviewRepository.findByProductAndReviewer(
-        input.productId,
-        reviewerId
-      );
-      if (existingReview) {
-        throw new ConflictError("You have already reviewed this product");
-      }
     }
 
     const reviewId = uuidv4();
-    const review = await reviewRepository.create({
-      _id: reviewId,
-      productId: input.productId,
-      bookingId: input.bookingId || undefined,
-      reviewerId,
-      sellerId: product.sellerId,
-      rating: input.rating,
-      title: input.title,
-      comment: input.comment,
-    });
+    let review;
+    try {
+      review = await reviewRepository.create({
+        _id: reviewId,
+        productId: input.productId,
+        bookingId: input.bookingId || undefined,
+        reviewerId,
+        sellerId: product.sellerId,
+        rating: input.rating,
+        title: input.title,
+        comment: input.comment,
+      });
+    } catch (error) {
+      if (error?.code === 11000 && error?.keyPattern?.productId && error?.keyPattern?.reviewerId) {
+        throw new ConflictError("You have already reviewed this product");
+      }
+      throw error;
+    }
 
     await Promise.all([
       reviewRepository.updateProductRatingStats(input.productId),
