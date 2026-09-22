@@ -216,6 +216,7 @@ export type NotificationType =
   | "booking_dispute_opened"
   | "booking_dispute_resolved"
   | "booking_dispute_dismissed"
+  | "report_submitted"
   | "report_resolved"
   | "report_dismissed"
   | "seller_application_submitted"
