@@ -15,8 +15,6 @@ export class CartService {
 
     const enrichedItems = items.map((item) => {
       let calculation = null;
-      let isAvailable = true;
-
       if (item.product?.pricing) {
         try {
           const pricingData = {
