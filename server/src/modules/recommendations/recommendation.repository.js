@@ -121,6 +121,7 @@ export class RecommendationRepository {
     };
 
     return Product.find(filter)
+      .collation({ locale: "en", strength: 2 })
       .select(productProjection)
       .limit(limit)
       .lean({ virtuals: true });
