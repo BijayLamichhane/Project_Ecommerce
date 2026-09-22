@@ -116,7 +116,7 @@ export interface Product {
   brand?: string;
   model?: string;
   condition: "new" | "like_new" | "good" | "fair" | "poor";
-  status: "active" | "inactive" | "suspended" | "draft";
+  status: "active" | "inactive" | "suspended" | "draft" | "deleted";
   city?: string;
   state?: string;
   totalQuantity: number;
