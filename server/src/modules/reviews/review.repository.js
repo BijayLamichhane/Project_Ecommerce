@@ -25,10 +25,6 @@ export class ReviewRepository {
     return Review.findById(id).lean({ virtuals: true });
   }
 
-  async findByBookingAndReviewer(bookingId, reviewerId) {
-    return Review.findOne({ bookingId, reviewerId }).lean({ virtuals: true });
-  }
-
   async findByProductAndReviewer(productId, reviewerId) {
     return Review.findOne({ productId, reviewerId }).lean({ virtuals: true });
   }
