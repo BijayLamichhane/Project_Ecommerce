@@ -147,10 +147,6 @@ export function HomePage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between mb-8">
           <div>
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#C17817] mb-1">
-              <Sparkles className="w-4 h-4" />
-              Admin Selected
-            </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-[#211E1B] tracking-tight">
               Featured Gear
             </h2>

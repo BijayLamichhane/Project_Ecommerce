@@ -8,7 +8,6 @@ import {
   SlidersHorizontal,
   Search,
   RotateCcw,
-  Sparkles,
   ChevronLeft,
   ChevronRight,
   Filter,
