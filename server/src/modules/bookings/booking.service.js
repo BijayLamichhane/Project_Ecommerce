@@ -185,7 +185,7 @@ export class BookingService {
     }
 
     await bookingInventoryRepository.releaseBooking(bookingId);
-    await this.notifyBookingReleased(cancelled, "cancelled");
+    await this.notifyBookingReleased(cancelled, "cancelled", userId);
     await this.emitAvailabilityChanges(cancelled);
 
     return cancelled;
@@ -245,7 +245,7 @@ export class BookingService {
 
     if (["rejected", "cancelled"].includes(newStatus)) {
       await bookingInventoryRepository.releaseBooking(bookingId);
-      await this.notifyBookingReleased(updated, newStatus);
+      await this.notifyBookingReleased(updated, newStatus, userId);
       await this.emitAvailabilityChanges(updated);
     }
 
@@ -266,7 +266,7 @@ export class BookingService {
       if (!expired) continue;
 
       await bookingInventoryRepository.releasePendingBooking(booking.id || booking._id);
-      await this.notifyBookingReleased(expired, "expired");
+      await this.notifyBookingReleased(expired, "expired", null);
       await this.emitAvailabilityChanges(expired);
     }
 
@@ -347,10 +347,19 @@ export class BookingService {
         : "The seller declined this booking request, so the selected dates are available again.";
 
     try {
-      await notificationService.notifyUser(booking.customerId, {
-        type: isExpired ? "booking_expired" : "booking_rejected",
-        title,
-        message,
+      const recipientId =
+        reason === "cancelled" && String(actorId) === String(booking.customerId)
+          ? booking.sellerId
+          : booking.customerId;
+
+      await notificationService.notifyUser(recipientId, {
+        type: isExpired ? "booking_expired" : reason === "cancelled" ? "booking_cancelled" : "booking_rejected",
+        title: reason === "cancelled" && String(actorId) === String(booking.customerId)
+          ? "Booking cancelled by customer"
+          : title,
+        message: reason === "cancelled" && String(actorId) === String(booking.customerId)
+          ? "The customer cancelled the booking, so the selected dates are available again."
+          : message,
         actionUrl,
       });
     } catch (error) {
