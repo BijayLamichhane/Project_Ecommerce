@@ -64,7 +64,7 @@ export function HomePage() {
               className="w-full sm:w-auto px-8 py-3.5 text-base font-bold text-[#211E1B] bg-[#C17817] hover:bg-[#A66314] rounded-xl shadow-none transition flex items-center justify-center gap-2"
             >
               Explore Products
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 pointer-events-none" />
             </Link>
             <Link
               to="/become-seller"
@@ -107,7 +107,7 @@ export function HomePage() {
             to="/products"
             className="text-sm font-semibold text-[#C17817] hover:text-[#A66314] flex items-center gap-1"
           >
-            View all <ArrowRight className="w-4 h-4" />
+            View all <ArrowRight className="w-4 h-4 pointer-events-none" />
           </Link>
         </div>
 
@@ -159,7 +159,7 @@ export function HomePage() {
             to="/products"
             className="text-sm font-semibold text-[#C17817] hover:text-[#A66314] flex items-center gap-1"
           >
-            Browse all gear <ArrowRight className="w-4 h-4" />
+            Browse all gear <ArrowRight className="w-4 h-4 pointer-events-none" />
           </Link>
         </div>
 
@@ -258,7 +258,7 @@ export function HomePage() {
                 className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-[#F7F3EA] text-[#211E1B] hover:bg-[#F1E0C8] font-bold text-sm shadow-md transition"
               >
                 Start Renting Out Now
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 pointer-events-none" />
               </Link>
             </div>
           </div>

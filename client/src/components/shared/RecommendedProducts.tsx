@@ -103,7 +103,7 @@ export function RecommendedProducts({
           className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-[#C17817] hover:text-[#A66314]"
         >
           Explore all
-          <ArrowRight className="w-3.5 h-3.5" />
+          <ArrowRight className="w-3.5 h-3.5 pointer-events-none" />
         </Link>
       </div>
 
