@@ -249,7 +249,7 @@ export class BookingService {
       await this.emitAvailabilityChanges(updated);
     }
 
-    await this.notifyBookingStatusChange(booking, updated, userId, userRole, reason);
+    await this.notifyBookingStatusChange(booking, updated, userId, reason);
 
     return updated;
   }
@@ -273,7 +273,7 @@ export class BookingService {
     return candidates.length;
   }
 
-  async notifyBookingStatusChange(previousBooking, booking, actorId, actorRole, reason) {
+  async notifyBookingStatusChange(previousBooking, booking, actorId, reason) {
     if (!booking?.customerId || !booking?.sellerId) return;
     if (["rejected", "cancelled"].includes(booking.status)) return;
 
