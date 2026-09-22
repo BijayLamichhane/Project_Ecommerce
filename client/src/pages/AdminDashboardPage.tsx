@@ -204,6 +204,58 @@ export function AdminDashboardPage() {
     moderateSellerMutation.mutate({ sellerId, status: "rejected", reason });
   };
 
+  const updateReportStatusMutation = useMutation({
+    mutationFn: async ({
+      reportId,
+      status,
+      notes,
+    }: {
+      reportId: string;
+      status: "reviewed" | "resolved" | "dismissed";
+      notes: string;
+    }) => {
+      setErrorMsg(null);
+      await api.patch(`/admin/reports/${encodeURIComponent(reportId)}/status`, {
+        status,
+        notes,
+      });
+    },
+    onSuccess: () => {
+      setModerationModal(null);
+      setModerationNotes("");
+      queryClient.invalidateQueries({ queryKey: ["admin-reports"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
+    },
+    onError: (err: unknown) =>
+      setErrorMsg(getErrorMessage(err, "Failed to update the report.")),
+  });
+
+  const resolveDisputeMutation = useMutation({
+    mutationFn: async ({
+      bookingId,
+      action,
+      notes,
+    }: {
+      bookingId: string;
+      action: "resolve" | "dismiss";
+      notes: string;
+    }) => {
+      setErrorMsg(null);
+      await api.patch(`/admin/disputes/${encodeURIComponent(bookingId)}`, {
+        action,
+        notes,
+      });
+    },
+    onSuccess: () => {
+      setModerationModal(null);
+      setModerationNotes("");
+      queryClient.invalidateQueries({ queryKey: ["admin-disputes"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
+    },
+    onError: (err: unknown) =>
+      setErrorMsg(getErrorMessage(err, "Failed to resolve the dispute.")),
+  });
+
   const createCategoryMutation = useMutation({
     mutationFn: async () => {
       setErrorMsg(null);
