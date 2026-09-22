@@ -89,7 +89,7 @@ export class AdminRepository {
     const filter = {};
 
     if (q) {
-      const escapedQuery = q.replace(/[.*+?^${}()|[\]\\]/g, "\\  async getAllUsers(limit = 50, offset = 0) {");
+      const escapedQuery = q.replace(/[.*+?^${}()|[\\]\\]/g, (match) => "\\" + match);
       filter.$or = [
         { name: new RegExp(escapedQuery, "i") },
         { brand: new RegExp(escapedQuery, "i") },
