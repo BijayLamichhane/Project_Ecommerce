@@ -5,8 +5,6 @@ import { api } from "../lib/axios";
 import { ProductCard } from "../components/shared/ProductCard";
 import { RecommendedProducts } from "../components/shared/RecommendedProducts";
 import { useAuth } from "../hooks/useAuth";
-import { RecommendedProducts } from "../components/shared/RecommendedProducts";
-import { useAuth } from "../hooks/useAuth";
 import { Product, Category } from "../types";
 import {
   ArrowRight,
@@ -133,18 +131,6 @@ export function HomePage() {
           ))}
         </div>
       </section>
-
-      {/* ─── Personalized Recommendations ───────────────────────── */}
-      {isAuthenticated && !isSeller && !isAdmin && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <RecommendedProducts
-            mode="personalized"
-            title="Recommended For You"
-            subtitle="Based on the equipment you have rented or saved."
-            limit={4}
-          />
-        </section>
-      )}
 
       {/* ─── Personalized Recommendations ───────────────────────── */}
       {isAuthenticated && !isSeller && !isAdmin && (
