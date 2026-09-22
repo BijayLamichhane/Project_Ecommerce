@@ -1,5 +1,6 @@
 import { adminRepository } from "./admin.repository.js";
 import { productRepository } from "../products/product.repository.js";
+import { bookingRepository } from "../bookings/booking.repository.js";
 import { bookingInventoryRepository } from "../bookings/booking.inventory.repository.js";
 import { NotFoundError, ConflictError, ValidationError } from "../../middleware/errorHandler.js";
 import { getRedisClient, CacheKeys } from "../../config/redis.js";
