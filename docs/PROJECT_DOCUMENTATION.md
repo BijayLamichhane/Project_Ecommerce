@@ -117,7 +117,7 @@ Product detail pages join a product-specific Socket.IO room. Booking creation, d
 
 ### Notifications
 
-Booking expiry, booking decline, and successful payment generate persisted notifications where applicable. Socket.IO is used to deliver supported notification events immediately.
+The notification system is centralized around persisted in-app notifications and Socket.IO delivery. Notifications are created for booking requests and lifecycle changes, successful payments, refund-required payments, disputes and dispute outcomes, report submission and moderation decisions, seller applications and moderation, account suspension and reactivation, product moderation and featured status changes, wishlist availability changes, new messages, and review activity. Notification records are stored per user with unread tracking and direct action links. Socket.IO delivers newly created notifications immediately while the notification page remains the durable history and fallback for users who were offline. Notification delivery is intentionally isolated from core business operations so a temporary notification failure does not roll back a successful booking, payment, moderation action, or review.
 
 ### Returns
 
