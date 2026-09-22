@@ -22,6 +22,22 @@ export class PaymentRepository {
     return Payment.findByIdAndUpdate(id, { $set: data }, { new: true }).lean({ virtuals: true });
   }
 
+  async cancelPendingPayment(id, reason = "Payment cancelled by customer") {
+    return Payment.findOneAndUpdate(
+      { _id: id, status: "pending" },
+      {
+        $set: {
+          status: "cancelled",
+          paymentGatewayResponse: {
+            cancellationReason: reason,
+            cancelledAt: new Date(),
+          },
+        },
+      },
+      { new: true }
+    ).lean({ virtuals: true });
+  }
+
   async updateDeposit(id, data) {
     return Payment.findByIdAndUpdate(id, { $set: data }, { new: true }).lean({ virtuals: true });
   }
