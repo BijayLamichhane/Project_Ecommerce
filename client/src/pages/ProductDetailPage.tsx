@@ -394,7 +394,7 @@ export function ProductDetailPage() {
                     Currently rented
                   </p>
                   <p className="text-[11px] text-[#6F685F] mt-1">
-                    This product is booked until {formatDate(currentBookingRange.endDate)}. Select another available date to reserve it in advance.
+                    This product is scheduled to return on {formatDate(currentBookingRange.endDate)}. You can select that date or any later available date to reserve it in advance.
                   </p>
                 </div>
               )}
