@@ -11,6 +11,8 @@ const productUpdate = vi.fn();
 const productDelete = vi.fn();
 const inventoryReleaseBooking = vi.fn();
 const notificationCreate = vi.fn();
+const emitToUser = vi.fn();
+const reportFindByReporterId = vi.fn();
 const adminGetProducts = vi.fn();
 const adminGetReports = vi.fn();
 const adminUpdateReportStatus = vi.fn();
@@ -64,6 +66,7 @@ vi.mock("../src/modules/reports/report.repository.js", () => ({
   reportRepository: {
     getTarget: reportGetTarget,
     findPendingDuplicate: reportFindPendingDuplicate,
+    findByReporterId: reportFindByReporterId,
     create: reportCreate,
   },
 }));
@@ -82,7 +85,7 @@ vi.mock("../src/modules/notifications/notification.service.js", () => ({
 
 vi.mock("../src/sockets/index.js", () => ({
   emitProductAvailabilityChanged: vi.fn(),
-  emitToUser: vi.fn(),
+  emitToUser,
 }));
 
 vi.mock("../src/modules/products/product.repository.js", () => ({
@@ -261,11 +264,42 @@ describe("HTTP authorization boundaries", () => {
     });
   });
 
+  it("allows a customer to read only their own report history", async () => {
+    reportFindByReporterId.mockResolvedValue([
+      {
+        id: "report-1",
+        reporterId: "customer-a",
+        targetType: "product",
+        reason: "Inaccurate listing",
+        status: "pending",
+      },
+    ]);
+
+    const { response, json } = await request("/api/v1/reports", {
+      userId: "customer-a",
+      role: "customer",
+    });
+
+    expect(response.status).toBe(200);
+    expect(json?.data).toHaveLength(1);
+    expect(reportFindByReporterId).toHaveBeenCalledWith("customer-a");
+  });
+
   it("allows an admin to resolve a report", async () => {
     adminUpdateReportStatus.mockResolvedValue({
       id: "report-1",
+      reporterId: "customer-a",
       status: "resolved",
       resolutionNotes: "Listing reviewed and corrected",
+      reportedProductId: { id: "product-1", name: "Camera" },
+    });
+    notificationCreate.mockResolvedValue({
+      id: "notification-1",
+      userId: "customer-a",
+      type: "report_resolved",
+      title: "Your report was resolved",
+      message: "We reviewed your report about Camera and took action. Moderator note: Listing reviewed and corrected",
+      actionUrl: "/reports",
     });
 
     const { response, json } = await request("/api/v1/admin/reports/report-1/status", {
@@ -285,6 +319,18 @@ describe("HTTP authorization boundaries", () => {
       "admin-1",
       "resolved",
       "Listing reviewed and corrected"
+    );
+    expect(notificationCreate).toHaveBeenCalledWith({
+      userId: "customer-a",
+      type: "report_resolved",
+      title: "Your report was resolved",
+      message: "We reviewed your report about Camera and took action. Moderator note: Listing reviewed and corrected",
+      actionUrl: "/reports",
+    });
+    expect(emitToUser).toHaveBeenCalledWith(
+      "customer-a",
+      "notification_created",
+      expect.objectContaining({ id: "notification-1" })
     );
   });
 
