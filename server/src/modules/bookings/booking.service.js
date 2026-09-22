@@ -15,7 +15,7 @@ import {
 } from "../../middleware/errorHandler.js";
 import { isValidTransition } from "./booking.schema.js";
 import { differenceInDays } from "date-fns";
-import { emitProductAvailabilityChanged, emitToUser } from "../../sockets/index.js";
+import { emitProductAvailabilityChanged } from "../../sockets/index.js";
 import { v4 as uuidv4 } from "uuid";
 import { logger } from "../../utils/logger.js";
 
@@ -147,7 +147,20 @@ export class BookingService {
     }
 
     await cartRepository.clearCart(customerId);
-    return bookingRepository.findById(bookingId);
+    const booking = await bookingRepository.findById(bookingId);
+
+    try {
+      await notificationService.notifyUser(sellerId, {
+        type: "booking_created",
+        title: "New booking request",
+        message: "A customer submitted a new rental request and is waiting for your review.",
+        actionUrl: `/bookings/${encodeURIComponent(bookingId)}`,
+      });
+    } catch (error) {
+      logger.warn({ error, bookingId }, "Failed to create booking request notification");
+    }
+
+    return booking;
   }
 
   async cancelPendingForCustomer(bookingId, userId, reason = "Payment cancelled by customer") {
@@ -236,6 +249,8 @@ export class BookingService {
       await this.emitAvailabilityChanges(updated);
     }
 
+    await this.notifyBookingStatusChange(booking, updated, userId, userRole, reason);
+
     return updated;
   }
 
@@ -256,6 +271,62 @@ export class BookingService {
     }
 
     return candidates.length;
+  }
+
+  async notifyBookingStatusChange(previousBooking, booking, actorId, actorRole, reason) {
+    if (!booking?.customerId || !booking?.sellerId) return;
+
+    const bookingId = booking.id || booking._id;
+    const actionUrl = `/bookings/${encodeURIComponent(bookingId)}`;
+    const customerId = String(booking.customerId);
+    const sellerId = String(booking.sellerId);
+    const recipientId = String(actorId) === customerId ? sellerId : customerId;
+    const actorIsAdmin = actorRole === "admin";
+
+    const messages = {
+      rejected: ["Booking request declined", "The seller declined your rental request."],
+      cancelled: ["Booking cancelled", "The booking was cancelled and the selected dates are available again."],
+      active: ["Rental is now active", "The seller has marked your rental as active."],
+      return_requested: ["Return requested", "The customer has requested to return the rental."],
+      returned: ["Rental returned", "The seller has marked the rental as returned."],
+      completed: ["Rental completed", "The rental has been completed successfully."],
+      disputed: ["Booking dispute opened", "A dispute has been opened for this booking and is awaiting review."],
+    };
+
+    const [title, defaultMessage] = messages[booking.status] || [];
+    if (!title || !defaultMessage) return;
+
+    try {
+      if (booking.status === "disputed") {
+        await notificationService.notifyUser(recipientId, {
+          type: "booking_dispute_opened",
+          title,
+          message: reason?.trim() ? `${defaultMessage} Reason: ${reason.trim()}` : defaultMessage,
+          actionUrl,
+        });
+        await notificationService.notifyAdmins({
+          type: "booking_dispute_opened",
+          title: "Booking dispute requires review",
+          message: "A customer or seller opened a dispute that requires administrator review.",
+          actionUrl: `/admin?section=disputes&booking=${encodeURIComponent(bookingId)}`,
+        });
+        return;
+      }
+
+      await notificationService.notifyUser(recipientId, {
+        type: `booking_${booking.status}`,
+        title,
+        message: reason?.trim() && ["rejected", "cancelled"].includes(booking.status)
+          ? `${defaultMessage} Reason: ${reason.trim()}`
+          : defaultMessage,
+        actionUrl,
+      });
+    } catch (error) {
+      logger.warn(
+        { error, bookingId, status: booking.status, actorId, previousStatus: previousBooking?.status },
+        "Failed to create booking lifecycle notification"
+      );
+    }
   }
 
   async notifyBookingReleased(booking, reason) {
