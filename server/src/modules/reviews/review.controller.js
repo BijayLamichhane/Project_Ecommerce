@@ -29,6 +29,19 @@ export class ReviewController {
     }
   }
 
+  async updateReview(req, res, next) {
+    try {
+      const review = await reviewService.updateReview(
+        req.user.id,
+        req.params.reviewId,
+        req.body
+      );
+      sendSuccess(res, review, "Review updated successfully");
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async replyToReview(req, res, next) {
     try {
       const updated = await reviewService.replyToReview(

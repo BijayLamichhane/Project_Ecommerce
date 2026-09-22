@@ -44,6 +44,7 @@ export function ProductDetailPage() {
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [reviewSuccess, setReviewSuccess] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
 
   // 1. Fetch Product
   const { data: product, isLoading: loadingProduct } = useQuery({
@@ -115,16 +116,26 @@ export function ProductDetailPage() {
   const submitReviewMutation = useMutation({
     mutationFn: async () => {
       setReviewError(null);
+      const payload = {
+        rating: reviewRating,
+        title: reviewTitle.trim() || undefined,
+        comment: reviewComment.trim(),
+      };
+
+      if (editingReviewId) {
+        await api.patch(`/reviews/${editingReviewId}`, payload);
+        return;
+      }
+
       await api.post("/reviews", {
         productId: id,
-        rating: reviewRating,
-        title: reviewTitle || undefined,
-        comment: reviewComment,
+        ...payload,
       });
     },
     onSuccess: () => {
       setReviewSuccess(true);
       setShowReviewForm(false);
+      setEditingReviewId(null);
       setReviewTitle("");
       setReviewComment("");
       setReviewRating(5);
@@ -220,11 +231,13 @@ export function ProductDetailPage() {
   const images = product.images?.length > 0 ? product.images : [{ id: "1", url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800", isPrimary: true, sortOrder: 0, productId: product.id }];
   const currentImage = images[selectedImageIndex]?.url || images[0]?.url;
   const deposit = product.pricing?.securityDeposit ? parseFloat(product.pricing.securityDeposit) : 0;
-  const hasReviewedProduct = Boolean(
-    isAuthenticated &&
-    user &&
-    reviews?.some((review) => String(review.reviewerId) === String(user.id ?? user._id))
+  const myReview = reviews?.find(
+    (review) =>
+      isAuthenticated &&
+      user &&
+      String(review.reviewerId) === String(user.id ?? user._id)
   );
+  const hasReviewedProduct = Boolean(myReview);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
@@ -450,18 +463,26 @@ export function ProductDetailPage() {
               <span>{parseFloat(product.averageRating || "0").toFixed(1)} / 5.0</span>
             </div>
             {isAuthenticated && user?.role !== "seller" && user?.role !== "admin" && reviews && (
-              hasReviewedProduct ? (
-                <span className="px-4 py-2 rounded-md bg-[#E8E1D5] border border-[#C8C0B3] text-[#6F685F] text-xs font-bold">
-                  You already reviewed this product
-                </span>
-              ) : (
-                <button
-                  onClick={() => setShowReviewForm(!showReviewForm)}
-                  className="px-4 py-2 rounded-md bg-[#C17817] hover:bg-[#211E1B] text-white text-xs font-bold transition"
-                >
-                  {showReviewForm ? "Cancel" : "Write a Review"}
-                </button>
-              )
+              <button
+                onClick={() => {
+                  if (myReview) {
+                    setEditingReviewId(getEntityId(myReview));
+                    setReviewRating(myReview.rating);
+                    setReviewTitle(myReview.title || "");
+                    setReviewComment(myReview.comment);
+                  } else {
+                    setEditingReviewId(null);
+                    setReviewRating(5);
+                    setReviewTitle("");
+                    setReviewComment("");
+                  }
+                  setReviewError(null);
+                  setShowReviewForm((current) => !current);
+                }}
+                className="px-4 py-2 rounded-md bg-[#C17817] hover:bg-[#211E1B] text-white text-xs font-bold transition"
+              >
+                {showReviewForm ? "Cancel" : hasReviewedProduct ? "Edit Your Review" : "Write a Review"}
+              </button>
             )}
           </div>
         </div>
@@ -474,7 +495,7 @@ export function ProductDetailPage() {
 
         {showReviewForm && (
           <div className="bg-white rounded-md border border-[#C8C0B3] shadow-sm p-6 space-y-4">
-            <h4 className="text-sm font-bold text-[#211E1B]">Write Your Review</h4>
+            <h4 className="text-sm font-bold text-[#211E1B]">{editingReviewId ? "Edit Your Review" : "Write Your Review"}</h4>
 
             <div className="space-y-1">
               <label className="text-xs font-semibold text-[#6F685F]">Rating *</label>
@@ -538,7 +559,7 @@ export function ProductDetailPage() {
                 disabled={submitReviewMutation.isPending || reviewComment.trim().length < 5}
                 className="px-4 py-2 text-xs font-bold text-white bg-[#C17817] hover:bg-[#211E1B] rounded-md shadow-md disabled:opacity-50"
               >
-                {submitReviewMutation.isPending ? "Submitting..." : "Submit Review"}
+                {submitReviewMutation.isPending ? "Saving..." : editingReviewId ? "Save Changes" : "Submit Review"}
               </button>
             </div>
           </div>
