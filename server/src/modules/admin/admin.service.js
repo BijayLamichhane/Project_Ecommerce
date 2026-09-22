@@ -306,7 +306,7 @@ export class AdminService {
             };
 
       try {
-        const createdNotification = await notificationService.createNotification(notification);
+        await notificationService.notifyUser(String(reporterId), notification);
       } catch (error) {
         logger.error(
           { error, reportId, reporterId },
@@ -364,7 +364,7 @@ export class AdminService {
           actionUrl: `/bookings/${encodeURIComponent(bookingId)}`,
         }),
         notificationService.notifyUser(sellerId, {
-          type: `booking_dispute_${action}d`,
+          type: action === "resolve" ? "booking_dispute_resolved" : "booking_dispute_dismissed",
           title: action === "resolve" ? "Dispute resolved" : "Dispute dismissed",
           message: notes?.trim() ? `${resolutionMessage} Admin note: ${notes.trim()}` : resolutionMessage,
           actionUrl: `/bookings/${encodeURIComponent(bookingId)}`,
