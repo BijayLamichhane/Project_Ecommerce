@@ -80,7 +80,7 @@ export class AdminService {
         message: reason?.trim()
           ? `Your account has been suspended. Reason: ${reason.trim()}`
           : "Your account has been suspended by an administrator.",
-        actionUrl: "/profile",
+        actionUrl: "/dashboard",
       });
     } catch (error) {
       logger.warn({ error, userId }, "Failed to notify suspended user");
@@ -136,7 +136,7 @@ export class AdminService {
           type: "seller_application_approved",
           title: "Seller application approved",
           message: "Your seller application has been approved. You can now manage rental listings from your seller account.",
-          actionUrl: "/seller/dashboard",
+          actionUrl: "/seller",
         });
         return approvedSeller;
       }
