@@ -101,6 +101,27 @@ export function BookingDetailPage() {
     },
   });
 
+  const disputeMutation = useMutation({
+    mutationFn: async () => {
+      if (!id) throw new Error("Booking could not be found.");
+      const reason = disputeReason.trim();
+      if (reason.length < 3) throw new Error("Please explain the issue before raising a dispute.");
+      await api.patch(`/bookings/${id}/status`, {
+        status: "disputed",
+        reason,
+      });
+    },
+    onSuccess: () => {
+      setIsDisputeOpen(false);
+      setDisputeReason("");
+      setErrorMsg(null);
+      queryClient.invalidateQueries({ queryKey: ["booking", id] });
+      queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["customer-stats"] });
+    },
+    onError: (err: unknown) => setErrorMsg(getErrorMessage(err, "Failed to raise the dispute.")),
+  });
+
   const cancelPaymentMutation = useMutation({
     mutationFn: async () => {
       setErrorMsg(null);
