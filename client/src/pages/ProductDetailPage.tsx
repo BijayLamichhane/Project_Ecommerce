@@ -5,6 +5,7 @@ import { api } from "../lib/axios";
 import { Product, Review, RentalPriceCalculation } from "../types";
 import { RentalCalendar } from "../components/shared/RentalCalendar";
 import { PriceSummary } from "../components/shared/PriceSummary";
+import { RecommendedProducts } from "../components/shared/RecommendedProducts";
 import { formatCurrency, getEntityId, formatDate, getErrorMessage } from "../lib/utils";
 import { useAuth } from "../hooks/useAuth";
 import { useSocket } from "../hooks/useSocket";
@@ -588,6 +589,14 @@ export function ProductDetailPage() {
           </div>
         )}
       </section>
+      <RecommendedProducts
+        mode="similar"
+        productId={id}
+        title="You May Also Like"
+        subtitle="Similar rental gear based on category, brand, location, and price"
+        limit={4}
+      />
+
     </div>
   );
 }
