@@ -32,7 +32,7 @@ RentHub is a full-stack web application for renting physical products such as ca
 - **Conversation authorization**: Users can only read, join, or send messages in conversations where they are actual participants.
 - **Password protection**: The application user model no longer exposes or returns stored password hashes.
 - **Production secret checks**: The server refuses to start in production when development authentication/payment secrets are still being used.
-- **Request rate limiting**: General API traffic is rate-limited from a single global middleware, while credential login/registration uses a stricter 20-requests-per-15-minutes budget. Redis is used when enabled, with an in-memory fallback otherwise.
+- **Request rate limiting**: General API traffic is rate-limited from a single global middleware, while credential login/registration uses a stricter 20-requests-per-15-minutes budget. Redis is used when enabled, with an in-memory fallback otherwise. The session bootstrap request used by the frontend is excluded from this general limiter to avoid blocking authentication state initialization, and the frontend does not retry HTTP 429 responses automatically.
 - **Upload content validation**: Product image uploads validate file signatures (magic bytes) in addition to the declared MIME type before storage.
 - **HTTP authorization tests**: Express routes are covered by integration-style tests for booking ownership, product ownership, admin RBAC, and role-specific booking transitions.
 - **Seller payout choices**: Seller onboarding supports a bank account or debit/credit card demo payout profile. Only masked card details are stored; full card numbers and CVV are never persisted.
