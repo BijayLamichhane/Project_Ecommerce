@@ -8,7 +8,8 @@ import {
   Tent,
   Wrench,
   Car,
-  Tractor
+  Tractor,
+  Smartphone
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -23,6 +24,7 @@ export const CATEGORY_ICONS = {
   Wrench,
   Car,
   Tractor,
+  Smartphone,
 } satisfies Record<string, LucideIcon>;
 
 export const CATEGORY_ICON_NAMES = Object.keys(CATEGORY_ICONS);
