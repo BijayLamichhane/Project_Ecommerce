@@ -150,6 +150,34 @@ export class BookingService {
     return bookingRepository.findById(bookingId);
   }
 
+  async cancelPendingForCustomer(bookingId, userId, reason = "Payment cancelled by customer") {
+    const booking = await bookingRepository.findById(bookingId);
+    if (!booking) throw new NotFoundError("Booking");
+    if (String(booking.customerId) !== String(userId)) {
+      throw new ForbiddenError("You can only cancel your own payment");
+    }
+    if (booking.status !== "pending") {
+      throw new ValidationError("Only a pending payment can be cancelled");
+    }
+
+    const cancelled = await bookingRepository.cancelPending(bookingId, {
+      cancellationReason: reason,
+      actorId: userId,
+    });
+
+    if (!cancelled) {
+      const latest = await bookingRepository.findById(bookingId);
+      if (latest?.status === "cancelled") return latest;
+      throw new ValidationError("This payment is already being processed and can no longer be cancelled");
+    }
+
+    await bookingInventoryRepository.releaseBooking(bookingId);
+    await this.notifyBookingReleased(cancelled, "cancelled");
+    await this.emitAvailabilityChanges(cancelled);
+
+    return cancelled;
+  }
+
   async updateStatus(bookingId, userId, userRole, newStatus, reason) {
     const booking = await bookingRepository.findById(bookingId);
     if (!booking) throw new NotFoundError("Booking");
@@ -223,10 +251,17 @@ export class BookingService {
 
     const actionUrl = `/bookings/${encodeURIComponent(booking.id || booking._id)}`;
     const isExpired = reason === "expired";
-    const title = isExpired ? "Booking hold expired" : "Booking request declined";
+    const isCancelled = reason === "cancelled";
+    const title = isExpired
+      ? "Booking hold expired"
+      : isCancelled
+        ? "Payment cancelled"
+        : "Booking request declined";
     const message = isExpired
       ? "Your payment window expired, so the selected dates are available again. Please create a new booking if you still need them."
-      : "The seller declined this booking request, so the selected dates are available again.";
+      : isCancelled
+        ? "Your payment was cancelled and the selected dates are available again."
+        : "The seller declined this booking request, so the selected dates are available again.";
 
     try {
       const notification = await notificationService.createNotification({

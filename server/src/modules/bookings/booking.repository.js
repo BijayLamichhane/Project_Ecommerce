@@ -220,6 +220,32 @@ export class BookingRepository {
     }
   }
 
+  async cancelPending(id, extra = {}) {
+    const now = new Date();
+
+    return populateBooking(
+      Booking.findOneAndUpdate(
+        { _id: id, status: "pending" },
+        {
+          $set: {
+            status: "cancelled",
+            cancelledAt: now,
+            ...extra,
+          },
+          $push: {
+            timeline: {
+              status: "cancelled",
+              timestamp: now,
+              note: extra.cancellationReason || "Payment cancelled by customer",
+              actorId: extra.actorId,
+            },
+          },
+        },
+        { new: true }
+      )
+    );
+  }
+
   async updateStatus(id, status, extra = {}) {
     const statusTimestamps = {};
     if (status === "confirmed") statusTimestamps.confirmedAt = new Date();

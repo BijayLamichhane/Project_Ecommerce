@@ -73,6 +73,8 @@ The server performs startup reconciliation and periodically expires stale pendin
 
 A pending booking can be paid directly from the customer dashboard and from the navbar. The dashboard shows a Payment Required section with a Pay Now link for each active pending hold. The desktop navbar shows a payment badge and dropdown with direct links to each pending booking, while mobile navigation exposes the payment due count and a direct Pay Now link. This keeps payment accessible even after the customer has left the original product page and avoids requiring a trip through booking history.
 
+Customers can also cancel a pending payment from the booking detail page. Cancellation atomically targets the pending booking state, releases its inventory hold, and marks an unfinished payment attempt as cancelled. If a gateway reports a completed transaction after the booking was already cancelled, the transaction is flagged for refund and the cancelled booking is not confirmed.
+
 ### Payment flow
 
 The payment flow is payment driven.

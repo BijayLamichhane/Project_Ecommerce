@@ -32,6 +32,7 @@ export function BookingDetailPage() {
   const [question, setQuestion] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [remainingHoldMs, setRemainingHoldMs] = useState<number | null>(null);
+  const [isCancelPaymentOpen, setIsCancelPaymentOpen] = useState(false);
 
   const { data: booking, isLoading } = useQuery({ queryKey: ["booking", id], queryFn: async () => { const { data } = await api.get(`/bookings/${id}`); return data.data as Booking; }, enabled: !!id });
   const reviewProductId = booking?.bookingItems?.[0]?.productId || getEntityId(booking?.bookingItems?.[0]?.product);
@@ -95,6 +96,28 @@ export function BookingDetailPage() {
           ? "This booking hold expired. Please rebook the equipment for your dates."
           : message
       );
+    },
+  });
+
+  const cancelPaymentMutation = useMutation({
+    mutationFn: async () => {
+      setErrorMsg(null);
+      if (!id) throw new Error("Booking could not be found.");
+      await api.post(`/payments/booking/${id}/cancel`, {
+        reason: "Payment cancelled by customer",
+      });
+    },
+    onSuccess: () => {
+      setIsCancelPaymentOpen(false);
+      setErrorMsg(null);
+      queryClient.invalidateQueries({ queryKey: ["booking", id] });
+      queryClient.invalidateQueries({ queryKey: ["booking-payment", id] });
+      queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["pending-bookings-nav"] });
+      queryClient.invalidateQueries({ queryKey: ["customer-stats"] });
+    },
+    onError: (err: unknown) => {
+      setErrorMsg(getErrorMessage(err, "Failed to cancel the payment."));
     },
   });
 
@@ -173,7 +196,7 @@ export function BookingDetailPage() {
           <div><span className="text-[11px] font-bold text-[#C17817] font-mono">Booking ID: {bookingId.substring(0, 13)}</span><h1 className="text-3xl font-extrabold text-[#211E1B] mt-1">Rental Details</h1><p className="text-xs text-[#8B8377] mt-1">Created {formatDate(booking.createdAt, "MMM d, yyyy h:mm a")}</p></div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="px-3 py-2 rounded-md bg-[#F1E0C8] border border-[#C17817]/30 text-[#A66314] text-xs font-bold">{statusLabel[booking.status] || booking.status}</span>
-            {booking.status === "pending" && isCustomer && !holdExpired && <div className="flex flex-wrap gap-2"><button onClick={() => payMutation.mutate("esewa")} disabled={payMutation.isPending} className="px-4 py-2.5 rounded-md bg-[#C17817] hover:bg-[#A66314] disabled:opacity-50 text-[#211E1B] text-xs font-extrabold transition flex items-center gap-2"><CreditCard className="w-4 h-4" />{payMutation.isPending ? "Opening payment..." : "Pay with eSewa"}</button><button onClick={() => payMutation.mutate("card")} disabled={payMutation.isPending} className="px-4 py-2.5 rounded-md bg-[#C17817] hover:bg-[#A66314] disabled:opacity-50 text-[#211E1B] text-xs font-extrabold transition flex items-center gap-2"><CreditCard className="w-4 h-4" />{payMutation.isPending ? "Opening payment..." : "Debit / Credit Card"}</button></div>}
+            {booking.status === "pending" && isCustomer && !holdExpired && <div className="flex flex-wrap gap-2"><button onClick={() => payMutation.mutate("esewa")} disabled={payMutation.isPending || cancelPaymentMutation.isPending} className="px-4 py-2.5 rounded-md bg-[#C17817] hover:bg-[#A66314] disabled:opacity-50 text-[#211E1B] text-xs font-extrabold transition flex items-center gap-2"><CreditCard className="w-4 h-4" />{payMutation.isPending ? "Opening payment..." : "Pay with eSewa"}</button><button onClick={() => payMutation.mutate("card")} disabled={payMutation.isPending || cancelPaymentMutation.isPending} className="px-4 py-2.5 rounded-md bg-[#C17817] hover:bg-[#A66314] disabled:opacity-50 text-[#211E1B] text-xs font-extrabold transition flex items-center gap-2"><CreditCard className="w-4 h-4" />{payMutation.isPending ? "Opening payment..." : "Debit / Credit Card"}</button><button onClick={() => setIsCancelPaymentOpen(true)} disabled={payMutation.isPending || cancelPaymentMutation.isPending} className="px-4 py-2.5 rounded-md border border-[#A23B2E]/40 bg-white hover:bg-[#FBE9E5] disabled:opacity-50 text-[#A23B2E] text-xs font-extrabold transition flex items-center gap-2"><X className="w-4 h-4" />{cancelPaymentMutation.isPending ? "Cancelling..." : "Cancel Payment"}</button></div>}
             {booking.status === "active" && isCustomer && <button onClick={() => returnMutation.mutate()} disabled={returnMutation.isPending} className="px-4 py-2.5 rounded-md bg-[#C17817] hover:bg-[#A66314] disabled:opacity-50 text-[#211E1B] text-xs font-extrabold transition flex items-center gap-2"><RotateCcw className="w-4 h-4" />{returnMutation.isPending ? "Requesting..." : "Request Return"}</button>}
             {canReview && (
               <button
@@ -206,6 +229,22 @@ export function BookingDetailPage() {
           <div className="lg:col-span-5 bg-white rounded-md border border-[#DDD5C7] p-6  space-y-5"><h3 className="text-base font-bold text-[#211E1B]">Charges & Security Deposit</h3><div className="space-y-3 text-xs text-[#8B8377]"><div className="flex justify-between"><span>Rental Charges</span><span className="font-bold text-[#211E1B]">{formatCurrency(booking.totalRentalPrice)}</span></div><div className="flex justify-between"><span>Service Fee</span><span className="font-bold text-[#211E1B]">{formatCurrency(booking.serviceFee)}</span></div>{Number(booking.deliveryFee) > 0 && <div className="flex justify-between"><span>Delivery</span><span className="font-bold text-[#211E1B]">{formatCurrency(booking.deliveryFee)}</span></div>}<div className="pt-3 border-t border-[#DDD5C7] flex justify-between text-sm font-extrabold"><span className="text-[#211E1B]">Rental Total</span><span className="text-[#A66314]">{formatCurrency(booking.totalAmount)}</span></div></div><div className="p-4 rounded-md bg-[#E7EFE2] border border-[#4B5D3A]/30"><div className="flex justify-between font-bold text-[#4B5D3A]"><span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4" />Security Deposit</span><span>{formatCurrency(booking.totalDeposit)}</span></div><p className="text-[11px] text-[#4B5D3A] mt-2">Status: <span className="font-bold capitalize">{paymentInfo?.deposit?.status || "Held"}</span></p></div></div>
         </div>
         {booking.status === "active" && isCustomer && <div className="bg-white rounded-md border border-[#DDD5C7] p-6"><h3 className="text-sm font-bold text-[#211E1B]">Return Handover Details</h3><div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4"><select value={returnCondition} onChange={(e) => setReturnCondition(e.target.value)} className="px-4 py-3 rounded-md bg-[#F7F3EA] border border-[#B8B0A3] text-sm text-[#211E1B] outline-none focus:border-[#C17817]"><option value="like_new">Like New</option><option value="good">Good</option><option value="fair">Fair</option><option value="damaged">Damaged</option></select><input value={returnNotes} onChange={(e) => setReturnNotes(e.target.value)} placeholder="Optional return notes" className="px-4 py-3 rounded-md bg-[#F7F3EA] border border-[#B8B0A3] text-sm text-[#211E1B] placeholder:text-[#8B8377] outline-none focus:border-[#C17817]" /></div><p className="text-[11px] text-[#8B8377] mt-3">Your return request will be reviewed by the seller before the booking is marked returned.</p></div>}
+        {isCancelPaymentOpen && <div className="fixed inset-0 z-50 bg-[#211E1B]/75 flex items-center justify-center p-4">
+          <div className="bg-white border border-[#DDD5C7] rounded-md p-6 max-w-md w-full shadow-sm space-y-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-bold text-[#211E1B]">Cancel Payment?</h3>
+                <p className="text-xs text-[#8B8377] mt-1">This will cancel the pending booking and release the selected dates.</p>
+              </div>
+              <button onClick={() => setIsCancelPaymentOpen(false)} disabled={cancelPaymentMutation.isPending} className="p-2 rounded-lg hover:bg-[#E8E1D5] text-[#8B8377]"><X className="w-4 h-4" /></button>
+            </div>
+            <p className="text-sm text-[#514B44]">Any unfinished payment attempt will be cancelled. You can create a new booking later if you still need the equipment.</p>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setIsCancelPaymentOpen(false)} disabled={cancelPaymentMutation.isPending} className="px-4 py-2.5 rounded-md text-xs font-bold text-[#8B8377] hover:bg-[#E8E1D5]">Keep Payment</button>
+              <button onClick={() => cancelPaymentMutation.mutate()} disabled={cancelPaymentMutation.isPending} className="px-4 py-2.5 rounded-md bg-[#A23B2E] hover:bg-[#8F3328] disabled:opacity-50 text-white text-xs font-extrabold">{cancelPaymentMutation.isPending ? "Cancelling..." : "Cancel Payment"}</button>
+            </div>
+          </div>
+        </div>}
         {isReviewOpen && <div className="fixed inset-0 z-50 bg-[#211E1B]/75 flex items-center justify-center p-4"><div className="bg-white border border-[#DDD5C7] rounded-md p-6 max-w-md w-full shadow-sm space-y-5"><div className="flex items-center justify-between"><h3 className="text-lg font-bold text-[#211E1B]">{editingReviewId ? "Edit Your Review" : "Review this Rental"}</h3><button onClick={() => setIsReviewOpen(false)} className="p-2 rounded-lg hover:bg-[#E8E1D5] text-[#8B8377]"><X className="w-4 h-4" /></button></div><div><label className="text-xs font-bold text-[#8B8377]">Rating</label><div className="flex gap-1 mt-2">{[1,2,3,4,5].map((star) => <button key={star} type="button" onClick={() => setReviewRating(star)} className="p-1"><Star className={`w-7 h-7 ${star <= reviewRating ? "fill-[#C17817] text-[#C17817]" : "text-[#B8B0A3]"}`} /></button>)}</div></div><input value={reviewTitle} onChange={(e) => setReviewTitle(e.target.value)} placeholder="Review headline (optional)" className="w-full px-4 py-3 text-sm bg-[#F7F3EA] border border-[#B8B0A3] rounded-md text-[#211E1B] placeholder:text-[#8B8377] outline-none focus:border-[#C17817]" /><textarea rows={4} value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} placeholder="Describe your rental experience..." className="w-full px-4 py-3 text-sm bg-[#F7F3EA] border border-[#B8B0A3] rounded-md text-[#211E1B] placeholder:text-[#8B8377] outline-none focus:border-[#C17817]" /><div className="flex justify-end gap-2"><button onClick={() => setIsReviewOpen(false)} className="px-4 py-2.5 rounded-md text-xs font-bold text-[#8B8377] hover:bg-[#E8E1D5]">Cancel</button><button onClick={() => reviewMutation.mutate()} disabled={reviewMutation.isPending || reviewComment.trim().length < 5} className="px-4 py-2.5 rounded-md bg-[#C17817] hover:bg-[#A66314] disabled:opacity-50 text-[#211E1B] text-xs font-extrabold">{reviewMutation.isPending ? "Saving..." : editingReviewId ? "Save Changes" : "Submit Review"}</button></div></div></div>}
         {isQuestionOpen && <div className="fixed inset-0 z-50 bg-[#211E1B]/75 flex items-center justify-center p-4"><div className="bg-white border border-[#DDD5C7] rounded-md p-6 max-w-lg w-full shadow-sm space-y-5"><div className="flex items-center justify-between"><div><h3 className="text-lg font-bold text-[#211E1B]">Ask {sellerName} a Question</h3><p className="text-xs text-[#8B8377] mt-1">Your message will open a conversation in Messages.</p></div><button onClick={() => setIsQuestionOpen(false)} className="p-2 rounded-lg hover:bg-[#E8E1D5] text-[#8B8377]"><X className="w-4 h-4" /></button></div><textarea autoFocus rows={5} value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={3000} placeholder="e.g. What time can I pick up the equipment?" className="w-full px-4 py-3 text-sm bg-[#F7F3EA] border border-[#B8B0A3] rounded-md text-[#211E1B] placeholder:text-[#8B8377] outline-none focus:border-[#C17817] resize-none" /><div className="flex items-center justify-between"><span className="text-[11px] text-[#8B8377]">{question.length}/3000</span><div className="flex gap-2"><button onClick={() => setIsQuestionOpen(false)} className="px-4 py-2.5 rounded-md text-xs font-bold text-[#8B8377] hover:bg-[#E8E1D5]">Cancel</button><button onClick={() => questionMutation.mutate()} disabled={questionMutation.isPending || !question.trim()} className="px-4 py-2.5 rounded-md bg-[#C17817] hover:bg-[#A66314] disabled:opacity-50 text-[#211E1B] text-xs font-extrabold flex items-center gap-2"><Send className="w-4 h-4" />{questionMutation.isPending ? "Sending..." : "Send Question"}</button></div></div></div></div>}
       </div>

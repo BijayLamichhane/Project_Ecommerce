@@ -5,6 +5,10 @@ export const processPaymentSchema = z.object({
   paymentMethod: z.enum(["esewa", "card"]).default("esewa"),
 });
 
+export const cancelPaymentSchema = z.object({
+  reason: z.string().max(1000).optional(),
+});
+
 export const adjustDepositSchema = z.object({
   deductedAmount: z.number().min(0),
   deductionReason: z.string().min(5, "Reason for deduction is required"),

@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { paymentRepository } from "./payment.repository.js";
 import { bookingRepository } from "../bookings/booking.repository.js";
+import { bookingService } from "../bookings/booking.service.js";
 import { bookingInventoryRepository } from "../bookings/booking.inventory.repository.js";
 import { notificationService } from "../notifications/notification.service.js";
 import { emitProductAvailabilityChanged, emitToUser } from "../../sockets/index.js";
@@ -397,6 +398,17 @@ export class PaymentService {
         );
       }
 
+      if (booking.status === "cancelled") {
+        const refunded = await this.markPaymentForManualRefund(
+          payment,
+          "Payment was received after the customer cancelled the booking.",
+          { response, verification: verified }
+        );
+        throw new ValidationError(
+          "Payment was received after you cancelled the booking. The payment has been flagged for refund."
+        );
+      }
+
       try {
         const confirmation = await this.confirmBookingAfterPayment(booking);
         const completed = await paymentRepository.updatePayment(payment.id, {
@@ -433,6 +445,44 @@ export class PaymentService {
     }
 
     return { payment, bookingId: payment.bookingId };
+  }
+
+  async cancelPayment(userId, bookingId, reason = "Payment cancelled by customer") {
+    const booking = await bookingRepository.findById(bookingId);
+    if (!booking) throw new NotFoundError("Booking");
+    if (String(booking.customerId) !== String(userId)) {
+      throw new ForbiddenError("You can only cancel your own payment");
+    }
+    if (booking.status !== "pending") {
+      throw new ValidationError("Only a pending payment can be cancelled");
+    }
+
+    const payment = await paymentRepository.findByBookingId(bookingId);
+    if (payment?.status === "completed") {
+      throw new ValidationError("This payment has already been completed");
+    }
+
+    const cancelledBooking = await bookingService.cancelPendingForCustomer(
+      bookingId,
+      userId,
+      reason
+    );
+
+    let cancelledPayment = null;
+    if (payment?.status === "pending") {
+      cancelledPayment = await paymentRepository.cancelPendingPayment(
+        payment.id,
+        reason
+      );
+      if (!cancelledPayment) {
+        cancelledPayment = await paymentRepository.findByBookingId(bookingId);
+      }
+    }
+
+    return {
+      booking: cancelledBooking,
+      payment: cancelledPayment || payment || null,
+    };
   }
 
   async getPaymentByBooking(userId, bookingId, userRole) {

@@ -19,6 +19,7 @@ RentHub is a full-stack web application for renting physical products such as ca
 - **Recommendation Architecture**: Recommendations are implemented as a dedicated module without adding an ML dependency or storing a separate tracking profile. Existing marketplace behavior is used as the signal source.
 - **One Review Per Product**: Each customer can have only one review for a product. The existing review can be edited, while the database still enforces a unique `(productId, reviewerId)` index for concurrent requests.
 - **Easy Payment Access**: Unpaid pending bookings are surfaced directly from the customer dashboard and navbar with Pay Now links, so customers do not need to return to the product page or search through booking history to continue payment.
+- **Payment Cancellation**: Customers can cancel a pending payment from the booking detail page. The booking hold is cancelled, reserved dates are released, and the pending payment attempt is marked cancelled. A late gateway completion after cancellation is flagged for refund instead of confirming the cancelled booking.
 
 ---
 
